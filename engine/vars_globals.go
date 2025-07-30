@@ -8,25 +8,15 @@ import (
 
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/dop251/goja"
-	"github.com/go-redis/redis"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	RedisClient *redis.Client
-	db          *sql.DB
-)
+// Las variables globales se han movido al ConfigRepository
+// Usar GetConfigRepository() para acceder a ellas
 
 func GetDB() (*sql.DB, error) {
-	if db == nil {
-		var err error
-		db, err = sql.Open(Config.DatabaseNflow.Driver, Config.DatabaseNflow.DSN)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return db, nil
+	return GetConfigRepository().GetDB()
 }
 
 func saveInSession(form url.Values, c echo.Context) {
@@ -36,7 +26,7 @@ func saveInSession(form url.Values, c echo.Context) {
 		c.Set("_session_form_data", form)
 		return
 	}
-	
+
 	syncsession.EchoSessionsMutex.Lock()
 	defer syncsession.EchoSessionsMutex.Unlock()
 	s, _ := session.Get("nflow_form", c)
@@ -57,7 +47,7 @@ func AddGlobals(vm *goja.Runtime, c echo.Context) {
 	// Set Echo context for HTTP operations
 	vm.Set("c", c)
 	vm.Set("echo_context", c)
-	
+
 	header := make(map[string][]string)
 	if c.Request().Header != nil {
 		header = (map[string][]string)(c.Request().Header)
@@ -72,18 +62,20 @@ func AddGlobals(vm *goja.Runtime, c echo.Context) {
 
 	saveInSession(form, c)
 
-	vm.Set("redis_hset", RedisClient.HSet)
-	vm.Set("redis_hget", RedisClient.HGet)
-	vm.Set("redis_hdel", RedisClient.HDel)
+	redisClient := GetRedisClient()
+	vm.Set("redis_hset", redisClient.HSet)
+	vm.Set("redis_hget", redisClient.HGet)
+	vm.Set("redis_hdel", redisClient.HDel)
 	vm.Set("redis_expire", func(key string, s int32) {
-		RedisClient.Expire(key, time.Duration(s)*time.Second)
+		redisClient.Expire(key, time.Duration(s)*time.Second)
 	})
 
 	//fmt.Println("REDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDISREDIS")
-	vm.Set("config", Config)
-	vm.Set("env", Config.Env)
+	config := GetConfig()
+	vm.Set("config", config)
+	vm.Set("env", config.Env)
 
-	vm.Set("url_base", Config.URLConfig.URLBase)
+	vm.Set("url_base", config.URLConfig.URLBase)
 	vm.Set("__vm", *vm)
 	vm.Set("ctx", context.Background())
 

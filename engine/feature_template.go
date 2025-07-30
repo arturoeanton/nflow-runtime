@@ -20,7 +20,8 @@ func GetTemplateFromDB(paramName string) string {
 		return ""
 	}
 	defer conn.Close()
-	row := conn.QueryRowContext(context.Background(), Config.DatabaseNflow.QueryGetTemplate, paramName)
+	config := GetConfig()
+	row := conn.QueryRowContext(context.Background(), config.DatabaseNflow.QueryGetTemplate, paramName)
 
 	var id int
 	var name string

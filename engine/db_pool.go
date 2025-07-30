@@ -38,7 +38,8 @@ func InitDBPool() error {
 	var initErr error
 
 	dbPoolOnce.Do(func() {
-		db, err := sql.Open(Config.DatabaseNflow.Driver, Config.DatabaseNflow.DSN)
+		config := GetConfig()
+		db, err := sql.Open(config.DatabaseNflow.Driver, config.DatabaseNflow.DSN)
 		if err != nil {
 			initErr = fmt.Errorf("error abriendo base de datos: %v", err)
 			return
@@ -51,7 +52,7 @@ func InitDBPool() error {
 		connMaxIdleTime := 1 * time.Minute
 
 		// Ajustar según el driver
-		switch Config.DatabaseNflow.Driver {
+		switch config.DatabaseNflow.Driver {
 		case "sqlite3":
 			maxOpenConns = 1 // SQLite funciona mejor con una sola conexión
 			maxIdleConns = 1
@@ -89,7 +90,7 @@ func InitDBPool() error {
 		go dbPool.monitorStats()
 
 		log.Printf("Pool de base de datos inicializado: driver=%s, maxConns=%d",
-			Config.DatabaseNflow.Driver, maxOpenConns)
+			config.DatabaseNflow.Driver, maxOpenConns)
 	})
 
 	return initErr

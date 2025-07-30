@@ -16,10 +16,6 @@ import (
 )
 
 var (
-	// Config is ...
-	Config ConfigWorkspace
-	// PathBase is ...
-
 	// playbookRepo es la instancia global del repository
 	playbookRepo PlaybookRepository
 )
@@ -35,7 +31,8 @@ func GetPlaybookRepository() PlaybookRepository {
 }
 
 func GetPlaybook(ctx context.Context, conn *sql.Conn, pbName string) (map[string]map[string]*model.Playbook, error) {
-	rows, err := conn.QueryContext(ctx, Config.DatabaseNflow.QueryGetApp, pbName)
+	config := GetConfig()
+	rows, err := conn.QueryContext(ctx, config.DatabaseNflow.QueryGetApp, pbName)
 	if err != nil {
 		log.Println(err)
 		return nil, err

@@ -161,18 +161,28 @@ func run(c echo.Context) error {
 func main() {
 	flag.Parse()
 	configPath := "config.toml"
+	
+	// Inicializar ConfigRepository
+	configRepo := engine.GetConfigRepository()
+	
+	// Cargar configuración
+	var config engine.ConfigWorkspace
 	if utils.Exists(configPath) {
 		data, _ := utils.FileToString(configPath)
-		if _, err := toml.Decode(data, &engine.Config); err != nil {
+		if _, err := toml.Decode(data, &config); err != nil {
 			log.Println(err)
 		}
+		configRepo.SetConfig(config)
 	}
-
-	engine.RedisClient = redis.NewClient(&redis.Options{
-		Addr:     engine.Config.RedisConfig.Host,
-		Password: engine.Config.RedisConfig.Password, // no password set
-		DB:       0,                                  // use default DB
+	
+	// Inicializar Redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     config.RedisConfig.Host,
+		Password: config.RedisConfig.Password, // no password set
+		DB:       0,                           // use default DB
 	})
+	configRepo.SetRedisClient(redisClient)
+	
 	engine.UpdateQueries()
 
 	engine.LoadPlugins()
@@ -200,7 +210,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(session.Middleware(commons.GetSessionStore(&engine.Config.PgSessionConfig)))
+	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
 
 	e.Any("/*", run)
 

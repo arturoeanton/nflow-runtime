@@ -22,7 +22,8 @@ func GetTokenFromDB(paramName string) []map[string]interface{} {
 		return nil
 	}
 	defer conn.Close()
-	rows, err := conn.QueryContext(context.Background(), Config.DatabaseNflow.QueryGetToken, paramName)
+	config := GetConfig()
+	rows, err := conn.QueryContext(context.Background(), config.DatabaseNflow.QueryGetToken, paramName)
 	if err != nil {
 		log.Println(err)
 		return nil

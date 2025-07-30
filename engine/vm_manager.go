@@ -57,20 +57,21 @@ var (
 func GetVMManager() *VMManager {
 	vmManagerOnce.Do(func() {
 		// Use config or defaults
+		config := GetConfig()
 		maxSize := 50
-		if Config.VMPoolConfig.MaxSize > 0 {
-			maxSize = Config.VMPoolConfig.MaxSize
+		if config.VMPoolConfig.MaxSize > 0 {
+			maxSize = config.VMPoolConfig.MaxSize
 		}
 
-		vmManager = NewVMManagerWithConfig(maxSize, &Config.VMPoolConfig)
+		vmManager = NewVMManagerWithConfig(maxSize, &config.VMPoolConfig)
 
 		// Start cleanup routine if configured
-		if Config.VMPoolConfig.CleanupInterval > 0 {
+		if config.VMPoolConfig.CleanupInterval > 0 {
 			go vmManager.Cleanup()
 		}
 
 		// Log metrics periodically if enabled
-		if Config.VMPoolConfig.EnableMetrics {
+		if config.VMPoolConfig.EnableMetrics {
 			go vmManager.logMetrics()
 		}
 	})
@@ -359,8 +360,9 @@ func (m *VMManager) GetStats() *VMStats {
 // Cleanup performs periodic cleanup of idle VMs
 func (m *VMManager) Cleanup() {
 	interval := 5 * time.Minute
-	if Config.VMPoolConfig.CleanupInterval > 0 {
-		interval = time.Duration(Config.VMPoolConfig.CleanupInterval) * time.Minute
+	config := GetConfig()
+	if config.VMPoolConfig.CleanupInterval > 0 {
+		interval = time.Duration(config.VMPoolConfig.CleanupInterval) * time.Minute
 	}
 
 	ticker := time.NewTicker(interval)
@@ -386,8 +388,9 @@ func (m *VMManager) logMetrics() {
 // cleanupIdleVMs removes VMs that have been idle too long
 func (m *VMManager) cleanupIdleVMs() {
 	idleTimeout := 10 * time.Minute
-	if Config.VMPoolConfig.IdleTimeout > 0 {
-		idleTimeout = time.Duration(Config.VMPoolConfig.IdleTimeout) * time.Minute
+	config := GetConfig()
+	if config.VMPoolConfig.IdleTimeout > 0 {
+		idleTimeout = time.Duration(config.VMPoolConfig.IdleTimeout) * time.Minute
 	}
 	now := time.Now()
 

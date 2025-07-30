@@ -213,7 +213,8 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 				return nil
 			}
 			defer conn.Close()
-			row := conn.QueryRowContext(ctx, Config.DatabaseNflow.QueryGetApp, "app")
+			config := GetConfig()
+			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetApp, "app")
 			var code string
 			var jsonCode string
 			err = row.Scan(&jsonCode, &code)
@@ -339,7 +340,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		}()
 
 		go func(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host string, diff time.Duration, orderBox int, jsonPayload []byte) {
-			if Config.DatabaseNflow.QueryInsertLog == "" {
+			config := GetConfig()
+			if config.DatabaseNflow.QueryInsertLog == "" {
 				return
 			}
 
@@ -355,7 +357,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 			}
 			defer conn.Close()
 
-			_, err = conn.ExecContext(ctx, Config.DatabaseNflow.QueryInsertLog,
+			_, err = conn.ExecContext(ctx, config.DatabaseNflow.QueryInsertLog,
 				logId,                                   // $1
 				boxId,                                   // $2
 				boxName,                                 // $3
@@ -403,7 +405,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				return
 			}
 			defer conn.Close()
-			row := conn.QueryRowContext(ctx, Config.DatabaseNflow.QueryGetApp, "app")
+			config := GetConfig()
+			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetApp, "app")
 			var code string
 			var jsonCode string
 			err = row.Scan(&jsonCode, &code)

@@ -34,7 +34,8 @@ func LoadPlugins() {
 	Plugins[pluing5.Name()] = pluing5
 
 	pluing6 := plugins.TwilioPlugin("twilio")
-	pluing6.Initialize(Config.TwilioConfig.Enable, Config.TwilioConfig.AccountSid, Config.TwilioConfig.AuthToken, Config.TwilioConfig.VerifyServiceID)
+	config := GetConfig()
+	pluing6.Initialize(config.TwilioConfig.Enable, config.TwilioConfig.AccountSid, config.TwilioConfig.AuthToken, config.TwilioConfig.VerifyServiceID)
 	Plugins[pluing6.Name()] = pluing6
 
 	pluing7 := plugins.IAnFlow("ia")

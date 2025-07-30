@@ -110,8 +110,13 @@ type ConfigMail struct {
 
 func UpdateQueries() {
 	log.Println("Updating queries")
-	if Config.DatabaseNflow.Query == "" {
-		Config.DatabaseNflow.Query = "SELECT name,query FROM queries"
+	repo := GetConfigRepository()
+	config := repo.GetConfig()
+	
+	if config.DatabaseNflow.Query == "" {
+		config.DatabaseNflow.Query = "SELECT name,query FROM queries"
+		repo.SetConfig(*config)
+		config = repo.GetConfig()
 	}
 	db, err := GetDB()
 	if err != nil {
@@ -125,7 +130,7 @@ func UpdateQueries() {
 	}
 	defer conn.Close()
 	queries := make(map[string]string)
-	rows, err := conn.QueryContext(context.Background(), Config.DatabaseNflow.Query)
+	rows, err := conn.QueryContext(context.Background(), config.DatabaseNflow.Query)
 	if err != nil {
 		log.Println(err)
 		return
@@ -140,25 +145,29 @@ func UpdateQueries() {
 		}
 		queries[name] = query
 	}
-	Config.DatabaseNflow.QueryGetUser = queries["QueryGetUser"]
-	Config.DatabaseNflow.QueryGetApp = queries["QueryGetApp"]
-	Config.DatabaseNflow.QueryGetModules = queries["QueryGetModules"]
-	Config.DatabaseNflow.QueryCountModulesByName = queries["QueryCountModulesByName"]
-	Config.DatabaseNflow.QueryGetModuleByName = queries["QueryGetModuleByName"]
-	Config.DatabaseNflow.QueryUpdateModModuleByName = queries["QueryUpdateModModuleByName"]
-	Config.DatabaseNflow.QueryUpdateFormModuleByName = queries["QueryUpdateFormModuleByName"]
-	Config.DatabaseNflow.QueryUpdateCodeModuleByName = queries["QueryUpdateCodeModuleByName"]
-	Config.DatabaseNflow.QueryUpdateApp = queries["QueryUpdateApp"]
-	Config.DatabaseNflow.QueryInsertModule = queries["QueryInsertModule"]
-	Config.DatabaseNflow.QueryDeleteModule = queries["QueryDeleteModule"]
-	Config.DatabaseNflow.QueryInsertLog = queries["QueryInsertLog"]
-	Config.DatabaseNflow.QueryGetToken = queries["QueryGetToken"]
-	Config.DatabaseNflow.QueryGetTemplateCount = queries["QueryGetTemplateCount"]
-	Config.DatabaseNflow.QueryGetTemplate = queries["QueryGetTemplate"]
-	Config.DatabaseNflow.QueryGetTemplates = queries["QueryGetTemplates"]
-	Config.DatabaseNflow.QueryUpdateTemplate = queries["QueryUpdateTemplate"]
-	Config.DatabaseNflow.QueryInsertTemplate = queries["QueryInsertTemplate"]
-	Config.DatabaseNflow.QueryDeleteTemplate = queries["QueryDeleteTemplate"]
+	// Actualizar las queries en la configuración
+	config.DatabaseNflow.QueryGetUser = queries["QueryGetUser"]
+	config.DatabaseNflow.QueryGetApp = queries["QueryGetApp"]
+	config.DatabaseNflow.QueryGetModules = queries["QueryGetModules"]
+	config.DatabaseNflow.QueryCountModulesByName = queries["QueryCountModulesByName"]
+	config.DatabaseNflow.QueryGetModuleByName = queries["QueryGetModuleByName"]
+	config.DatabaseNflow.QueryUpdateModModuleByName = queries["QueryUpdateModModuleByName"]
+	config.DatabaseNflow.QueryUpdateFormModuleByName = queries["QueryUpdateFormModuleByName"]
+	config.DatabaseNflow.QueryUpdateCodeModuleByName = queries["QueryUpdateCodeModuleByName"]
+	config.DatabaseNflow.QueryUpdateApp = queries["QueryUpdateApp"]
+	config.DatabaseNflow.QueryInsertModule = queries["QueryInsertModule"]
+	config.DatabaseNflow.QueryDeleteModule = queries["QueryDeleteModule"]
+	config.DatabaseNflow.QueryInsertLog = queries["QueryInsertLog"]
+	config.DatabaseNflow.QueryGetToken = queries["QueryGetToken"]
+	config.DatabaseNflow.QueryGetTemplateCount = queries["QueryGetTemplateCount"]
+	config.DatabaseNflow.QueryGetTemplate = queries["QueryGetTemplate"]
+	config.DatabaseNflow.QueryGetTemplates = queries["QueryGetTemplates"]
+	config.DatabaseNflow.QueryUpdateTemplate = queries["QueryUpdateTemplate"]
+	config.DatabaseNflow.QueryInsertTemplate = queries["QueryInsertTemplate"]
+	config.DatabaseNflow.QueryDeleteTemplate = queries["QueryDeleteTemplate"]
+	
+	// Guardar la configuración actualizada
+	repo.SetConfig(*config)
 	log.Println("Queries updated")
 
 }

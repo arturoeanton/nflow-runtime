@@ -46,7 +46,8 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 		scriptName, hasScript := actor.Data["script"]
 		
 		if hasScript {
-			row := conn.QueryRowContext(ctx, Config.DatabaseNflow.QueryGetModuleByName, scriptName.(string))
+			config := GetConfig()
+			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetModuleByName, scriptName.(string))
 			var form string
 			var mod string
 			var code string
