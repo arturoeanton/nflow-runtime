@@ -4,22 +4,151 @@ import (
 	"context"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/dop251/goja"
 	"github.com/labstack/echo/v4"
 )
 
-func GetTemplateFromDB(paramName string) string {
+var (
+	templateRepo *RepositoryTemplate
+	muTemplate   sync.Mutex
+)
+
+type RepositoryTemplate struct {
+	templates map[string]string
+	mu        sync.Mutex
+	dinamic   bool
+}
+
+func GetRepositoryTemplate() *RepositoryTemplate {
+	muTemplate.Lock()
+	defer muTemplate.Unlock()
+	if templateRepo != nil {
+		return templateRepo
+	}
+	templateRepo = &RepositoryTemplate{
+		templates: make(map[string]string),
+		dinamic:   false,
+		mu:        sync.Mutex{},
+	}
+	return templateRepo
+}
+
+func (r *RepositoryTemplate) IsDinamic() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.dinamic
+}
+
+func (r *RepositoryTemplate) SetDinamic(dinamic bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.dinamic = dinamic
+}
+
+func (r *RepositoryTemplate) InicializarTemplate(templates map[string]string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.templates = templates
+}
+
+func (r *RepositoryTemplate) AddTemplate(name, content string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.templates[name] = content
+}
+
+func (r *RepositoryTemplate) GetTemplate(name string) (string, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if !r.dinamic { // If not dynamic, check the in-memory map first
+		content, exists := r.templates[name]
+		if exists {
+			return content, true
+		}
+	}
+
+	templatePath := os.Getenv("NFLOW_TEMPLATE_PATH")
+	if templatePath == "" {
+		templatePath = "./templates"
+	}
+
+	filename := templatePath + "/" + name + ".html"
+	content, exist := checkAndGetFileTemplate(filename)
+	if exist {
+		r.templates[name] = content
+		return content, true
+	}
+
+	filename = templatePath + "/" + name + ".tmpl"
+	content, exist = checkAndGetFileTemplate(filename)
+	if exist {
+		r.templates[name] = content
+		return content, true
+	}
+
+	filename = templatePath + "/" + name
+	content, exist = checkAndGetFileTemplate(filename)
+	if exist {
+		r.templates[name] = content
+		return content, true
+	}
+
+	// If not found in the map or file, check the database
+	t, exist := getTemplateFromDB(name)
+	if exist {
+		r.templates[name] = t
+		return t, true
+	}
+
+	return "", false
+
+}
+
+func (r *RepositoryTemplate) RemoveTemplate(name string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.templates, name)
+}
+func (r *RepositoryTemplate) ListTemplates() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	names := make([]string, 0, len(r.templates))
+	for name := range r.templates {
+		names = append(names, name)
+	}
+	return names
+}
+func (r *RepositoryTemplate) ClearTemplates() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.templates = make(map[string]string)
+}
+func (r *RepositoryTemplate) TemplateCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.templates)
+}
+func (r *RepositoryTemplate) HasTemplate(name string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, exists := r.templates[name]
+	return exists
+}
+
+func getTemplateFromDB(paramName string) (string, bool) {
 	db, err := GetDB()
 	if err != nil {
 		log.Println(err)
-		return ""
+		return "", false
 	}
 	conn, err := db.Conn(context.Background())
 	if err != nil {
 		log.Println(err)
-		return ""
+		return "", false
 	}
 	defer conn.Close()
 	config := GetConfig()
@@ -32,33 +161,23 @@ func GetTemplateFromDB(paramName string) string {
 	err = row.Scan(&id, &name, &content)
 	if err != nil {
 		log.Println(err)
-		return ""
+		return "", false
 	}
 
-	return content
+	return content, true
 }
 
 func AddFeatureTemplate(vm *goja.Runtime, c echo.Context) {
 
 	vm.Set("get_template", func(paramName string) string {
 
-		templatePath := os.Getenv("NFLOW_TEMPLATE_PATH")
-		if templatePath == "" {
-			templatePath = "./templates/"
+		t, exist := templateRepo.GetTemplate(paramName)
+		if !exist {
+			logger.Error("Template not found:", paramName)
+			return ""
 		}
+		return t
 
-		filename := templatePath + paramName
-		s, shouldReturn := checkAndGetFileTemplate(filename)
-		if shouldReturn {
-			return s
-		}
-		filename = templatePath + paramName + ".html"
-		s, shouldReturn = checkAndGetFileTemplate(filename)
-		if shouldReturn {
-			return s
-		}
-
-		return GetTemplateFromDB(paramName)
 	})
 
 }

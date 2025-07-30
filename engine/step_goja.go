@@ -48,15 +48,10 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 		if hasScript {
 			//*** if actor has a script, we load it from the database                       *****
 			//*** we can load other places too example: filesystem, mongo,  etc.            *****
-			config := GetConfig()
-			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetModuleByName, scriptName.(string))
-			var form string
-			var mod string
-			var code string
-			err = row.Scan(&form, &mod, &code)
-			if err == nil {
-				code = babelTransform(code)
-				actor.Data["compile"] = code
+			mr := GetRepositoryModules()
+			module, ok := mr.GetModuleWithFallback(scriptName.(string), ctx, conn)
+			if ok {
+				actor.Data["compile"] = module.Code
 			}
 		}
 		codeData, hasCode := actor.Data["code"]

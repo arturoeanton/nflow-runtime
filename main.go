@@ -76,6 +76,11 @@ func run(c echo.Context, appJson string) error {
 	}
 	defer conn.Close()
 
+	repoTemplate := engine.GetRepositoryTemplate()
+	repoTemplate.SetDinamic(false)
+
+	modulesRepo := engine.GetRepositoryModules()
+	modulesRepo.SetDinamic(false)
 	// Obtener el repository
 	repo := engine.GetPlaybookRepository()
 	if repo == nil {
