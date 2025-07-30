@@ -1,0 +1,20 @@
+[pg_session]
+url = ""
+
+
+[redis]
+host = ""
+password = ""
+
+
+[database_nflow]
+driver = "sqlite3"
+dsn = "app/app.sqlite"
+#driver = "postgres"
+#dsn = "postgres://postgres:nflowsecret@localhost:5432/nflow?sslmode=disable"
+query="SELECT name,query FROM queries"
+
+[env]
+scim_base = "https://localhost:8443"
+openid_base = "https://localhost:8443"
+

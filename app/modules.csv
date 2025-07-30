@@ -1,0 +1,453 @@
+id,name,form,mod,code
+1,_end,"<hr>
+
+<!-- add your form -->
+    ","{
+    ""title"": ""End"",
+    ""in"": 1,
+    ""out"": null,
+    ""icon"": """",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""type"": ""js"",
+        ""script"": ""_end""
+    }
+}","function main(){
+  c.JSON(200,{})
+}"
+2,_goroutine,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr/>","{
+    ""title"": ""Parallel"",
+    ""in"": 1,
+    ""out"": 2,
+    ""icon"": ""share"",
+    ""custom"": false,
+    ""editable"":false,
+    ""boxcolor"": ""darkmagenta"",
+    ""fontcolor"": ""white"",
+    ""param"": {
+        ""type"": ""gorutine"",
+        ""name_box"":"""",
+        ""nflow_auth"":""false""
+    }
+}",NULL
+3,_js_code,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr/>
+    <textarea class=""hide_component"" name=""code"" df-code></textarea>
+    <button class=""btn-export"" name=""open"" onclick='open_coder(this)'> CODE </button>","{
+    ""title"": ""JS Code"",
+    ""icon"": ""source"",
+    ""in"": 1,
+    ""out"": -1,
+    ""custom"":false,
+    ""editable"":false,
+    ""boxcolor"": ""darkred"",
+    ""fontcolor"": ""white"",
+    ""param"": {
+        ""type"":""js"",
+        ""code"":"""",
+        ""name_box"":"""",
+        ""nflow_auth"":""false""
+    }
+}",NULL
+4,_start_form,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<div class=""nflow_auth"">Auth:<input type=""checkbox"" df-nflow_auth=""false"" name=""nflow_auth""></div>
+<hr/>
+<p>Url</p>
+<input type=""text""  name=""urlpattern"" df-urlpattern>
+<button  class=""btn-export"" onclick='setFieldNode();save();window.open(window.location+""/..""+getElemenByNameOfChiled(this.parentElement,""urlpattern"")[0].value)'> OPEN </button>","{
+    ""title"": ""Form Start"",
+    ""in"": 0,
+    ""out"": 1,
+    ""icon"": ""video_settings"",
+    ""custom"": false,
+    ""editable"":false,
+    ""boxcolor"": ""darkcyan"",
+    ""fontcolor"": ""white"",
+    ""param"": {
+        ""type"": ""starter"",
+        ""method"": ""ANY"",
+        ""urlpattern"":"""",
+        ""name_box"":"""",
+        ""nflow_auth"":""false""
+    }
+}",NULL
+5,_js_foreach,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+Field:<input type=""text"" name=""field"" df-field="""" class=""nflow_field""><br>
+ItemName:<input type=""text"" name=""item_name"" df-item_name=""current_element"" class=""nflow_field"">
+","{
+    ""title"": ""For each"",
+    ""in"": 1,
+    ""out"": 2,
+    ""icon"": """",
+    ""boxcolor"": ""darkred"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""nflow_auth"": ""false"",
+        ""field"": """",
+        ""item_name"": ""current_element"",
+        ""type"": ""js"",
+        ""script"": ""_js_foreach""
+    }
+}","function main(){
+  try{
+    if (payload[""__foreach""] == undefined || payload[""__foreach""] == null){
+      payload[""__foreach""] = find_element(nflow_data[""field""], payload)
+    }
+  	var current_list = payload[""__foreach""]
+    console.log(""*>""+current_list.length)
+    if (current_list.length == 0){
+      next=""output_1""
+      return
+    }
+    next = ""output_2""
+    payload[nflow_data[""item_name""]] = current_list.shift()
+    payload[""__foreach""]=current_list
+	console.log(""+>""+payload[""__foreach""].length)
+  }catch(e){
+    next=""output_1""
+    return
+  }
+}"
+6,_start_http,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<div class=""nflow_auth"">Auth:<input type=""checkbox"" df-nflow_auth=""false"" name=""nflow_auth""></div>
+<hr/>
+<p>Url</p>
+<input type=""text""  name=""urlpattern"" df-urlpattern>
+
+<p>Choose Method:</p>
+<select name=""method"" df-method>
+  <option value=""GET"">GET</option>
+  <option value=""POST"">POST</option>
+  <option value=""PUT"">PUT</option>
+  <option value=""PATCH"">PATCH</option>
+  <option value=""DELETE"">DELETE</option>
+  <option value=""ANY"">ANY</option>
+</select>
+<button  class=""btn-export"" onclick='setFieldNode();save();window.open(window.location+""/..""+getElemenByNameOfChiled(this.parentElement,""urlpattern"")[0].value)'> OPEN </button>
+</div>","{
+    ""title"": ""Http Start"",
+    ""in"": 0,
+    ""out"": 1,
+    ""icon"": ""http"",
+    ""custom"": false,
+    ""editable"":false,
+    ""boxcolor"": ""darkcyan"",
+    ""fontcolor"": ""white"",
+    ""param"": {
+        ""type"": ""starter"",
+        ""method"": ""ANY"",
+        ""urlpattern"":"""",
+        ""name_box"":"""",
+        ""nflow_auth"":""false""
+    }
+}",NULL
+7,form,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+<textarea class=""hide_component"" name=""html_form"" df-html_form=""<div><input type='input' name='n1'/><input type='submit'/></div>""> </textarea>
+<button class=""btn-export"" onclick=""open_coder(this, `htmlmixed`)""> CODE</button>
+<input type=""input"" df-template=""form1.html"" name=""template"">","{
+    ""title"": ""Form"",
+    ""in"": 1,
+    ""out"": 1,
+    ""icon"": ""book"",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""html_form"": ""<div><input type='input' name='n1'/><input type='submit'/></div>"",
+        ""template"": ""form1.html"",
+        ""type"": ""js"",
+        ""script"": ""form""
+    }
+}","function main(){
+  var action = ""/nflow/node/run/""+__flow_name+""/""+__outputs[""output_1""]
+  var html_form = dromedary_data[""html_form""]
+  var template1 = dromedary_data[""template""]  
+  var code = template(html_form,{
+        form_code:html_form, 
+        action:action,
+    	next:__outputs[""output_1""],
+    	payload:payload,
+    	profile:get_profile()
+  });
+  var html = template(file_to_string(""templete/"" + template1), 
+  {
+        form_code:code, 
+        action:action,
+    	next:__outputs[""output_1""],
+    	payload:payload,
+    	profile:get_profile()
+  });
+  c.HTML(200,html)
+  
+  if (payload == undefined || payload == null){
+    payload = {}
+  }
+  payload[""break""] = true
+}"
+8,js_set_var,"Description:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+Name:<input type=""text"" name=""var_name"" df-var_name=""name1"" class=""nflow_field""> <br>
+Value:<input type=""text"" name=""var_value"" df-var_value="""" class=""nflow_field""><br>
+    ","{
+    ""title"": ""Set Variable"",
+    ""in"": 1,
+    ""out"": 1,
+    ""icon"": """",
+    ""boxcolor"": ""darkred"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""var_name"": ""name1"",
+        ""var_value"": """",
+        ""type"": ""js"",
+        ""script"": ""js_set_var""
+    }
+}","function main(){
+  if (payload == undefined || payload == null ) {
+    payload = {}
+  }
+  payload[nflow_data[""var_name""]] = nflow_data[""var_value""]
+}"
+9,if_major,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+<!-- add your form -->
+Field:<input type=""text"" name=""field"" df-field="""" class=""nflow_field""><br>
+Limit:<input type=""number"" name=""limit"" df-limit=""0"" class=""nflow_field"">    ","{
+    ""title"": ""if higher/lower"",
+    ""in"": 1,
+    ""out"": 2,
+    ""icon"": """",
+    ""boxcolor"": ""darkred"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""field"": """",
+        ""limit"": ""0"",
+        ""type"": ""js"",
+        ""script"": ""if_major""
+    }
+}","function main(){
+  if (parseFloat(payload[nflow_data[""field""]]) > parseFloat(nflow_data[""limit""])){
+    next= ""output_1""
+    return
+  } 
+  next=""output_2""
+}"
+10,if_equals,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+<!-- add your form -->
+Field:<input type=""text"" name=""field"" df-field="""" class=""nflow_field""><br>
+Value:<input type=""text"" name=""value"" df-value="""" class=""nflow_field"">    ","{
+    ""title"": ""if equals"",
+    ""in"": 1,
+    ""out"": 2,
+    ""icon"": """",
+    ""boxcolor"": ""darkred"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""field"": """",
+        ""value"": """",
+        ""type"": ""js"",
+        ""script"": ""if_equals""
+    }
+}","function main(){
+  if (payload[nflow_data[""field""]] == nflow_data[""value""]){
+    next= ""output_1""
+    return
+  } 
+  next=""output_2""
+}"
+11,json,"<input type=""text"" name=""field"" df-field="""">
+<input type=""number"" name=""http_code"" df-http_code=""200"">","{
+    ""title"": ""JSON Render"",
+    ""in"": 1,
+    ""out"": 0,
+    ""icon"": ""source"",
+    ""boxcolor"": ""darkviolet"",
+    ""custom"": false,
+    ""param"": {
+        ""field"": """",
+        ""http_code"": ""200"",
+        ""type"": ""js"",
+        ""script"": ""json""
+    }
+}","function main(){
+    var code = 200
+    if (nflow_data[""http_code""] != """"){
+        code = parseInt(nflow_data[""http_code""])
+    }
+    if (nflow_data[""field""] == undefined || nflow_data[""field""] =="""" || nflow_data[""field""] ==""*""){
+        c.JSON(code, payload)
+        return
+    }
+    c.JSON(code,find_element(nflow_data[""field""],payload))
+}"
+12,parser_query_param,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+","{
+    ""title"": ""Param to Payload"",
+    ""in"": 1,
+    ""out"": 1,
+    ""icon"": ""filter_alt"",
+    ""boxcolor"": ""darkred"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""nflow_auth"": ""false"",
+        ""type"": ""js"",
+        ""script"": ""parser_query_param""
+    }
+}","function main (){
+    if (payload == undefined){
+      payload = {}
+    } 
+    var params = url_values_to_map(c.QueryParams())
+    for (key in params){
+      payload[key] = c.QueryParam(key)
+    }
+  }"
+13,mustache,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+    
+<textarea class=""hide_component"" name=""template"" df-template=""""></textarea>
+<button class=""btn-export"" onclick=""open_coder(this, `htmlmixed`)""> CODE </button>","{
+    ""title"": ""Mustache"",
+    ""in"": 1,
+    ""out"": 0,
+    ""icon"": ""code"",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""nflow_auth"": ""false"",
+        ""template"": """",
+        ""type"": ""js"",
+        ""script"": ""mustache""
+    }
+}","function main(){
+    console.log(JSON.stringify(payload))
+    c.HTML(200, mustache(dromedary_data[""template""], payload))
+}"
+14,Logout,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+    ","{
+    ""title"": ""logout"",
+    ""in"": 1,
+    ""out"": null,
+    ""icon"": """",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""nflow_auth"": ""false"",
+        ""type"": ""js"",
+        ""script"": ""Logout""
+    }
+}","function main(){
+  delete_profile()
+  c.HTML(200,""logout <a href='/home' >Home</a>"")
+}"
+15,template,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+<textarea class=""hide_component"" name=""template"" df-template=""""></textarea>
+<button class=""btn-export"" onclick=""open_coder(this, `htmlmixed`)""> CODE </button>","{
+    ""title"": ""Template"",
+    ""in"": 1,
+    ""out"": 0,
+    ""icon"": ""code"",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""nflow_auth"": ""false"",
+        ""template"": """",
+        ""type"": ""js"",
+        ""script"": ""template""
+    }
+}","function main(){
+    console.log(JSON.stringify(payload))
+    c.HTML(200, template(dromedary_data[""template""], payload))
+}"
+16,Validate Token,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+Token: <input type=""input"" name=""token"" df-token=""test1"">","{
+    ""title"": """",
+    ""in"": 1,
+    ""out"": 1,
+    ""icon"": """",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""token"": ""test1"",
+        ""type"": ""js"",
+        ""script"": ""Validate Token""
+    }
+}","function main(){
+  next= ""output_1""
+  if (header[""Authorization""] != ""Bearer "" + nflow_data[""token""]){
+    c.JSON(401,{""error"":""Unauthorized""})
+    next= ""break""
+  }
+  
+}"
+17,Validate Login,"Name:<input type=""text"" name=""name_box"" df-name_box="""" class=""nflow_field"">
+<hr>
+
+<!-- add your form -->
+    ","{
+    ""title"": ""Validate Login"",
+    ""in"": 1,
+    ""out"": null,
+    ""icon"": """",
+    ""boxcolor"": ""darkorange"",
+    ""custom"": false,
+    ""param"": {
+        ""name_box"": """",
+        ""type"": ""js"",
+        ""script"": ""Validate Login""
+    }
+}","function main(){
+  	var url_back = """"+get_session(""auth-session"",""redirect_url"")
+  	var flag = false
+  	if (payload[""username""] == ""user1"") {
+      if (payload[""password""] == ""1"") {
+      	flag = true
+      }
+    }
+  
+  	if (payload[""username""] == ""admin"") {
+      if (payload[""password""] == ""admin"") {
+      	flag = true
+      }
+    }
+  	
+  	if (flag) {
+      	set_profile({""username"":payload[""username""]})
+  		return c.HTML(200,"" <script>window.location.href = '""+url_back+""'</script>"")
+    }
+    return c.HTML(200,"" Error Login <br/>  <a href='/home' >Home</a>"")
+
+}"
