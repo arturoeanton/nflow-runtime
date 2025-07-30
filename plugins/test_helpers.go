@@ -1,12 +1,12 @@
 package plugins
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"bytes"
 
 	"github.com/cbroglie/mustache"
 	"github.com/dop251/goja"

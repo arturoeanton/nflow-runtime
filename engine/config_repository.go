@@ -76,7 +76,7 @@ func (r *configRepository) SetRedisClient(client *redis.Client) {
 func (r *configRepository) GetDB() (*sql.DB, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	if r.db == nil {
 		config := r.config
 		var err error

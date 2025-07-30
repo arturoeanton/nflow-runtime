@@ -111,7 +111,7 @@ func (l *Logger) log(level Level, levelStr string, args ...interface{}) {
 	caller := l.getCaller()
 	timestamp := time.Now().Format(l.timeFormat)
 	prefix := fmt.Sprintf("[%s] [%s] [%s] %s:", timestamp, l.prefix, levelStr, caller)
-	
+
 	message := fmt.Sprint(args...)
 	log.Printf("%s %s", prefix, message)
 }
@@ -125,7 +125,7 @@ func (l *Logger) logf(level Level, levelStr string, format string, args ...inter
 	caller := l.getCaller()
 	timestamp := time.Now().Format(l.timeFormat)
 	prefix := fmt.Sprintf("[%s] [%s] [%s] %s:", timestamp, l.prefix, levelStr, caller)
-	
+
 	message := fmt.Sprintf(format, args...)
 	log.Printf("%s %s", prefix, message)
 }
@@ -143,11 +143,11 @@ func (l *Logger) getCaller() string {
 	if !ok {
 		return "unknown:0"
 	}
-	
+
 	// Get only the filename, not the full path
 	parts := strings.Split(file, "/")
 	filename := parts[len(parts)-1]
-	
+
 	return fmt.Sprintf("%s:%d", filename, line)
 }
 

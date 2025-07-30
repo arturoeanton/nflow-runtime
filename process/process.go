@@ -62,7 +62,7 @@ func WKill(wid string) {
 		}
 		process.FlagExit = 1
 		process.mu.Unlock()
-		
+
 		process.SendCallback(`{"error_exit":"exit"}`)
 	}
 }

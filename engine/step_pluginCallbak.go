@@ -18,10 +18,10 @@ type StepPluginCallback struct {
 func (s *StepPluginCallback) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm *goja.Runtime, connection_next string, vars model.Vars, currentProcess *process.Process, payload goja.Value) (string, goja.Value, error) {
 	currentProcess.State = "run"
 	time.Sleep(1 * time.Second)
-	
+
 	// Ya no necesitamos mutex porque el actor es una copia
 	name := actor.Data["dromedary_name"].(string)
-	
+
 	dataJs, _ := json.Marshal(actor.Data)
 
 	output := "output_2"

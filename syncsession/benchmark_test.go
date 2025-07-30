@@ -18,7 +18,7 @@ type SimpleMutexManager struct {
 func (sm *SimpleMutexManager) GetValue(sessionName, key string, c echo.Context) (interface{}, error) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (sm *SimpleMutexManager) GetValue(sessionName, key string, c echo.Context) 
 func (sm *SimpleMutexManager) SetValue(sessionName, key string, value interface{}, c echo.Context) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return err
@@ -42,10 +42,10 @@ func (sm *SimpleMutexManager) SetValue(sessionName, key string, value interface{
 func BenchmarkSimpleMutex_Read(b *testing.B) {
 	c := setupEchoContext()
 	sm := &SimpleMutexManager{}
-	
+
 	// Preparar datos
 	sm.SetValue("bench-session", "test-key", "test-value", c)
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -60,10 +60,10 @@ func BenchmarkSessionManager_Read_NoCache(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   0, // Sin cache
 	}
-	
+
 	// Preparar datos
 	sm.SetValue("bench-session", "test-key", "test-value", c)
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -78,11 +78,11 @@ func BenchmarkSessionManager_Read_WithCache(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
 	}
-	
+
 	// Preparar datos y calentar cache
 	sm.SetValue("bench-session", "test-key", "test-value", c)
 	sm.GetValue("bench-session", "test-key", c) // Calentar cache
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -95,7 +95,7 @@ func BenchmarkSessionManager_Read_WithCache(b *testing.B) {
 func BenchmarkSimpleMutex_Write(b *testing.B) {
 	c := setupEchoContext()
 	sm := &SimpleMutexManager{}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -113,7 +113,7 @@ func BenchmarkSessionManager_Write(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
 	}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -129,12 +129,12 @@ func BenchmarkSessionManager_Write(b *testing.B) {
 func BenchmarkSimpleMutex_Mixed(b *testing.B) {
 	c := setupEchoContext()
 	sm := &SimpleMutexManager{}
-	
+
 	// Preparar datos
 	for i := 0; i < 100; i++ {
 		sm.SetValue("bench-session", fmt.Sprintf("key-%d", i), "value", c)
 	}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -155,12 +155,12 @@ func BenchmarkSessionManager_Mixed(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
 	}
-	
+
 	// Preparar datos
 	for i := 0; i < 100; i++ {
 		sm.SetValue("bench-session", fmt.Sprintf("key-%d", i), "value", c)
 	}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -179,7 +179,7 @@ func BenchmarkSessionManager_Mixed(b *testing.B) {
 func BenchmarkSimpleMutex_MultipleWrites(b *testing.B) {
 	c := setupEchoContext()
 	sm := &SimpleMutexManager{}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Simular escritura de 10 valores
@@ -195,7 +195,7 @@ func BenchmarkSessionManager_MultipleWrites(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Usar SetMultipleValues para escribir 10 valores de una vez
@@ -211,12 +211,12 @@ func BenchmarkSessionManager_MultipleWrites(b *testing.B) {
 func BenchmarkSimpleMutex_HighConcurrency(b *testing.B) {
 	c := setupEchoContext()
 	sm := &SimpleMutexManager{}
-	
+
 	// Preparar datos
 	for i := 0; i < 1000; i++ {
 		sm.SetValue("bench-session", fmt.Sprintf("key-%d", i), "value", c)
 	}
-	
+
 	b.ResetTimer()
 	b.SetParallelism(100) // 100 goroutines concurrentes
 	b.RunParallel(func(pb *testing.PB) {
@@ -234,14 +234,14 @@ func BenchmarkSessionManager_HighConcurrency(b *testing.B) {
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
 	}
-	
+
 	// Preparar datos y calentar cache
 	for i := 0; i < 1000; i++ {
 		key := fmt.Sprintf("key-%d", i)
 		sm.SetValue("bench-session", key, "value", c)
 		sm.GetValue("bench-session", key, c) // Calentar cache
 	}
-	
+
 	b.ResetTimer()
 	b.SetParallelism(100) // 100 goroutines concurrentes
 	b.RunParallel(func(pb *testing.PB) {

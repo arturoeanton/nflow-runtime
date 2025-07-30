@@ -32,7 +32,7 @@ func NewProcessRepository() ProcessRepository {
 func (r *processRepository) Get(wid string) (*Process, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	process, exists := r.processes[wid]
 	return process, exists
 }
@@ -41,7 +41,7 @@ func (r *processRepository) Get(wid string) (*Process, bool) {
 func (r *processRepository) GetAll() map[string]*Process {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	// Crear copia para evitar modificaciones externas
 	copy := make(map[string]*Process, len(r.processes))
 	for k, v := range r.processes {
@@ -54,7 +54,7 @@ func (r *processRepository) GetAll() map[string]*Process {
 func (r *processRepository) Set(wid string, process *Process) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.processes[wid] = process
 }
 
@@ -62,7 +62,7 @@ func (r *processRepository) Set(wid string, process *Process) {
 func (r *processRepository) Delete(wid string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	delete(r.processes, wid)
 }
 
@@ -70,7 +70,7 @@ func (r *processRepository) Delete(wid string) {
 func (r *processRepository) Exists(wid string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	_, exists := r.processes[wid]
 	return exists
 }
@@ -79,7 +79,7 @@ func (r *processRepository) Exists(wid string) bool {
 func (r *processRepository) GetAllKeys() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	keys := make([]string, 0, len(r.processes))
 	for k := range r.processes {
 		keys = append(keys, k)
@@ -91,6 +91,6 @@ func (r *processRepository) GetAllKeys() []string {
 func (r *processRepository) Clear() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.processes = make(map[string]*Process)
 }

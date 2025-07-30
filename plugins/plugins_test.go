@@ -20,7 +20,7 @@ func TestHTTPClient_GET(t *testing.T) {
 		assert.Equal(t, "GET", r.Method)
 		assert.Equal(t, "/test", r.URL.Path)
 		assert.Equal(t, "test-value", r.Header.Get("X-Test-Header"))
-		
+
 		response := map[string]interface{}{
 			"status": "success",
 			"data":   "test response",
@@ -47,7 +47,7 @@ func TestHTTPClient_GET(t *testing.T) {
 	// Verify response
 	response, ok := result.(map[string]interface{})
 	require.True(t, ok)
-	
+
 	body, ok := response["body"].(map[string]interface{})
 	require.True(t, ok)
 	assert.Equal(t, "success", body["status"])
@@ -58,16 +58,16 @@ func TestHTTPClient_POST(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "POST", r.Method)
-		
+
 		// Read body
 		bodyBytes, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
-		
+
 		var requestBody map[string]interface{}
 		err = json.Unmarshal(bodyBytes, &requestBody)
 		assert.NoError(t, err)
 		assert.Equal(t, "test data", requestBody["data"])
-		
+
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"id":      "123",
@@ -267,7 +267,7 @@ func TestGojaExtensions(t *testing.T) {
 	t.Run("console methods", func(t *testing.T) {
 		// Capture console output
 		var logOutput bytes.Buffer
-		
+
 		console := map[string]interface{}{
 			"log": func(args ...interface{}) {
 				for _, arg := range args {
@@ -277,7 +277,7 @@ func TestGojaExtensions(t *testing.T) {
 				logOutput.WriteString("\n")
 			},
 		}
-		
+
 		vm.Set("console", console)
 
 		// Test console.log

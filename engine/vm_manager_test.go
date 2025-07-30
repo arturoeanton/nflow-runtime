@@ -18,10 +18,10 @@ func createTestContext() echo.Context {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
-	
+
 	// Set up test marker to skip feature initialization in tests
 	ctx.Set("_test_context", true)
-	
+
 	return ctx
 }
 
@@ -56,10 +56,10 @@ func TestVMManagerBasicOperations(t *testing.T) {
 func TestVMManagerConcurrency(t *testing.T) {
 	manager := NewVMManager(20) // Increased pool size
 	ctx := createTestContext()
-	
-	numGoroutines := 20  // Reduced to match pool size
-	numOperations := 50  // Reduced operations
-	
+
+	numGoroutines := 20 // Reduced to match pool size
+	numOperations := 50 // Reduced operations
+
 	var wg sync.WaitGroup
 	errors := make(chan error, numGoroutines*numOperations)
 
@@ -67,7 +67,7 @@ func TestVMManagerConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < numOperations; j++ {
 				// Acquire VM
 				instance, err := manager.AcquireVM(ctx)
@@ -75,28 +75,28 @@ func TestVMManagerConcurrency(t *testing.T) {
 					errors <- fmt.Errorf("goroutine %d op %d: acquire failed: %w", id, j, err)
 					continue
 				}
-				
+
 				// Use VM - simulate some work
 				instance.VM.Set(fmt.Sprintf("var_%d_%d", id, j), id*1000+j)
-				
+
 				// Verify value
 				val := instance.VM.Get(fmt.Sprintf("var_%d_%d", id, j))
 				if val.ToInteger() != int64(id*1000+j) {
 					errors <- fmt.Errorf("goroutine %d op %d: value mismatch", id, j)
 				}
-				
+
 				// Random small delay
 				time.Sleep(time.Microsecond * time.Duration(j%10))
-				
+
 				// Release VM
 				manager.ReleaseVM(instance)
 			}
 		}(i)
 	}
-	
+
 	wg.Wait()
 	close(errors)
-	
+
 	// Check for errors
 	var errCount int
 	for err := range errors {
@@ -106,7 +106,7 @@ func TestVMManagerConcurrency(t *testing.T) {
 			t.Fatal("Too many errors, stopping test")
 		}
 	}
-	
+
 	// Verify stats
 	stats := manager.GetStats()
 	assert.Equal(t, int64(numGoroutines*numOperations), stats.TotalUses)
@@ -117,27 +117,27 @@ func TestVMManagerConcurrency(t *testing.T) {
 func TestVMManagerPoolExhaustion(t *testing.T) {
 	manager := NewVMManager(2) // Very small pool
 	ctx := createTestContext()
-	
+
 	// Acquire all VMs
 	vm1, err := manager.AcquireVM(ctx)
 	assert.NoError(t, err)
-	
+
 	vm2, err := manager.AcquireVM(ctx)
 	assert.NoError(t, err)
-	
+
 	// Try to acquire one more - should fail
 	vm3, err := manager.AcquireVM(ctx)
 	assert.Error(t, err)
 	assert.Nil(t, vm3)
 	assert.Contains(t, err.Error(), "VM pool exhausted")
-	
+
 	// Release one and try again
 	manager.ReleaseVM(vm1)
-	
+
 	vm3, err = manager.AcquireVM(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, vm3)
-	
+
 	// Cleanup
 	manager.ReleaseVM(vm2)
 	manager.ReleaseVM(vm3)
@@ -147,12 +147,12 @@ func TestVMManagerPoolExhaustion(t *testing.T) {
 func TestVMManagerIsolation(t *testing.T) {
 	manager := NewVMManager(2)
 	ctx := createTestContext()
-	
+
 	// First VM sets a value
 	vm1, _ := manager.AcquireVM(ctx)
 	vm1.VM.Set("shared_var", "vm1_value")
 	manager.ReleaseVM(vm1)
-	
+
 	// Second VM should not see the value
 	vm2, _ := manager.AcquireVM(ctx)
 	val := vm2.VM.Get("shared_var")
@@ -164,33 +164,33 @@ func TestVMManagerIsolation(t *testing.T) {
 func TestVMManagerRaceCondition(t *testing.T) {
 	manager := NewVMManager(5)
 	ctx := createTestContext()
-	
+
 	var wg sync.WaitGroup
-	
+
 	// Multiple goroutines accessing shared state
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < 20; j++ {
 				instance, err := manager.AcquireVM(ctx)
 				if err != nil {
 					continue
 				}
-				
+
 				// Access stats (read operation)
 				_ = manager.GetStats()
-				
+
 				// Use VM
 				instance.VM.RunString(fmt.Sprintf("var test%d = %d", id, j))
-				
+
 				// Release
 				manager.ReleaseVM(instance)
 			}
 		}(i)
 	}
-	
+
 	// Concurrent stats reading
 	wg.Add(1)
 	go func() {
@@ -201,7 +201,7 @@ func TestVMManagerRaceCondition(t *testing.T) {
 			time.Sleep(time.Millisecond)
 		}
 	}()
-	
+
 	wg.Wait()
 }
 
@@ -209,7 +209,7 @@ func TestVMManagerRaceCondition(t *testing.T) {
 func TestVMManagerWithVM(t *testing.T) {
 	manager := NewVMManager(3)
 	ctx := createTestContext()
-	
+
 	var executionCount int
 	err := manager.WithVM(ctx, func(vm *goja.Runtime) error {
 		executionCount++
@@ -218,10 +218,10 @@ func TestVMManagerWithVM(t *testing.T) {
 		assert.Equal(t, "value", val.String())
 		return nil
 	})
-	
+
 	assert.NoError(t, err)
 	assert.Equal(t, 1, executionCount)
-	
+
 	// Test error propagation
 	expectedErr := fmt.Errorf("test error")
 	err = manager.WithVM(ctx, func(vm *goja.Runtime) error {
@@ -234,7 +234,7 @@ func TestVMManagerWithVM(t *testing.T) {
 func BenchmarkVMManagerAcquireRelease(b *testing.B) {
 	manager := NewVMManager(10)
 	ctx := createTestContext()
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -251,7 +251,7 @@ func BenchmarkVMManagerAcquireRelease(b *testing.B) {
 func BenchmarkVMManagerWithVM(b *testing.B) {
 	manager := NewVMManager(10)
 	ctx := createTestContext()
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

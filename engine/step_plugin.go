@@ -16,10 +16,10 @@ type StepPlugin struct {
 func (s *StepPlugin) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm *goja.Runtime, connectionNext string, vars model.Vars, currentProcess *process.Process, payload goja.Value) (string, goja.Value, error) {
 	currentProcess.State = "run"
 	currentProcess.Killeable = true
-	
+
 	// Ya no necesitamos mutex porque el actor es una copia
 	name := actor.Data["dromedary_name"].(string)
-	
+
 	var payloadOut interface{}
 	dataJs, _ := json.Marshal(actor.Data)
 	payloadOut, next, err := Plugins[name].Run(c, vars, &payload, string(dataJs), nil)

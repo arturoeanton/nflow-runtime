@@ -16,11 +16,11 @@ func TestVMMemoryLimit(t *testing.T) {
 		MaxOperations:    1000000,
 		CheckInterval:    100,
 	}
-	
+
 	vm := goja.New()
 	tracker := SetupVMWithLimits(vm, limits)
 	defer tracker.Stop()
-	
+
 	// Script que intenta usar mucha memoria
 	script := `
 		var arr = [];
@@ -28,18 +28,18 @@ func TestVMMemoryLimit(t *testing.T) {
 			arr.push("This is a long string that will consume memory " + i);
 		}
 	`
-	
+
 	_, err := vm.RunString(script)
-	
+
 	// Debería fallar por límite de memoria
 	if err == nil {
 		t.Error("Expected memory limit error, got nil")
 	}
-	
+
 	if !strings.Contains(err.Error(), "execution terminated") {
 		t.Errorf("Expected execution terminated error, got: %v", err)
 	}
-	
+
 	stats := tracker.GetStats()
 	if !stats.Interrupted {
 		t.Error("Expected tracker to be interrupted")
@@ -53,11 +53,11 @@ func TestVMTimeLimit(t *testing.T) {
 		MaxOperations:    10000000,
 		CheckInterval:    100,
 	}
-	
+
 	vm := goja.New()
 	tracker := SetupVMWithLimits(vm, limits)
 	defer tracker.Stop()
-	
+
 	// Script con loop infinito
 	script := `
 		var i = 0;
@@ -65,21 +65,21 @@ func TestVMTimeLimit(t *testing.T) {
 			i++;
 		}
 	`
-	
+
 	start := time.Now()
 	_, err := vm.RunString(script)
 	elapsed := time.Since(start)
-	
+
 	// Debería fallar por timeout
 	if err == nil {
 		t.Error("Expected timeout error, got nil")
 	}
-	
+
 	// No debería tardar mucho más que el límite
 	if elapsed > 200*time.Millisecond {
 		t.Errorf("Execution took too long: %v", elapsed)
 	}
-	
+
 	stats := tracker.GetStats()
 	if !stats.Interrupted {
 		t.Error("Expected tracker to be interrupted")
@@ -93,11 +93,11 @@ func TestVMOperationLimit(t *testing.T) {
 		MaxOperations:    1000, // Muy bajo para testing
 		CheckInterval:    10,
 	}
-	
+
 	vm := goja.New()
 	tracker := SetupVMWithLimits(vm, limits)
 	defer tracker.Stop()
-	
+
 	// Script con muchas operaciones
 	script := `
 		var sum = 0;
@@ -105,19 +105,19 @@ func TestVMOperationLimit(t *testing.T) {
 			sum += i;
 		}
 	`
-	
+
 	_, err := vm.RunString(script)
-	
+
 	// Debería fallar por límite de operaciones
 	if err == nil {
 		t.Error("Expected operation limit error, got nil")
 	}
-	
+
 	stats := tracker.GetStats()
 	if !stats.Interrupted {
 		t.Error("Expected tracker to be interrupted")
 	}
-	
+
 	// Las operaciones deberían estar cerca del límite
 	if stats.OperationCount < 900 || stats.OperationCount > 1100 {
 		t.Errorf("Operation count out of expected range: %d", stats.OperationCount)
@@ -132,11 +132,11 @@ func TestVMNoLimits(t *testing.T) {
 		MaxOperations:    0,
 		CheckInterval:    1000,
 	}
-	
+
 	vm := goja.New()
 	tracker := SetupVMWithLimits(vm, limits)
 	defer tracker.Stop()
-	
+
 	// Script normal
 	script := `
 		var sum = 0;
@@ -145,20 +145,20 @@ func TestVMNoLimits(t *testing.T) {
 		}
 		sum;
 	`
-	
+
 	result, err := vm.RunString(script)
-	
+
 	// No debería fallar
 	if err != nil {
 		t.Errorf("Expected no error with no limits, got: %v", err)
 	}
-	
+
 	// Verificar resultado correcto
 	expectedSum := 499500
 	if result.ToInteger() != int64(expectedSum) {
 		t.Errorf("Expected sum %d, got %v", expectedSum, result)
 	}
-	
+
 	stats := tracker.GetStats()
 	if stats.Interrupted {
 		t.Error("Expected tracker not to be interrupted")
@@ -207,7 +207,7 @@ func TestIsResourceLimitError(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := IsResourceLimitError(tt.err)

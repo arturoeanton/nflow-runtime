@@ -10,11 +10,11 @@ import (
 
 // EchoContextManager provides thread-safe access to Echo context
 type EchoContextManager struct {
-	mu          sync.RWMutex
-	context     echo.Context
-	sessionMu   sync.Mutex
-	responseMu  sync.Mutex
-	requestMu   sync.RWMutex
+	mu         sync.RWMutex
+	context    echo.Context
+	sessionMu  sync.Mutex
+	responseMu sync.Mutex
+	requestMu  sync.RWMutex
 }
 
 // NewEchoContextManager creates a new thread-safe Echo context wrapper
@@ -166,5 +166,3 @@ func (m *EchoContextManager) GetContext() echo.Context {
 		Context: m.context,
 	}
 }
-
-

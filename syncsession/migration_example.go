@@ -93,7 +93,7 @@ func MigrateGetSession(name, key string, c echo.Context, useNewImplementation bo
 func ExampleFeatureSessionMigration(useNewImpl bool) {
 	// En el código real, esto vendría del contexto
 	var c echo.Context
-	
+
 	// Ejemplo 1: Migrar set_session
 	if useNewImpl {
 		// Nueva implementación
@@ -106,7 +106,7 @@ func ExampleFeatureSessionMigration(useNewImpl bool) {
 		s.Values["key"] = "value"
 		s.Save(c.Request(), c.Response())
 	}
-	
+
 	// Ejemplo 2: Migrar operaciones múltiples
 	if useNewImpl {
 		// Con Session Manager - una sola operación atómica
@@ -158,12 +158,12 @@ EJEMPLO DE FLAG DE FEATURE:
 
 type Config struct {
 	UseSessionManager bool
-	CacheTTL         int // minutos
-	CleanupInterval  int // minutos
+	CacheTTL          int // minutos
+	CleanupInterval   int // minutos
 }
 
 var MigrationConfig = Config{
 	UseSessionManager: false, // Cambiar a true para activar
-	CacheTTL:         5,
-	CleanupInterval:  10,
+	CacheTTL:          5,
+	CleanupInterval:   10,
 }

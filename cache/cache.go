@@ -24,10 +24,10 @@ func NewCache(ttl time.Duration) *Cache {
 		items: make(map[string]*CacheItem),
 		ttl:   ttl,
 	}
-	
+
 	// Iniciar limpieza periódica
 	go c.cleanupExpired()
-	
+
 	return c
 }
 
@@ -35,17 +35,17 @@ func NewCache(ttl time.Duration) *Cache {
 func (c *Cache) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	item, exists := c.items[key]
 	if !exists {
 		return nil, false
 	}
-	
+
 	// Verificar si ha expirado
 	if time.Now().After(item.Expiration) {
 		return nil, false
 	}
-	
+
 	return item.Value, true
 }
 
@@ -58,7 +58,7 @@ func (c *Cache) Set(key string, value interface{}) {
 func (c *Cache) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.items[key] = &CacheItem{
 		Value:      value,
 		Expiration: time.Now().Add(ttl),
@@ -69,7 +69,7 @@ func (c *Cache) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 func (c *Cache) Delete(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	delete(c.items, key)
 }
 
@@ -77,7 +77,7 @@ func (c *Cache) Delete(key string) {
 func (c *Cache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.items = make(map[string]*CacheItem)
 }
 
@@ -85,7 +85,7 @@ func (c *Cache) Clear() {
 func (c *Cache) Size() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	return len(c.items)
 }
 
@@ -93,7 +93,7 @@ func (c *Cache) Size() int {
 func (c *Cache) cleanupExpired() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-	
+
 	for range ticker.C {
 		c.mu.Lock()
 		now := time.Now()
@@ -112,15 +112,15 @@ func (c *Cache) GetOrCompute(key string, compute func() (interface{}, error)) (i
 	if val, ok := c.Get(key); ok {
 		return val, nil
 	}
-	
+
 	// Calcular valor
 	val, err := compute()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Guardar en caché
 	c.Set(key, val)
-	
+
 	return val, nil
 }

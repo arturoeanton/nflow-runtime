@@ -104,7 +104,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	// This ensures all features are properly initialized
 	limits := GetLimitsFromConfig()
 	sandboxConfig := GetSandboxConfigFromConfig()
-	
+
 	vm, tracker, err := CreateSecureVM(limits, sandboxConfig)
 	if err != nil {
 		logger.Errorf("Error creating secure VM: %v", err)
@@ -112,7 +112,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		return nil
 	}
 	defer tracker.Stop()
-	
+
 	// Initialize VM with all required modules. The registry is a singleton
 	// that provides Node.js-compatible modules to the JavaScript environment.
 	// This includes console and util modules for basic functionality.
@@ -121,10 +121,10 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		registry.RegisterNativeModule("console", console.Require)
 		registry.RegisterNativeModule("util", util.Require)
 	}
-	
+
 	registry.Enable(vm)
 	// We don't need console.Enable because the sandbox provides its own secure version
-	
+
 	// Add all features to the VM. These features provide various APIs
 	// that workflows can use. The optimized session version uses the
 	// syncsession.Manager for better performance and thread safety.
@@ -133,12 +133,12 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	} else {
 		AddFeatureSession(vm, c)
 	}
-	
+
 	AddFeatureUsers(vm, c)
 	AddFeatureToken(vm, c)
 	AddFeatureTemplate(vm, c)
 	AddGlobals(vm, c)
-	
+
 	// Add plugin features to the VM. Plugins can extend the JavaScript
 	// environment with custom functions and objects. Each plugin returns
 	// a map of feature names to their implementations.
@@ -193,7 +193,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	ActorDataMutex.RLock()
 	flag, hasAuthFlag := nodeAuth.Data["nflow_auth"]
 	ActorDataMutex.RUnlock()
-	
+
 	if hasAuthFlag {
 		flagString, ok := flag.(string)
 		if !ok {
@@ -214,10 +214,10 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 					profile = nil
 					return
 				}
-				
+
 				EchoSessionsMutex.Lock()
 				defer EchoSessionsMutex.Unlock()
-				
+
 				auth_session, err := session.Get("auth-session", c)
 				if err != nil {
 					logger.Error("Error in start data:", err)
@@ -340,7 +340,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		// Extract data from context before goroutine to avoid race conditions
 		var username, ip, realip, url, userAgent, queryParam, hostname, host string
 		var jsonPayload []byte
-		
+
 		// Get profile with proper locking
 		profile := GetProfile(c)
 		if profile != nil {
@@ -348,7 +348,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				username = profile["username"]
 			}
 		}
-		
+
 		// Marshal payload with locking
 		var err error
 		func() {
@@ -359,7 +359,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		if err != nil {
 			jsonPayload = []byte("{}")
 		}
-		
+
 		// Extract request info
 		func() {
 			defer func() {
@@ -421,7 +421,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 
 		// Get profile before goroutine to avoid race
 		logProfile := GetProfile(c)
-		
+
 		go func(logProfile map[string]string, actor *model.Node, boxId string, boxName string, boxType string, connectionNext string, diff time.Duration) {
 
 			defer func() {
@@ -497,7 +497,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	}
 	pb := *cc.Playbook
 	originalActor := pb[next]
-	
+
 	// Crear una copia profunda del actor para evitar race conditions
 	actor, err := originalActor.DeepCopy()
 	if err != nil {
@@ -505,7 +505,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		// Si falla la copia, usar el original con mutex
 		actor = originalActor
 	}
-	
+
 	sbLog.WriteString("- IDBox:" + next)
 	currentProcess.UUIDBoxCurrent = next
 	boxId = next
@@ -630,15 +630,15 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					
+
 					// Si es un contexto aislado, no guardar en sesión real
 					if _, isIsolated := c.(*IsolatedContext); isIsolated {
 						return
 					}
-					
+
 					EchoSessionsMutex.Lock()
 					defer EchoSessionsMutex.Unlock()
-					
+
 					s, err := session.Get("nflow_form", c)
 					if err != nil {
 						logger.Error("Error in start data:", err)
@@ -675,10 +675,10 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 			if _, isIsolated := c.(*IsolatedContext); isIsolated {
 				return
 			}
-			
+
 			EchoSessionsMutex.Lock()
 			defer EchoSessionsMutex.Unlock()
-			
+
 			s, err := session.Get("nflow_form", c)
 			if err != nil {
 				logger.Error("Error processing node:", err)

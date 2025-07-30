@@ -23,11 +23,11 @@ type mockStore struct {
 func (m *mockStore) Get(r *http.Request, name string) (*sessions.Session, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	if s, ok := m.sessions[name]; ok {
 		return s, nil
 	}
-	
+
 	s := sessions.NewSession(m, name)
 	return s, nil
 }
@@ -52,16 +52,16 @@ func setupEchoContext() echo.Context {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	
+
 	// Configurar mock store
 	store := &mockStore{sessions: make(map[string]*sessions.Session)}
-	
+
 	// Usar el middleware de sesiones
 	e.Use(session.Middleware(store))
-	
+
 	// Configurar el store en el contexto
 	c.Set("_session_store", store)
-	
+
 	return c
 }
 
@@ -117,7 +117,7 @@ func TestSessionManager_Cache(t *testing.T) {
 
 	// Primera lectura - no está en cache
 	sm.SetValue("test-session", "key1", "value1", c)
-	
+
 	// Segunda lectura - debería venir del cache
 	start := time.Now()
 	val, _ := sm.GetValue("test-session", "key1", c)
@@ -177,15 +177,15 @@ func TestSessionManager_ConcurrentAccess(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < numOperations; j++ {
 				key := fmt.Sprintf("key-%d-%d", id, j)
 				value := fmt.Sprintf("value-%d-%d", id, j)
-				
+
 				// Escribir
 				err := sm.SetValue("concurrent-session", key, value, c)
 				assert.NoError(t, err)
-				
+
 				// Leer
 				val, err := sm.GetValue("concurrent-session", key, c)
 				assert.NoError(t, err)

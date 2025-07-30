@@ -21,10 +21,10 @@ type PlaybookRepository interface {
 
 // playbookRepository implementación concreta del repository
 type playbookRepository struct {
-	mu             sync.RWMutex
-	playbooks      map[string]map[string]map[string]*model.Playbook
-	needsReload    map[string]bool
-	db             *sql.DB
+	mu          sync.RWMutex
+	playbooks   map[string]map[string]map[string]*model.Playbook
+	needsReload map[string]bool
+	db          *sql.DB
 }
 
 // NewPlaybookRepository crea una nueva instancia del repository
@@ -40,11 +40,11 @@ func NewPlaybookRepository(db *sql.DB) PlaybookRepository {
 func (r *playbookRepository) Get(appName string) (map[string]map[string]*model.Playbook, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if playbook, exists := r.playbooks[appName]; exists {
 		return playbook, nil
 	}
-	
+
 	return nil, nil
 }
 
@@ -52,7 +52,7 @@ func (r *playbookRepository) Get(appName string) (map[string]map[string]*model.P
 func (r *playbookRepository) Set(appName string, playbooks map[string]map[string]*model.Playbook) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.playbooks[appName] = playbooks
 }
 
@@ -60,7 +60,7 @@ func (r *playbookRepository) Set(appName string, playbooks map[string]map[string
 func (r *playbookRepository) NeedsReload(appName string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	needsReload, exists := r.needsReload[appName]
 	return !exists || needsReload
 }
@@ -69,7 +69,7 @@ func (r *playbookRepository) NeedsReload(appName string) bool {
 func (r *playbookRepository) SetReloaded(appName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.needsReload[appName] = false
 }
 
@@ -81,23 +81,23 @@ func (r *playbookRepository) LoadPlaybook(ctx context.Context, appName string) (
 			return playbooks, nil
 		}
 	}
-	
+
 	// Cargar desde la base de datos
 	conn, err := r.db.Conn(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	
+
 	playbooks, err := GetPlaybook(ctx, conn, appName)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Guardar en cache
 	r.Set(appName, playbooks)
 	r.SetReloaded(appName)
-	
+
 	return playbooks, nil
 }
 
@@ -105,7 +105,7 @@ func (r *playbookRepository) LoadPlaybook(ctx context.Context, appName string) (
 func (r *playbookRepository) InvalidateCache(appName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.needsReload[appName] = true
 }
 
@@ -113,7 +113,7 @@ func (r *playbookRepository) InvalidateCache(appName string) {
 func (r *playbookRepository) InvalidateAllCache() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	for appName := range r.needsReload {
 		r.needsReload[appName] = true
 	}

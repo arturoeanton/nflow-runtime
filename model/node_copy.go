@@ -9,13 +9,13 @@ func (n *Node) DeepCopy() (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var copy Node
 	err = json.Unmarshal(data, &copy)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &copy, nil
 }
 
@@ -24,10 +24,10 @@ func (n *Node) DeepCopyData() map[string]interface{} {
 	if n.Data == nil {
 		return nil
 	}
-	
+
 	// Crear un nuevo mapa
 	dataCopy := make(map[string]interface{})
-	
+
 	// Copiar cada elemento
 	for k, v := range n.Data {
 		// Para valores complejos, usar JSON para copiar
@@ -38,7 +38,7 @@ func (n *Node) DeepCopyData() map[string]interface{} {
 			dataCopy[k] = v
 		}
 	}
-	
+
 	return dataCopy
 }
 

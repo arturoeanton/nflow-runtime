@@ -24,7 +24,7 @@ type IsolatedContext struct {
 func NewIsolatedContext(c echo.Context) *IsolatedContext {
 	// Clone the request
 	req := c.Request().Clone(c.Request().Context())
-	
+
 	// Create isolated context
 	ic := &IsolatedContext{
 		Context:        c,
@@ -34,14 +34,14 @@ func NewIsolatedContext(c echo.Context) *IsolatedContext {
 		cookies:        make([]*http.Cookie, 0),
 		sessionData:    make(map[string]interface{}),
 	}
-	
+
 	// Copy current session data
 	if sess, ok := c.Get("_session_data").(map[string]interface{}); ok {
 		for k, v := range sess {
 			ic.sessionData[k] = v
 		}
 	}
-	
+
 	return ic
 }
 
@@ -66,12 +66,12 @@ func (ic *IsolatedContext) Response() *echo.Response {
 func (ic *IsolatedContext) Get(key string) interface{} {
 	ic.mu.RLock()
 	defer ic.mu.RUnlock()
-	
+
 	// Check session data first
 	if key == "_session_data" {
 		return ic.sessionData
 	}
-	
+
 	// Fall back to original context for other values
 	return ic.Context.Get(key)
 }
@@ -80,7 +80,7 @@ func (ic *IsolatedContext) Get(key string) interface{} {
 func (ic *IsolatedContext) Set(key string, val interface{}) {
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
-	
+
 	// Store session data locally
 	if key == "_session_data" {
 		if data, ok := val.(map[string]interface{}); ok {
@@ -88,7 +88,7 @@ func (ic *IsolatedContext) Set(key string, val interface{}) {
 		}
 		return
 	}
-	
+
 	// For other values, use original context
 	ic.Context.Set(key, val)
 }

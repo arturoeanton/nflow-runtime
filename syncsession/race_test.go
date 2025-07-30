@@ -1,3 +1,4 @@
+//go:build race
 // +build race
 
 package syncsession
@@ -80,17 +81,17 @@ func TestRaceCondition_CacheOperations(t *testing.T) {
 
 	var wg sync.WaitGroup
 	numWorkers := 20
-	
+
 	// Workers que continuamente leen/escriben/limpian
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < 500; j++ {
 				operation := rand.Intn(4)
 				key := fmt.Sprintf("key-%d", rand.Intn(10))
-				
+
 				switch operation {
 				case 0: // Get
 					sm.GetValue("race-cache", key, c)
@@ -105,7 +106,7 @@ func TestRaceCondition_CacheOperations(t *testing.T) {
 				case 3: // Cleanup
 					sm.CleanupCache()
 				}
-				
+
 				// Pequeña pausa aleatoria
 				if rand.Intn(10) == 0 {
 					time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
@@ -179,17 +180,17 @@ func TestRaceCondition_GetSession(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < 100; j++ {
 				// GetSession
 				sess, err := sm.GetSession("full-session", c)
 				if err != nil {
 					continue
 				}
-				
+
 				// Modificar valores
 				sess.Values[fmt.Sprintf("worker-%d", id)] = j
-				
+
 				// SaveSession
 				sm.SaveSession("full-session", c, sess)
 			}
@@ -201,7 +202,7 @@ func TestRaceCondition_GetSession(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < 100; j++ {
 				sm.SetValue("full-session", fmt.Sprintf("individual-%d", id), j, c)
 				sm.GetValue("full-session", fmt.Sprintf("worker-%d", id), c)
@@ -226,10 +227,10 @@ func TestRaceCondition_CacheKeyGeneration(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			
+
 			// Crear contexto único para cada goroutine
 			c := setupEchoContext()
-			
+
 			// Si es par, añadir cookie
 			if id%2 == 0 {
 				c.Request().AddCookie(&http.Cookie{
@@ -237,12 +238,12 @@ func TestRaceCondition_CacheKeyGeneration(t *testing.T) {
 					Value: fmt.Sprintf("session-%d", id),
 				})
 			}
-			
+
 			for j := 0; j < 100; j++ {
 				// Operaciones que usan getCacheKey internamente
 				sm.SetValue("key-test", "key", fmt.Sprintf("value-%d-%d", id, j), c)
 				sm.GetValue("key-test", "key", c)
-				
+
 				if j%10 == 0 {
 					sm.CleanupCache()
 				}
@@ -269,14 +270,14 @@ func TestRaceCondition_ComplexScenario(t *testing.T) {
 		wg.Add(1)
 		go func(userID int) {
 			defer wg.Done()
-			
+
 			// Cada usuario tiene su propio contexto
 			c := setupEchoContext()
 			c.Request().AddCookie(&http.Cookie{
 				Name:  "session",
 				Value: fmt.Sprintf("user-%d", userID),
 			})
-			
+
 			// Simular actividad del usuario
 			for {
 				select {
@@ -302,7 +303,7 @@ func TestRaceCondition_ComplexScenario(t *testing.T) {
 					case 4: // Logout
 						sm.DeleteSession("auth-session", c)
 					}
-					
+
 					// Pausa aleatoria entre operaciones
 					time.Sleep(time.Duration(rand.Intn(10)) * time.Millisecond)
 				}
@@ -330,4 +331,3 @@ func TestRaceCondition_ComplexScenario(t *testing.T) {
 	close(stopChan)
 	wg.Wait()
 }
-

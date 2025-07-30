@@ -15,11 +15,11 @@ import (
 
 // VMResourceLimits defines resource limits for a VM
 type VMResourceLimits struct {
-	MaxMemoryBytes    int64         // Maximum memory in bytes (0 = no limit)
-	MaxExecutionTime  time.Duration // Maximum execution time (0 = no limit)
-	MaxOperations     int64         // Maximum JS operations (0 = no limit)
-	MaxStackDepth     int           // Maximum stack depth (0 = no limit)
-	CheckInterval     int64         // How many operations between limit checks
+	MaxMemoryBytes   int64         // Maximum memory in bytes (0 = no limit)
+	MaxExecutionTime time.Duration // Maximum execution time (0 = no limit)
+	MaxOperations    int64         // Maximum JS operations (0 = no limit)
+	MaxStackDepth    int           // Maximum stack depth (0 = no limit)
+	CheckInterval    int64         // How many operations between limit checks
 }
 
 // DefaultVMResourceLimits returns safe default limits
@@ -35,14 +35,14 @@ func DefaultVMResourceLimits() VMResourceLimits {
 
 // VMResourceTracker tracks resource usage of a VM
 type VMResourceTracker struct {
-	startTime        time.Time
-	operationCount   int64
-	checkInterval    int64
-	limits           VMResourceLimits
-	ctx              context.Context
-	cancel           context.CancelFunc
-	memoryBaseline   uint64
-	interrupted      atomic.Bool
+	startTime      time.Time
+	operationCount int64
+	checkInterval  int64
+	limits         VMResourceLimits
+	ctx            context.Context
+	cancel         context.CancelFunc
+	memoryBaseline uint64
+	interrupted    atomic.Bool
 }
 
 // Limit errors
@@ -69,12 +69,12 @@ func IsResourceLimitError(err error) bool {
 // NewVMResourceTracker creates a new resource tracker
 func NewVMResourceTracker(limits VMResourceLimits) *VMResourceTracker {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	// Capture baseline memory
 	runtime.GC()
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	tracker := &VMResourceTracker{
 		startTime:      time.Now(),
 		limits:         limits,
@@ -83,22 +83,22 @@ func NewVMResourceTracker(limits VMResourceLimits) *VMResourceTracker {
 		cancel:         cancel,
 		memoryBaseline: m.Alloc,
 	}
-	
+
 	// If there's a time limit, configure timeout
 	if limits.MaxExecutionTime > 0 {
 		go tracker.watchTimeout()
 	}
-	
+
 	return tracker
 }
 
 // SetupVMWithLimits configures a VM with resource limits
 func SetupVMWithLimits(vm *goja.Runtime, limits VMResourceLimits) *VMResourceTracker {
 	tracker := NewVMResourceTracker(limits)
-	
+
 	// Start goroutine to check limits periodically
 	go tracker.monitorLimits(vm)
-	
+
 	return tracker
 }
 
@@ -106,7 +106,7 @@ func SetupVMWithLimits(vm *goja.Runtime, limits VMResourceLimits) *VMResourceTra
 func (t *VMResourceTracker) monitorLimits(vm *goja.Runtime) {
 	ticker := time.NewTicker(10 * time.Millisecond) // Check every 10ms
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -126,16 +126,16 @@ func (t *VMResourceTracker) CheckLimits() bool {
 	if t.interrupted.Load() {
 		return true
 	}
-	
+
 	// Increment operation counter
 	ops := atomic.AddInt64(&t.operationCount, 1)
-	
+
 	// Check operation limit immediately if exceeded
 	if t.limits.MaxOperations > 0 && ops > t.limits.MaxOperations {
 		t.interrupted.Store(true)
 		return true
 	}
-	
+
 	// Only check memory every N operations to avoid overhead
 	if ops%t.checkInterval == 0 {
 		// Check memory limit
@@ -143,14 +143,14 @@ func (t *VMResourceTracker) CheckLimits() bool {
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
 			memoryUsed := int64(m.Alloc - t.memoryBaseline)
-			
+
 			if memoryUsed > t.limits.MaxMemoryBytes {
 				t.interrupted.Store(true)
 				return true
 			}
 		}
 	}
-	
+
 	// Check if time exceeded
 	if t.limits.MaxExecutionTime > 0 {
 		if time.Since(t.startTime) > t.limits.MaxExecutionTime {
@@ -158,7 +158,7 @@ func (t *VMResourceTracker) CheckLimits() bool {
 			return true
 		}
 	}
-	
+
 	// Check if cancelled
 	select {
 	case <-t.ctx.Done():
@@ -173,7 +173,7 @@ func (t *VMResourceTracker) CheckLimits() bool {
 func (t *VMResourceTracker) watchTimeout() {
 	timer := time.NewTimer(t.limits.MaxExecutionTime)
 	defer timer.Stop()
-	
+
 	select {
 	case <-timer.C:
 		t.interrupted.Store(true)
@@ -187,7 +187,7 @@ func (t *VMResourceTracker) watchTimeout() {
 func (t *VMResourceTracker) GetStats() VMResourceStats {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	return VMResourceStats{
 		ElapsedTime:    time.Since(t.startTime),
 		OperationCount: atomic.LoadInt64(&t.operationCount),
@@ -213,19 +213,19 @@ type VMResourceStats struct {
 func GetLimitsFromConfig() VMResourceLimits {
 	config := GetConfig()
 	limits := DefaultVMResourceLimits()
-	
+
 	// Override with configuration values if they exist
 	if config.VMPoolConfig.MaxMemoryMB > 0 {
 		limits.MaxMemoryBytes = int64(config.VMPoolConfig.MaxMemoryMB) * 1024 * 1024
 	}
-	
+
 	if config.VMPoolConfig.MaxExecutionSeconds > 0 {
 		limits.MaxExecutionTime = time.Duration(config.VMPoolConfig.MaxExecutionSeconds) * time.Second
 	}
-	
+
 	if config.VMPoolConfig.MaxOperations > 0 {
 		limits.MaxOperations = config.VMPoolConfig.MaxOperations
 	}
-	
+
 	return limits
 }

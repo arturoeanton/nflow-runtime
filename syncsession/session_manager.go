@@ -30,7 +30,7 @@ var Manager = &SessionManager{
 // GetValue obtiene un valor de la sesión (operación de lectura)
 func (sm *SessionManager) GetValue(sessionName, key string, c echo.Context) (interface{}, error) {
 	cacheKey := sm.getCacheKey(sessionName, c)
-	
+
 	// Primero intentar desde cache
 	sm.mu.RLock()
 	if cached, ok := sm.cache[cacheKey]; ok && time.Since(cached.lastAccess) < sm.ttl {
@@ -43,19 +43,19 @@ func (sm *SessionManager) GetValue(sessionName, key string, c echo.Context) (int
 	// Si no está en cache, obtener de la sesión
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Actualizar cache
 	sm.cache[cacheKey] = &SessionCache{
 		values:     s.Values,
 		lastAccess: time.Now(),
 		dirty:      false,
 	}
-	
+
 	return s.Values[key], nil
 }
 
@@ -63,19 +63,19 @@ func (sm *SessionManager) GetValue(sessionName, key string, c echo.Context) (int
 func (sm *SessionManager) SetValue(sessionName, key string, value interface{}, c echo.Context) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return err
 	}
-	
+
 	s.Values[key] = value
 	err = s.Save(c.Request(), c.Response())
-	
+
 	// Invalidar cache
 	cacheKey := sm.getCacheKey(sessionName, c)
 	delete(sm.cache, cacheKey)
-	
+
 	return err
 }
 
@@ -83,22 +83,22 @@ func (sm *SessionManager) SetValue(sessionName, key string, value interface{}, c
 func (sm *SessionManager) SetMultipleValues(sessionName string, values map[string]interface{}, c echo.Context) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return err
 	}
-	
+
 	for k, v := range values {
 		s.Values[k] = v
 	}
-	
+
 	err = s.Save(c.Request(), c.Response())
-	
+
 	// Invalidar cache
 	cacheKey := sm.getCacheKey(sessionName, c)
 	delete(sm.cache, cacheKey)
-	
+
 	return err
 }
 
@@ -106,7 +106,7 @@ func (sm *SessionManager) SetMultipleValues(sessionName string, values map[strin
 func (sm *SessionManager) GetSession(sessionName string, c echo.Context) (*sessions.Session, error) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	
+
 	return session.Get(sessionName, c)
 }
 
@@ -114,13 +114,13 @@ func (sm *SessionManager) GetSession(sessionName string, c echo.Context) (*sessi
 func (sm *SessionManager) SaveSession(sessionName string, c echo.Context, s *sessions.Session) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	err := s.Save(c.Request(), c.Response())
-	
+
 	// Invalidar cache
 	cacheKey := sm.getCacheKey(sessionName, c)
 	delete(sm.cache, cacheKey)
-	
+
 	return err
 }
 
@@ -128,23 +128,23 @@ func (sm *SessionManager) SaveSession(sessionName string, c echo.Context, s *ses
 func (sm *SessionManager) DeleteSession(sessionName string, c echo.Context) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	s, err := session.Get(sessionName, c)
 	if err != nil {
 		return err
 	}
-	
+
 	// Limpiar valores
 	for k := range s.Values {
 		delete(s.Values, k)
 	}
-	
+
 	err = s.Save(c.Request(), c.Response())
-	
+
 	// Eliminar de cache
 	cacheKey := sm.getCacheKey(sessionName, c)
 	delete(sm.cache, cacheKey)
-	
+
 	return err
 }
 
@@ -152,7 +152,7 @@ func (sm *SessionManager) DeleteSession(sessionName string, c echo.Context) erro
 func (sm *SessionManager) CleanupCache() {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	now := time.Now()
 	for key, cached := range sm.cache {
 		if now.Sub(cached.lastAccess) > sm.ttl {

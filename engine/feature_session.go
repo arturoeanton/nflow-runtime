@@ -24,7 +24,7 @@ func withSessionLock(c echo.Context, fn func()) {
 
 func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
 	log.Println("[AddFeatureSession] Starting to add session features")
-	
+
 	vm.Set("set_session", func(name, k, v string) {
 		withSessionLock(c, func() {
 			s, _ := session.Get(name, c)
@@ -155,7 +155,7 @@ func GetProfile(c echo.Context) map[string]string {
 		}
 		return make(map[string]string, 0)
 	}
-	
+
 	syncsession.EchoSessionsMutex.Lock()
 	defer syncsession.EchoSessionsMutex.Unlock()
 	s, _ := session.Get(literals.AUTH_SESSION, c)

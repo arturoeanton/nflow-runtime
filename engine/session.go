@@ -25,5 +25,5 @@ func (m *defaultSessionManager) RUnlock() { m.mu.RUnlock() }
 // EchoSessionsMutex para compatibilidad
 var EchoSessionsMutex = &defaultSessionManager{}
 
-// PayloadSessionMutex para compatibilidad  
+// PayloadSessionMutex para compatibilidad
 var PayloadSessionMutex = &defaultSessionManager{}

@@ -48,11 +48,11 @@ func TestSessionManager_RaceConditions(t *testing.T) {
 			for j := 0; j < numOperations; j++ {
 				key := fmt.Sprintf("key-%d", rand.Intn(100))
 				value := fmt.Sprintf("value-%d-%d", id, j)
-				
+
 				if err := sm.SetValue("race-test", key, value, c); err != nil {
 					atomic.AddInt32(&writeErrors, 1)
 				}
-				
+
 				// Ocasionalmente hacer batch updates
 				if j%10 == 0 {
 					values := map[string]interface{}{
@@ -75,11 +75,11 @@ func TestSessionManager_RaceConditions(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < numOperations; j++ {
 				key := fmt.Sprintf("key-%d", rand.Intn(100))
-				
+
 				if _, err := sm.GetValue("race-test", key, c); err != nil {
 					atomic.AddInt32(&readErrors, 1)
 				}
-				
+
 				// Ocasionalmente limpiar cache
 				if j%100 == 0 {
 					sm.CleanupCache()
@@ -103,7 +103,7 @@ func TestSessionManager_RaceConditions(t *testing.T) {
 	t.Logf("Race condition test completed")
 	t.Logf("Write errors: %d", writeErrors)
 	t.Logf("Read errors: %d", readErrors)
-	
+
 	// No debería haber errores
 	assert.Equal(t, int32(0), writeErrors, "Write operations should not fail")
 	assert.Equal(t, int32(0), readErrors, "Read operations should not fail")
@@ -213,7 +213,7 @@ func TestSessionManager_LargePayloads(t *testing.T) {
 	// Leer payload
 	val, err := sm.GetValue("large-test", "bigdata", c)
 	require.NoError(t, err)
-	
+
 	retrievedData, ok := val.([]byte)
 	require.True(t, ok, "Should be able to cast to []byte")
 	assert.Equal(t, len(largeData), len(retrievedData))
@@ -229,7 +229,7 @@ func TestSessionManager_MultipleSessionTypes(t *testing.T) {
 
 	// Diferentes tipos de sesiones
 	sessions := []string{"auth-session", "nflow_form", "user-prefs", "temp-data"}
-	
+
 	// Establecer valores en diferentes sesiones
 	for _, sessName := range sessions {
 		for i := 0; i < 10; i++ {
@@ -245,7 +245,7 @@ func TestSessionManager_MultipleSessionTypes(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			key := fmt.Sprintf("key-%d", i)
 			expectedValue := fmt.Sprintf("%s-value-%d", sessName, i)
-			
+
 			val, err := sm.GetValue(sessName, key, c)
 			require.NoError(t, err)
 			assert.Equal(t, expectedValue, val)
@@ -260,9 +260,9 @@ func TestSessionManager_ErrorHandling(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	
+
 	// No configurar store - esto causará errores
-	
+
 	sm := &SessionManager{
 		cache: make(map[string]*SessionCache),
 		ttl:   5 * time.Minute,
@@ -286,7 +286,7 @@ func TestSessionManager_ConcurrentCacheCleanup(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	
+
 	// Goroutine que añade entradas continuamente
 	wg.Add(1)
 	go func() {
@@ -318,7 +318,7 @@ func TestSessionManager_ConcurrentCacheCleanup(t *testing.T) {
 	}()
 
 	wg.Wait()
-	
+
 	// No debe haber panic o deadlock
 	t.Log("Concurrent cleanup test completed successfully")
 }
@@ -411,7 +411,7 @@ func TestSessionManager_MemoryLeaks(t *testing.T) {
 	// Forzar GC inicial
 	runtime.GC()
 	runtime.GC()
-	
+
 	var m1 runtime.MemStats
 	runtime.ReadMemStats(&m1)
 
@@ -421,20 +421,20 @@ func TestSessionManager_MemoryLeaks(t *testing.T) {
 		for i := 0; i < 1000; i++ {
 			sm.SetValue("leak-test", fmt.Sprintf("key-%d-%d", cycle, i), "value", c)
 		}
-		
+
 		// Esperar TTL
 		time.Sleep(150 * time.Millisecond)
-		
+
 		// Limpiar
 		sm.CleanupCache()
-		
+
 		// Forzar GC
 		runtime.GC()
 	}
 
 	runtime.GC()
 	runtime.GC()
-	
+
 	var m2 runtime.MemStats
 	runtime.ReadMemStats(&m2)
 
@@ -447,7 +447,7 @@ func TestSessionManager_MemoryLeaks(t *testing.T) {
 		memGrowth = 0
 	}
 	t.Logf("Memory growth after 10 cycles: %.2f MB", memGrowth)
-	
+
 	// No debería crecer significativamente
 	assert.Less(t, memGrowth, 10.0, "Memory should not grow more than 10MB")
 }

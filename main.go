@@ -176,19 +176,19 @@ func run(c echo.Context) error {
 
 func main() {
 	flag.Parse()
-	
+
 	// Initialize logger with verbose flag
 	logger.Initialize(*verbose)
 	logger.Info("Starting nFlow Runtime")
 	if *verbose {
 		logger.Verbose("Verbose logging enabled")
 	}
-	
+
 	configPath := "config.toml"
-	
+
 	// Initialize ConfigRepository
 	configRepo := engine.GetConfigRepository()
-	
+
 	// Load configuration
 	var config engine.ConfigWorkspace
 	if utils.Exists(configPath) {
@@ -198,7 +198,7 @@ func main() {
 		}
 		configRepo.SetConfig(config)
 	}
-	
+
 	// Initialize Redis
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.RedisConfig.Host,
@@ -206,26 +206,26 @@ func main() {
 		DB:       0,                           // use default DB
 	})
 	configRepo.SetRedisClient(redisClient)
-	
+
 	engine.UpdateQueries()
 
 	engine.LoadPlugins()
-	
+
 	// Initialize database and repository
 	db, err := engine.GetDB()
 	if err != nil {
 		logger.Fatal("Failed to initialize database:", err)
 	}
 	engine.InitializePlaybookRepository(db)
-	
+
 	// Initialize ProcessRepository
 	process.InitializeRepository()
 	logger.Info("ProcessRepository initialized")
-	
+
 	// Initialize Session Manager
 	logger.Info("Starting Session Manager cleanup routine...")
 	go syncsession.Manager.StartCleanupRoutine()
-	
+
 	// VM pooling is disabled for now
 	// A fresh VM is created for each request to ensure stability
 	logger.Info("VM pooling disabled - creating fresh VM per request for stability")
