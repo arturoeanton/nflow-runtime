@@ -30,6 +30,13 @@ func GetDB() (*sql.DB, error) {
 }
 
 func saveInSession(form url.Values, c echo.Context) {
+	// Si el contexto es aislado, no guardar en sesión real
+	if _, isIsolated := c.(*IsolatedContext); isIsolated {
+		// En contexto aislado, guardar en memoria local
+		c.Set("_session_form_data", form)
+		return
+	}
+	
 	syncsession.EchoSessionsMutex.Lock()
 	defer syncsession.EchoSessionsMutex.Unlock()
 	s, _ := session.Get("nflow_form", c)

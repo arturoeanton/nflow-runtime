@@ -14,7 +14,6 @@ import (
 	"github.com/arturoeanton/nflow-runtime/process"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 
-	// Removed syncsession - will use interface
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/console"
 	"github.com/dop251/goja_nodejs/require"
@@ -31,6 +30,13 @@ var (
 	wg       sync.WaitGroup = sync.WaitGroup{}
 )
 
+func init() {
+	// Initialize registry globally
+	registry = new(require.Registry)
+	registry.RegisterNativeModule("console", console.Require)
+	registry.RegisterNativeModule("util", util.Require)
+}
+
 // Run ejecuta el workflow
 func Run(cc *model.Controller, c echo.Context, vars model.Vars, next string, endpoint string, uuid1 string, payload goja.Value) error {
 	return run(cc, c, vars, next, endpoint, uuid1, payload, false)
@@ -46,7 +52,9 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 
 	var p *process.Process
 
+	// Si es un fork (goroutine), usar contexto aislado
 	if fork {
+		c = NewIsolatedContext(c)
 		p = process.CreateProcessWithCallback(uuid1)
 		go func(uuid2 string, currentProcess *process.Process) {
 			data := <-currentProcess.Callback
@@ -67,15 +75,18 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	}()
 
 	func(uuid1 string) {
-		EchoSessionsMutex.Lock()
-		defer EchoSessionsMutex.Unlock()
+		// Solo usar mutex si no es un contexto aislado
+		if _, isIsolated := c.(*IsolatedContext); !isIsolated {
+			EchoSessionsMutex.Lock()
+			defer EchoSessionsMutex.Unlock()
+		}
 		if c.Response().Header().Get("Nflow-Wid-1") == "" {
 			c.Response().Header().Add("Nflow-Wid-1", uuid1)
 		}
 	}(uuid1)
 
-	// Create a fresh VM for each request temporarily
-	// TODO: Fix VM pooling to properly handle all the state
+	// Create a fresh VM for each request
+	// This ensures all features are properly initialized
 	vm := goja.New()
 	
 	// Initialize VM with all required modules
@@ -106,8 +117,8 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			vm.Set(key, fx)
 		}
 	}
-	
-	// Set endpoint - c and echo_context are set in AddGlobals
+
+	// Set endpoint
 	vm.Set("nflow_endpoint", endpoint)
 
 	postData := make(map[string]interface{})
@@ -128,7 +139,9 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	pb := *cc.Playbook
 	nodeAuth := pb[next]
 	if next == "" {
+		ActorDataMutex.RLock()
 		fmt.Println(cc.Start.Data)
+		ActorDataMutex.RUnlock()
 		if len(cc.Start.Outputs["output_1"].Connections) == 0 {
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "No output connections found for the start node."})
 			return nil
@@ -138,7 +151,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	}
 
 	// Exceute auth of default.js?
-	if flag, ok := nodeAuth.Data["nflow_auth"]; ok {
+	ActorDataMutex.RLock()
+	flag, hasAuthFlag := nodeAuth.Data["nflow_auth"]
+	ActorDataMutex.RUnlock()
+	
+	if hasAuthFlag {
 		flagString, ok := flag.(string)
 		if !ok {
 			flagBool := flag.(bool)
@@ -148,9 +165,21 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			//execute auth of default.js
 			var profile interface{}
 			func() {
+				// Si es un contexto aislado, no acceder a sesión real
+				if _, isIsolated := c.(*IsolatedContext); isIsolated {
+					profile = nil
+					return
+				}
+				
 				EchoSessionsMutex.Lock()
 				defer EchoSessionsMutex.Unlock()
-				auth_session, _ := session.Get("auth-session", c)
+				
+				auth_session, err := session.Get("auth-session", c)
+				if err != nil {
+					log.Println(err)
+					profile = nil
+					return
+				}
 
 				auth_session.Values["redirect_url"] = c.Request().URL.Path
 				auth_session.Save(c.Request(), c.Response())
@@ -215,17 +244,30 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	var orderBox int
 
 	func() {
-		EchoSessionsMutex.Lock()
-		defer EchoSessionsMutex.Unlock()
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println(err)
 			}
 		}()
 
+		// Si es un contexto aislado, generar valores por defecto
+		if _, isIsolated := c.(*IsolatedContext); isIsolated {
+			logId = uuid.New().String()
+			orderBox = 1
+			return
+		}
+
+		// Para contextos normales, usar mutex
+		EchoSessionsMutex.Lock()
+		defer EchoSessionsMutex.Unlock()
+
 		log_session, err := session.Get("log-session", c)
 		if err != nil {
 			log.Println(err)
+			// En caso de error, usar valores por defecto
+			logId = uuid.New().String()
+			orderBox = 1
+			return
 		}
 		if log_session.Values["log_id"] == nil {
 			log_session.Values["log_id"] = uuid.New().String()
@@ -247,7 +289,46 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		now := time.Now()
 		diff := now.Sub(t1)
 
-		go func(logId string, c echo.Context, boxId string, boxName string, boxType string, connectionNext string, diff time.Duration, orderBox int, payload goja.Value) {
+		// Extract data from context before goroutine to avoid race conditions
+		var username, ip, realip, url, userAgent, queryParam, hostname, host string
+		var jsonPayload []byte
+		
+		// Get profile with proper locking
+		profile := GetProfile(c)
+		if profile != nil {
+			if _, ok := profile["username"]; ok {
+				username = profile["username"]
+			}
+		}
+		
+		// Marshal payload with locking
+		var err error
+		func() {
+			PayloadSessionMutex.Lock()
+			defer PayloadSessionMutex.Unlock()
+			jsonPayload, err = json.Marshal(payload.Export())
+		}()
+		if err != nil {
+			jsonPayload = []byte("{}")
+		}
+		
+		// Extract request info
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Println(err)
+				}
+			}()
+			ip = c.Request().RemoteAddr
+			realip = c.RealIP()
+			url = c.Request().URL.RawPath
+			userAgent = c.Request().UserAgent()
+			queryParam = c.Request().URL.Query().Encode()
+			hostname = c.Request().URL.Hostname()
+			host = c.Request().Host
+		}()
+
+		go func(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host string, diff time.Duration, orderBox int, jsonPayload []byte) {
 			if Config.DatabaseNflow.QueryInsertLog == "" {
 				return
 			}
@@ -263,46 +344,6 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				return
 			}
 			defer conn.Close()
-			profile := GetProfile(c)
-			username := ""
-			if profile != nil {
-				if _, ok := profile["username"]; ok {
-					username = profile["username"]
-				}
-			}
-
-			var jsonPayload []byte
-			func() {
-				PayloadSessionMutex.Lock()
-				defer PayloadSessionMutex.Unlock()
-				jsonPayload, err = json.Marshal(payload.Export())
-			}()
-			if err != nil {
-				jsonPayload = []byte("{}")
-			}
-			ip := ""
-			realip := ""
-			url := ""
-			userAgent := ""
-			queryParam := ""
-			hostname := ""
-			host := ""
-
-			func() {
-				defer func() {
-					if err := recover(); err != nil {
-						log.Println(err)
-					}
-				}()
-				ip = c.Request().RemoteAddr
-				realip = c.RealIP()
-				url = c.Request().URL.RawPath
-				userAgent = c.Request().UserAgent()
-				queryParam = c.Request().URL.Query().Encode()
-				hostname = c.Request().URL.Hostname()
-				host = c.Request().Host
-
-			}()
 
 			_, err = conn.ExecContext(ctx, Config.DatabaseNflow.QueryInsertLog,
 				logId,                                   // $1
@@ -327,9 +368,12 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				log.Println(err)
 			}
 
-		}(logId, c, boxId, boxName, boxType, connectionNext, diff, orderBox, payload)
+		}(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host, diff, orderBox, jsonPayload)
 
-		go func(c echo.Context, actor *model.Node, boxId string, boxName string, boxType string, connectionNext string, diff time.Duration) {
+		// Get profile before goroutine to avoid race
+		logProfile := GetProfile(c)
+		
+		go func(logProfile map[string]string, actor *model.Node, boxId string, boxName string, boxType string, connectionNext string, diff time.Duration) {
 
 			defer func() {
 				if err := recover(); err != nil {
@@ -357,16 +401,19 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				return
 			}
 
-			// Obtener una VM separada del pool para evitar race conditions
-			vmManager := GetVMManager()
-			vmInstance, err := vmManager.AcquireVM(c)
-			if err != nil {
-				log.Printf("Failed to acquire VM for logging: %v", err)
-				return
+			// Crear una VM separada para logging para evitar race conditions
+			logVM := goja.New()
+
+			// Inicializar la VM de logging con los módulos necesarios
+			if registry != nil {
+				registry.Enable(logVM)
 			}
-			defer vmManager.ReleaseVM(vmInstance)
-			
-			logVM := vmInstance.VM
+			console.Enable(logVM)
+
+			// Add minimal required functions for logging with captured profile
+			logVM.Set("get_profile", func() interface{} {
+				return logProfile
+			})
 
 			logVM.Set("box_id", boxId)
 			logVM.Set("box_name", boxName)
@@ -383,7 +430,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				log.Println(err)
 			}
 
-		}(c, actor, boxId, boxName, boxType, connectionNext, diff)
+		}(logProfile, actor, boxId, boxName, boxType, connectionNext, diff)
 
 	}()
 	defer func() {
@@ -404,6 +451,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	currentProcess.UUIDBoxCurrent = next
 	boxId = next
 
+	// Proteger lectura en actor.Data
+	ActorDataMutex.RLock()
 	if nameBox, ok := actor.Data["name_box"]; ok {
 		boxName = nameBox.(string)
 		sbLog.WriteString("- NameBox:" + boxName)
@@ -413,6 +462,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	if pType, ok := actor.Data["type"]; ok {
 		currentProcess.Type = pType.(string)
 	}
+	ActorDataMutex.RUnlock()
 	boxType = currentProcess.Type
 
 	sbLog.WriteString(" - Type:" + currentProcess.Type)
@@ -455,15 +505,8 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 
 		wg.Add(1)
 		go func() {
-			EchoSessionsMutex.Lock()
-			defer EchoSessionsMutex.Unlock()
 			defer wg.Done()
 
-			var s *sessions.Session
-			s, err = session.Get("nflow_form", c)
-			if err != nil {
-				log.Println(err)
-			}
 			payloadMap := make(map[string]interface{})
 
 			if payload != nil {
@@ -474,11 +517,23 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 				}()
 			}
 
-			for k, v := range s.Values {
-				if k == "break" {
-					continue
+			// Si es un contexto aislado, no acceder a la sesión real
+			if _, isIsolated := c.(*IsolatedContext); !isIsolated {
+				EchoSessionsMutex.Lock()
+				defer EchoSessionsMutex.Unlock()
+
+				var s *sessions.Session
+				s, err = session.Get("nflow_form", c)
+				if err != nil {
+					log.Println(err)
+				} else if s != nil && s.Values != nil {
+					for k, v := range s.Values {
+						if k == "break" {
+							continue
+						}
+						payloadMap[k.(string)] = v
+					}
 				}
-				payloadMap[k.(string)] = v
 			}
 
 			func() {
@@ -502,10 +557,21 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 			if rawPayload, ok := payload.Export().(map[string]interface{}); ok {
 				wg.Add(1)
 				go func() {
+					defer wg.Done()
+					
+					// Si es un contexto aislado, no guardar en sesión real
+					if _, isIsolated := c.(*IsolatedContext); isIsolated {
+						return
+					}
+					
 					EchoSessionsMutex.Lock()
 					defer EchoSessionsMutex.Unlock()
-					defer wg.Done()
-					s, _ := session.Get("nflow_form", c)
+					
+					s, err := session.Get("nflow_form", c)
+					if err != nil {
+						log.Println(err)
+						return
+					}
 					for k, v := range rawPayload {
 						s.Values[k] = v
 					}
@@ -533,9 +599,19 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 
 	if next == "" && !fork {
 		func() {
+			// Si es un contexto aislado, no limpiar sesión real
+			if _, isIsolated := c.(*IsolatedContext); isIsolated {
+				return
+			}
+			
 			EchoSessionsMutex.Lock()
 			defer EchoSessionsMutex.Unlock()
-			s, _ := session.Get("nflow_form", c)
+			
+			s, err := session.Get("nflow_form", c)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 			s.Values = make(map[interface{}]interface{})
 			s.Save(c.Request(), c.Response())
 		}()

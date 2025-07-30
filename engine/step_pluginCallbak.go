@@ -18,8 +18,17 @@ type StepPluginCallback struct {
 func (s *StepPluginCallback) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm *goja.Runtime, connection_next string, vars model.Vars, currentProcess *process.Process, payload goja.Value) (string, goja.Value, error) {
 	currentProcess.State = "run"
 	time.Sleep(1 * time.Second)
+	
+	// Proteger lectura en actor.Data
+	ActorDataMutex.RLock()
 	name := actor.Data["dromedary_name"].(string)
-	dataJs, _ := json.Marshal(actor.Data)
+	dataCopy := make(map[string]interface{})
+	for k, v := range actor.Data {
+		dataCopy[k] = v
+	}
+	ActorDataMutex.RUnlock()
+	
+	dataJs, _ := json.Marshal(dataCopy)
 
 	output := "output_2"
 	if len(actor.Outputs) == 1 {

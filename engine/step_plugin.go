@@ -16,9 +16,18 @@ type StepPlugin struct {
 func (s *StepPlugin) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm *goja.Runtime, connectionNext string, vars model.Vars, currentProcess *process.Process, payload goja.Value) (string, goja.Value, error) {
 	currentProcess.State = "run"
 	currentProcess.Killeable = true
+	
+	// Proteger lectura en actor.Data
+	ActorDataMutex.RLock()
 	name := actor.Data["dromedary_name"].(string)
+	dataCopy := make(map[string]interface{})
+	for k, v := range actor.Data {
+		dataCopy[k] = v
+	}
+	ActorDataMutex.RUnlock()
+	
 	var payloadOut interface{}
-	dataJs, _ := json.Marshal(actor.Data)
+	dataJs, _ := json.Marshal(dataCopy)
 	payloadOut, next, err := Plugins[name].Run(c, vars, &payload, string(dataJs), nil)
 
 	payload = vm.ToValue(payloadOut)

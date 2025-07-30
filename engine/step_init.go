@@ -1,13 +1,19 @@
 package engine
 
 import (
+	"sync"
+
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
 	"github.com/dop251/goja"
 	"github.com/labstack/echo/v4"
 )
 
-var Steps map[string]Step = make(map[string]Step)
+var (
+	Steps map[string]Step = make(map[string]Step)
+	// ActorDataMutex protege el acceso a actor.Data en todos los steps
+	ActorDataMutex sync.RWMutex
+)
 
 type Step interface {
 	Run(cc *model.Controller, actor *model.Node, c echo.Context, vm *goja.Runtime, connectionNext string, vars model.Vars, currentProcess *process.Process, payload goja.Value) (string, goja.Value, error)

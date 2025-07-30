@@ -16,12 +16,23 @@ import (
 )
 
 var (
-	FindNewApp map[string]bool = make(map[string]bool)
 	// Config is ...
 	Config ConfigWorkspace
 	// PathBase is ...
 
+	// playbookRepo es la instancia global del repository
+	playbookRepo PlaybookRepository
 )
+
+// InitializePlaybookRepository inicializa el repository con la base de datos
+func InitializePlaybookRepository(db *sql.DB) {
+	playbookRepo = NewPlaybookRepository(db)
+}
+
+// GetPlaybookRepository retorna el repository actual
+func GetPlaybookRepository() PlaybookRepository {
+	return playbookRepo
+}
 
 func GetPlaybook(ctx context.Context, conn *sql.Conn, pbName string) (map[string]map[string]*model.Playbook, error) {
 	rows, err := conn.QueryContext(ctx, Config.DatabaseNflow.QueryGetApp, pbName)

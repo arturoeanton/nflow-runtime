@@ -12,7 +12,6 @@ import (
 	"github.com/arturoeanton/nflow-runtime/commons"
 	"github.com/arturoeanton/nflow-runtime/engine"
 	"github.com/arturoeanton/nflow-runtime/literals"
-	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
@@ -26,7 +25,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var playbooks map[string]map[string]map[string]*model.Playbook = make(map[string]map[string]map[string]*model.Playbook)
+// Ya no necesitamos variables globales para playbooks
 
 func CheckError(c echo.Context, err error, code int) bool {
 	if err != nil {
@@ -58,14 +57,18 @@ func run(c echo.Context) error {
 
 	appJson := "app"
 
-	v, ok := engine.FindNewApp[appJson]
-	if v || !ok {
-		var err error
-		playbooks[appJson], err = engine.GetPlaybook(ctx, conn, appJson)
-		if CheckError(c, err, 500) {
-			return nil
-		}
-		engine.FindNewApp[appJson] = false
+	// Obtener el repository
+	repo := engine.GetPlaybookRepository()
+	if repo == nil {
+		log.Println("PlaybookRepository not initialized")
+		c.HTML(http.StatusInternalServerError, "Internal Server Error")
+		return nil
+	}
+
+	// Cargar playbooks usando el repository
+	appPlaybooks, err := repo.LoadPlaybook(ctx, appJson)
+	if CheckError(c, err, 500) {
+		return nil
 	}
 
 	endpoint := strings.Split(c.Request().RequestURI, "?")[0]
@@ -142,7 +145,7 @@ func run(c echo.Context) error {
 		}()
 	}
 
-	runeable, vars, code, _, err := engine.GetWorkflow(c, playbooks[appJson], endpoint, c.Request().Method, appJson)
+	runeable, vars, code, _, err := engine.GetWorkflow(c, appPlaybooks, endpoint, c.Request().Method, appJson)
 	if CheckError(c, err, code) {
 		return nil
 	}
@@ -173,14 +176,20 @@ func main() {
 
 	engine.LoadPlugins()
 	
+	// Inicializar la base de datos y el repository
+	db, err := engine.GetDB()
+	if err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+	engine.InitializePlaybookRepository(db)
+	
 	// Inicializar Session Manager
 	log.Println("Starting Session Manager cleanup routine...")
 	go syncsession.Manager.StartCleanupRoutine()
 	
-	// Inicializar VM Manager
-	log.Println("Initializing VM Manager...")
-	_ = engine.GetVMManager() // Inicializa el singleton
-	log.Printf("VM Manager initialized with pool size: %d\n", engine.Config.VMPoolConfig.MaxSize)
+	// VM pooling está deshabilitado por ahora
+	// Se crea una nueva VM para cada request para garantizar estabilidad
+	log.Println("VM pooling disabled - creating fresh VM per request for stability")
 
 	// Crear servidor Echo
 	e := echo.New()
