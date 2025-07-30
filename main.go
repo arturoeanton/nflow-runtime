@@ -172,6 +172,15 @@ func main() {
 	engine.UpdateQueries()
 
 	engine.LoadPlugins()
+	
+	// Inicializar Session Manager
+	log.Println("Starting Session Manager cleanup routine...")
+	go syncsession.Manager.StartCleanupRoutine()
+	
+	// Inicializar VM Manager
+	log.Println("Initializing VM Manager...")
+	_ = engine.GetVMManager() // Inicializa el singleton
+	log.Printf("VM Manager initialized with pool size: %d\n", engine.Config.VMPoolConfig.MaxSize)
 
 	// Crear servidor Echo
 	e := echo.New()

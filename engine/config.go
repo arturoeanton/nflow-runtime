@@ -19,6 +19,16 @@ type ConfigWorkspace struct {
 	HttpsEngineConfig    HttpsConfig       `toml:"https_engine"`
 	HttpsDesingnerConfig HttpsConfig       `toml:"https_designer"`
 	DatabaseNflow        DatabaseNflow     `toml:"database_nflow"`
+	VMPoolConfig         VMPoolConfig      `toml:"vm_pool"`
+}
+
+// VMPoolConfig configures the VM pool
+type VMPoolConfig struct {
+	MaxSize         int  `toml:"max_size"`         // Maximum number of VMs in pool (default: 50)
+	PreloadSize     int  `toml:"preload_size"`     // Number of VMs to preload (default: max_size/2)
+	IdleTimeout     int  `toml:"idle_timeout"`     // Minutes before idle VM is removed (default: 10)
+	CleanupInterval int  `toml:"cleanup_interval"` // Minutes between cleanup runs (default: 5)
+	EnableMetrics   bool `toml:"enable_metrics"`   // Enable VM pool metrics logging
 }
 
 type DatabaseNflow struct {

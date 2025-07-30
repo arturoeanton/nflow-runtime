@@ -9,7 +9,7 @@ password = ""
 
 [database_nflow]
 driver = "sqlite3"
-dsn = "app/app.sqlite"
+dsn = "../nflow/app/app.sqlite"
 #driver = "postgres"
 #dsn = "postgres://postgres:nflowsecret@localhost:5432/nflow?sslmode=disable"
 query="SELECT name,query FROM queries"
@@ -18,3 +18,11 @@ query="SELECT name,query FROM queries"
 scim_base = "https://localhost:8443"
 openid_base = "https://localhost:8443"
 
+[vm_pool]
+max_size = 50              # Maximum VMs in pool
+preload_size = 25          # VMs to create at startup
+idle_timeout = 10          # Minutes before removing idle VMs
+cleanup_interval = 5       # Minutes between cleanup runs
+enable_metrics = true     # Log pool metrics
+
+  

@@ -12,6 +12,7 @@ import (
 
 // addFeatureSessionOptimized usa el SessionManager para mejor performance
 func AddFeatureSessionOptimized(vm *goja.Runtime, c echo.Context) {
+	fmt.Println("[AddFeatureSessionOptimized] Starting to add optimized session features")
 	sm := syncsession.Manager
 
 	vm.Set("set_session", func(name, k, v string) {
@@ -66,6 +67,7 @@ func AddFeatureSessionOptimized(vm *goja.Runtime, c echo.Context) {
 	vm.Set("get_profile", func() map[string]string {
 		return GetProfileOptimized(c)
 	})
+	fmt.Println("[AddFeatureSessionOptimized] get_profile function added")
 
 	vm.Set("exist_profile", func() bool {
 		profile, _ := sm.GetValue(literals.AUTH_SESSION, "profile", c)

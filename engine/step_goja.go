@@ -92,14 +92,13 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	}()
 
 	if err != nil {
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, echo.Map{
-				"message": err.Error(),
-				"actor":   actor,
-			})
-			currentProcess.State = "error"
-			return "", payload, err
-		}
+		c.JSON(http.StatusInternalServerError, echo.Map{
+			"message": err.Error(),
+			"actor":   actor,
+		})
+		currentProcess.State = "error"
+		return "", payload, err
+
 	}
 	payload = vm.Get("payload")
 	currentProcess.Payload = payload.Export()

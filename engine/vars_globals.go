@@ -47,6 +47,10 @@ func saveInSession(form url.Values, c echo.Context) {
 }
 
 func AddGlobals(vm *goja.Runtime, c echo.Context) {
+	// Set Echo context for HTTP operations
+	vm.Set("c", c)
+	vm.Set("echo_context", c)
+	
 	header := make(map[string][]string)
 	if c.Request().Header != nil {
 		header = (map[string][]string)(c.Request().Header)

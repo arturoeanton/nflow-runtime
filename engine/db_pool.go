@@ -14,7 +14,6 @@ type DBPool struct {
 	db          *sql.DB
 	maxConns    int
 	maxIdleTime time.Duration
-	mu          sync.RWMutex
 	stats       *DBStats
 }
 

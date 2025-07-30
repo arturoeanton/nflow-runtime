@@ -12,6 +12,8 @@ import (
 )
 
 func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
+	fmt.Println("[AddFeatureSession] Starting to add session features")
+	
 	vm.Set("set_session", func(name, k, v string) {
 		syncsession.EchoSessionsMutex.Lock()
 		defer syncsession.EchoSessionsMutex.Unlock()
@@ -92,6 +94,7 @@ func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
 	vm.Set("get_profile", func() map[string]string {
 		return GetProfile(c)
 	})
+	fmt.Println("[AddFeatureSession] get_profile function added")
 
 	vm.Set("exist_profile", func() bool {
 		syncsession.EchoSessionsMutex.Lock()

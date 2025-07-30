@@ -12,6 +12,7 @@ import (
 
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
+	"github.com/arturoeanton/nflow-runtime/syncsession"
 
 	// Removed syncsession - will use interface
 	"github.com/dop251/goja"
@@ -27,8 +28,7 @@ import (
 
 var (
 	registry *require.Registry
-	jsVars   map[string]string = make(map[string]string)
-	wg       sync.WaitGroup    = sync.WaitGroup{}
+	wg       sync.WaitGroup = sync.WaitGroup{}
 )
 
 // Run ejecuta el workflow
@@ -74,32 +74,40 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		}
 	}(uuid1)
 
+	// Create a fresh VM for each request temporarily
+	// TODO: Fix VM pooling to properly handle all the state
 	vm := goja.New()
-
+	
+	// Initialize VM with all required modules
 	if registry == nil {
-		registry = new(require.Registry) // this can be shared by multiple runtimes
+		registry = new(require.Registry)
 		registry.RegisterNativeModule("console", console.Require)
 		registry.RegisterNativeModule("util", util.Require)
 	}
-
+	
 	registry.Enable(vm)
 	console.Enable(vm)
-
-	AddFeatureSession(vm, c)
+	
+	// Add all features
+	if syncsession.Manager != nil {
+		AddFeatureSessionOptimized(vm, c)
+	} else {
+		AddFeatureSession(vm, c)
+	}
+	
 	AddFeatureUsers(vm, c)
 	AddFeatureToken(vm, c)
 	AddFeatureTemplate(vm, c)
-
 	AddGlobals(vm, c)
-
+	
+	// Add plugin features
 	for _, p := range Plugins {
 		for key, fx := range p.AddFeatureJS() {
 			vm.Set(key, fx)
 		}
 	}
-
-	vm.Set("c", c)
-	vm.Set("echo_context", c)
+	
+	// Set endpoint - c and echo_context are set in AddGlobals
 	vm.Set("nflow_endpoint", endpoint)
 
 	postData := make(map[string]interface{})
@@ -349,17 +357,28 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				return
 			}
 
-			vm.Set("box_id", boxId)
-			vm.Set("box_name", boxName)
-			vm.Set("box_ype", boxType)
-			vm.Set("connection_next", connectionNext)
+			// Obtener una VM separada del pool para evitar race conditions
+			vmManager := GetVMManager()
+			vmInstance, err := vmManager.AcquireVM(c)
+			if err != nil {
+				log.Printf("Failed to acquire VM for logging: %v", err)
+				return
+			}
+			defer vmManager.ReleaseVM(vmInstance)
+			
+			logVM := vmInstance.VM
 
-			vm.Set("duration_mc", diff.Microseconds())
-			vm.Set("duration_ms", diff.Milliseconds())
-			vm.Set("duration_s", diff.Seconds())
+			logVM.Set("box_id", boxId)
+			logVM.Set("box_name", boxName)
+			logVM.Set("box_type", boxType)
+			logVM.Set("connection_next", connectionNext)
+
+			logVM.Set("duration_mc", diff.Microseconds())
+			logVM.Set("duration_ms", diff.Milliseconds())
+			logVM.Set("duration_s", diff.Seconds())
 
 			code += "\nlog()"
-			_, err = vm.RunString(code)
+			_, err = logVM.RunString(code)
 			if err != nil {
 				log.Println(err)
 			}
