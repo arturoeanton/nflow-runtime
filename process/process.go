@@ -1,7 +1,6 @@
 package process
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -28,7 +27,16 @@ var (
 
 func KillWID(c echo.Context) error {
 	WKill(c.Param("wid"))
-	c.JSON(200, processes)
+	
+	// Crear copia segura de processes
+	processesMapMutex.Lock()
+	processesCopy := make(map[string]*Process)
+	for k, v := range processes {
+		processesCopy[k] = v
+	}
+	processesMapMutex.Unlock()
+	
+	c.JSON(200, processesCopy)
 	return nil
 }
 
@@ -46,26 +54,56 @@ func WKill(wid string) {
 }
 
 func WKillAll() {
+	// Primero obtener todas las keys para evitar locks anidados
+	processesMapMutex.Lock()
+	keys := make([]string, 0, len(processes))
 	for key := range processes {
+		keys = append(keys, key)
+	}
+	processesMapMutex.Unlock()
+	
+	// Ahora matar cada proceso
+	for _, key := range keys {
 		WKill(key)
 	}
-
 }
 
 func GetProcesses(c echo.Context) error {
-	c.JSON(200, processes)
+	processesMapMutex.Lock()
+	processesCopy := make(map[string]*Process)
+	for k, v := range processes {
+		processesCopy[k] = v
+	}
+	processesMapMutex.Unlock()
+	
+	c.JSON(200, processesCopy)
 	return nil
 }
 
 func GetProcess(c echo.Context) error {
 	wid := c.Param("wid")
-	c.JSON(200, processes[wid])
+	
+	processesMapMutex.Lock()
+	process := processes[wid]
+	processesMapMutex.Unlock()
+	
+	c.JSON(200, process)
 	return nil
 }
 
 func GetProcessPayload(c echo.Context) error {
 	wid := c.Param("wid")
-	c.JSON(200, processes[wid].Payload)
+	
+	processesMapMutex.Lock()
+	process, exists := processes[wid]
+	processesMapMutex.Unlock()
+	
+	if !exists {
+		c.JSON(404, echo.Map{"error": "process not found"})
+		return nil
+	}
+	
+	c.JSON(200, process.Payload)
 	return nil
 }
 
@@ -114,9 +152,24 @@ func CreateProcessWithCallback(wid string) *Process {
 
 func Ps() string {
 	var b strings.Builder
+	
+	processesMapMutex.Lock()
 	for key, p := range processes {
-		fmt.Fprintf(&b, "\n%s - %s - %s", key, p.UUIDBoxCurrent, fmt.Sprint(p.Payload))
+		// Evitar fmt para reducir race conditions
+		b.WriteString("\n")
+		b.WriteString(key)
+		b.WriteString(" - ")
+		b.WriteString(p.UUIDBoxCurrent)
+		b.WriteString(" - ")
+		// Para payload, usar representación simple
+		if p.Payload != nil {
+			b.WriteString("<payload>")
+		} else {
+			b.WriteString("<nil>")
+		}
 	}
+	processesMapMutex.Unlock()
+	
 	return b.String()
 }
 

@@ -36,22 +36,14 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	currentProcess.Killeable = true
 	code := "function main(){}"
 	
-	// Proteger escritura en actor.Data
-	ActorDataMutex.Lock()
+	// Ya no necesitamos mutex porque cada step tiene su propia copia del actor
 	actor.Data["storage_id"] = uuid.New().String()
-	ActorDataMutex.Unlock()
 	
-	// Proteger lectura en actor.Data
-	ActorDataMutex.RLock()
 	_, hasCompile := actor.Data["compile"]
-	ActorDataMutex.RUnlock()
 	
 	if !hasCompile {
 
-		// Proteger lectura en actor.Data
-		ActorDataMutex.RLock()
 		scriptName, hasScript := actor.Data["script"]
-		ActorDataMutex.RUnlock()
 		
 		if hasScript {
 			row := conn.QueryRowContext(ctx, Config.DatabaseNflow.QueryGetModuleByName, scriptName.(string))
@@ -61,33 +53,21 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 			err = row.Scan(&form, &mod, &code)
 			if err == nil {
 				code = babelTransform(code)
-				// Proteger escritura en actor.Data
-				ActorDataMutex.Lock()
 				actor.Data["compile"] = code
-				ActorDataMutex.Unlock()
 			}
 		}
-		// Proteger lectura en actor.Data
-		ActorDataMutex.RLock()
 		codeData, hasCode := actor.Data["code"]
-		ActorDataMutex.RUnlock()
 		
 		if hasCode {
 			code = codeData.(string)
 			code = babelTransform(code)
-			// Proteger escritura en actor.Data
-			ActorDataMutex.Lock()
 			actor.Data["compile"] = code
-			ActorDataMutex.Unlock()
 		}
 	}
 
-	// Proteger lectura en actor.Data
-	ActorDataMutex.RLock()
 	if compileCode, ok := actor.Data["compile"]; ok {
 		code = compileCode.(string)
 	}
-	ActorDataMutex.RUnlock()
 	code = code + "\nmain()"
 
 	outputs := make(map[string]string)
@@ -101,16 +81,9 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	}
 
 	vm.Set("next", connection_next)
-	// Crear una copia de actor.Data para evitar race conditions
-	ActorDataMutex.RLock()
-	actorDataCopy := make(map[string]interface{})
-	for k, v := range actor.Data {
-		actorDataCopy[k] = v
-	}
-	ActorDataMutex.RUnlock()
-	
-	vm.Set("dromedary_data", actorDataCopy)
-	vm.Set("nflow_data", actorDataCopy)
+	// Ya no necesitamos crear una copia porque el actor ya es una copia
+	vm.Set("dromedary_data", actor.Data)
+	vm.Set("nflow_data", actor.Data)
 	vm.Set("__outputs", outputs)
 	vm.Set("__flow_name", cc.FlowName)
 	vm.Set("__flow_app", cc.AppName)

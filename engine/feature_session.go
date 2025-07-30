@@ -2,7 +2,8 @@ package engine
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/arturoeanton/nflow-runtime/literals"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
@@ -22,7 +23,7 @@ func withSessionLock(c echo.Context, fn func()) {
 }
 
 func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
-	fmt.Println("[AddFeatureSession] Starting to add session features")
+	log.Println("[AddFeatureSession] Starting to add session features")
 	
 	vm.Set("set_session", func(name, k, v string) {
 		withSessionLock(c, func() {
@@ -36,7 +37,19 @@ func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
 		var r string
 		withSessionLock(c, func() {
 			s, _ := session.Get(name, c)
-			r = fmt.Sprint(s.Values[k])
+			switch v := s.Values[k].(type) {
+			case string:
+				r = v
+			case int:
+				r = strconv.Itoa(v)
+			default:
+				// Para otros tipos, usar formato seguro
+				if v == nil {
+					r = ""
+				} else {
+					r = "<complex-value>"
+				}
+			}
 		})
 		return r
 	})
@@ -107,7 +120,7 @@ func AddFeatureSession(vm *goja.Runtime, c echo.Context) {
 	vm.Set("get_profile", func() map[string]string {
 		return GetProfile(c)
 	})
-	fmt.Println("[AddFeatureSession] get_profile function added")
+	log.Println("[AddFeatureSession] get_profile function added")
 
 	vm.Set("exist_profile", func() bool {
 		var exists bool

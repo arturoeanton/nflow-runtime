@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"crypto/subtle"
-	"fmt"
 	"log"
 	"time"
 
@@ -82,7 +81,7 @@ func ValidateTokenDB(c echo.Context, name string) bool {
 		if tokenMap["header"] != nil {
 			keyHeader := tokenMap["header"].(string)
 			if c.Request().Header.Get(keyHeader) == "" {
-				log.Println("header not found in register [" + fmt.Sprint(id) + "]-[" + name + "]  database")
+				log.Printf("header not found in register [%d]-[%s] database", id, name)
 				continue
 			}
 			token = c.Request().Header.Get(keyHeader)
@@ -91,7 +90,7 @@ func ValidateTokenDB(c echo.Context, name string) bool {
 		if tokenMap["expired"] != nil {
 			expiredTime := int64(tokenMap["expired"].(int64))
 			if time.Now().Unix() > expiredTime {
-				log.Println("El token [" + fmt.Sprint(id) + "]-[" + name + "]  ha expirado.")
+				log.Printf("El token [%d]-[%s] ha expirado.", id, name)
 				continue
 			}
 		}

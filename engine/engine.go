@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +30,11 @@ var (
 	registry *require.Registry
 	wg       sync.WaitGroup = sync.WaitGroup{}
 )
+
+// formatDuration formatea milisegundos como string sin usar fmt.Sprintf
+func formatDuration(ms int64) string {
+	return strconv.FormatInt(ms, 10) + "m"
+}
 
 func init() {
 	// Initialize registry globally
@@ -140,7 +146,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	nodeAuth := pb[next]
 	if next == "" {
 		ActorDataMutex.RLock()
-		fmt.Println(cc.Start.Data)
+		log.Printf("Start Data: %+v", cc.Start.Data)
 		ActorDataMutex.RUnlock()
 		if len(cc.Start.Outputs["output_1"].Connections) == 0 {
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "No output connections found for the start node."})
@@ -159,7 +165,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		flagString, ok := flag.(string)
 		if !ok {
 			flagBool := flag.(bool)
-			flagString = fmt.Sprint(flagBool)
+			if flagBool {
+				flagString = "true"
+			} else {
+				flagString = "false"
+			}
 		}
 		if flagString != "false" {
 			//execute auth of default.js
@@ -220,7 +230,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			}
 
 			next = vm.Get("next").String()
-			fmt.Println(next)
+			log.Println("Next node:", next)
 			if next == "login" {
 				return c.Redirect(http.StatusTemporaryRedirect, "/nflow_login")
 			}
@@ -381,7 +391,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 				}
 			}()
 
-			//log.Println(sbLog.String() + " - time:" + fmt.Sprint(diff))
+			//log.Printf("%s - time: %v", sbLog.String(), diff)
 			ctx := context.Background()
 			db, err := GetDB()
 			if err != nil {
@@ -446,13 +456,21 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		panic("FlagExit")
 	}
 	pb := *cc.Playbook
-	actor = pb[next]
+	originalActor := pb[next]
+	
+	// Crear una copia profunda del actor para evitar race conditions
+	actor, err := originalActor.DeepCopy()
+	if err != nil {
+		log.Printf("Error creating actor copy: %v", err)
+		// Si falla la copia, usar el original con mutex
+		actor = originalActor
+	}
+	
 	sbLog.WriteString("- IDBox:" + next)
 	currentProcess.UUIDBoxCurrent = next
 	boxId = next
 
-	// Proteger lectura en actor.Data
-	ActorDataMutex.RLock()
+	// Ya no necesitamos mutex si tenemos una copia
 	if nameBox, ok := actor.Data["name_box"]; ok {
 		boxName = nameBox.(string)
 		sbLog.WriteString("- NameBox:" + boxName)
@@ -462,12 +480,10 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	if pType, ok := actor.Data["type"]; ok {
 		currentProcess.Type = pType.(string)
 	}
-	ActorDataMutex.RUnlock()
 	boxType = currentProcess.Type
 
 	sbLog.WriteString(" - Type:" + currentProcess.Type)
 	if s, ok := Steps[currentProcess.Type]; ok {
-		var err error
 		connectionNext, payload, err = s.Run(cc, actor, c, vm, connectionNext, vars, currentProcess, payload)
 		if err != nil {
 			sbLog.WriteString(" - Error: " + err.Error())
@@ -494,7 +510,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 	var err error
 	prevBox := ""
 	if fork {
-		fmt.Println("fork")
+		log.Println("fork")
 	}
 	for next != "" {
 
@@ -549,7 +565,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 			break
 		}
 		if fork {
-			fmt.Println("fork")
+			log.Println("fork")
 		}
 
 		// cut

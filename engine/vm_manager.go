@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -132,13 +133,13 @@ func NewVMManagerWithConfig(maxSize int, config *VMPoolConfig) *VMManager {
 
 // AcquireVM gets a VM from the pool or creates a new one
 func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
-	fmt.Printf("[VM Manager] AcquireVM called\n")
-	
+	log.Printf("[VM Manager] AcquireVM called\n")
+
 	// Try to get from pool first
 	select {
 	case instance := <-m.pool:
-		fmt.Printf("[VM Manager] Got VM from pool: %s\n", instance.ID)
-		
+		log.Printf("[VM Manager] Got VM from pool: %s\n", instance.ID)
+
 		m.mu.Lock()
 		instance.InUse = true
 		instance.LastUsed = time.Now()
@@ -153,7 +154,7 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 		})
 
 		// Reset VM state for new use
-		fmt.Printf("[VM Manager] Resetting VM for new use\n")
+		log.Printf("[VM Manager] Resetting VM for new use\n")
 		m.resetVM(instance.VM, c)
 		return instance, nil
 
@@ -168,7 +169,7 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 		}
 
 		// Create new VM
-		fmt.Printf("[VM Manager] Creating new VM (pool empty)\n")
+		log.Printf("[VM Manager] Creating new VM (pool empty)\n")
 		vm, err := m.factory()
 		if err != nil {
 			m.updateStats(func(s *VMStats) {
@@ -196,7 +197,7 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 		})
 
 		// Initialize VM with context
-		fmt.Printf("[VM Manager] Initializing new VM with context\n")
+		log.Printf("[VM Manager] Initializing new VM with context\n")
 		m.resetVM(vm, c)
 		return instance, nil
 	}
@@ -251,61 +252,61 @@ func (m *VMManager) createVM() (*goja.Runtime, error) {
 
 // resetVM resets VM state for new request
 func (m *VMManager) resetVM(vm *goja.Runtime, c echo.Context) {
-	fmt.Printf("[VM Reset] Starting resetVM\n")
-	
+	log.Printf("[VM Reset] Starting resetVM\n")
+
 	// Clear any previous global state
 	vm.Set("console", require.Require(vm, "console"))
 
 	// Check if this is a test context by looking for our specific test marker
 	if testMarker := c.Get("_test_context"); testMarker != nil {
-		fmt.Printf("[VM Reset] Test context detected, skipping feature setup\n")
+		log.Printf("[VM Reset] Test context detected, skipping feature setup\n")
 		// This is a test context, skip feature setup
 		return
 	}
-	
-	fmt.Printf("[VM Reset] Initializing VM features for context\n")
+
+	log.Printf("[VM Reset] Initializing VM features for context\n")
 
 	// Add features - these will be called for each request
 	// The actual feature functions should handle the context properly
-	
+
 	// Use optimized session if available, otherwise use regular session
 	if syncsession.Manager != nil {
-		fmt.Printf("[VM Reset] Using optimized session manager\n")
+		log.Printf("[VM Reset] Using optimized session manager\n")
 		AddFeatureSessionOptimized(vm, c)
 	} else {
-		fmt.Printf("[VM Reset] Using regular session\n")
+		log.Printf("[VM Reset] Using regular session\n")
 		AddFeatureSession(vm, c)
 	}
-	
-	fmt.Printf("[VM Reset] Adding other features...\n")
+
+	log.Printf("[VM Reset] Adding other features...\n")
 	AddFeatureUsers(vm, c)
 	AddFeatureToken(vm, c)
 	AddFeatureTemplate(vm, c)
 	AddGlobals(vm, c)
 
 	// Add plugin features
-	fmt.Printf("[VM Reset] Adding plugin features (%d plugins)...\n", len(Plugins))
+	log.Printf("[VM Reset] Adding plugin features (%d plugins)...\n", len(Plugins))
 	for _, p := range Plugins {
 		features := p.AddFeatureJS()
-		fmt.Printf("[VM Reset] Plugin features: %d\n", len(features))
+		log.Printf("[VM Reset] Plugin features: %d\n", len(features))
 		for key, fx := range features {
 			vm.Set(key, fx)
 		}
 	}
-	
+
 	// Verify critical functions are available
-	fmt.Printf("[VM Reset] Verifying critical functions...\n")
+	log.Printf("[VM Reset] Verifying critical functions...\n")
 	criticalFunctions := []string{"get_profile", "set_session", "get_session", "template"}
 	for _, fn := range criticalFunctions {
 		val := vm.Get(fn)
 		if val == nil || val.String() == "undefined" {
-			fmt.Printf("[VM Reset] WARNING: Function '%s' is not defined!\n", fn)
+			log.Printf("[VM Reset] WARNING: Function '%s' is not defined!\n", fn)
 		} else {
-			fmt.Printf("[VM Reset] Function '%s' is defined\n", fn)
+			log.Printf("[VM Reset] Function '%s' is defined\n", fn)
 		}
 	}
-	
-	fmt.Printf("[VM Reset] VM reset completed\n")
+
+	log.Printf("[VM Reset] VM reset completed\n")
 }
 
 // clearVM removes sensitive data from VM
@@ -327,10 +328,10 @@ func (m *VMManager) clearVM(vm *goja.Runtime) {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("[VM Clear] Recovered from panic during cleanup: %v\n", r)
+				log.Printf("[VM Clear] Recovered from panic during cleanup: %v\n", r)
 			}
 		}()
-		
+
 		vm.RunString(`
 			for (var key in this) {
 				if (this.hasOwnProperty(key) && !['console', 'require', 'module', 'exports'].includes(key)) {
@@ -377,7 +378,7 @@ func (m *VMManager) logMetrics() {
 
 	for range ticker.C {
 		stats := m.GetStats()
-		fmt.Printf("[VM Pool Metrics] Created: %d, InUse: %d, Available: %d, TotalUses: %d, Errors: %d\n",
+		log.Printf("[VM Pool Metrics] Created: %d, InUse: %d, Available: %d, TotalUses: %d, Errors: %d\n",
 			stats.Created, stats.InUse, stats.Available, stats.TotalUses, stats.Errors)
 	}
 }

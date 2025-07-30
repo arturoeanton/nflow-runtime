@@ -17,17 +17,11 @@ func (s *StepPlugin) Run(cc *model.Controller, actor *model.Node, c echo.Context
 	currentProcess.State = "run"
 	currentProcess.Killeable = true
 	
-	// Proteger lectura en actor.Data
-	ActorDataMutex.RLock()
+	// Ya no necesitamos mutex porque el actor es una copia
 	name := actor.Data["dromedary_name"].(string)
-	dataCopy := make(map[string]interface{})
-	for k, v := range actor.Data {
-		dataCopy[k] = v
-	}
-	ActorDataMutex.RUnlock()
 	
 	var payloadOut interface{}
-	dataJs, _ := json.Marshal(dataCopy)
+	dataJs, _ := json.Marshal(actor.Data)
 	payloadOut, next, err := Plugins[name].Run(c, vars, &payload, string(dataJs), nil)
 
 	payload = vm.ToValue(payloadOut)

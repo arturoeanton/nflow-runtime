@@ -2,7 +2,8 @@ package engine
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/arturoeanton/nflow-runtime/literals"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
@@ -12,7 +13,7 @@ import (
 
 // addFeatureSessionOptimized usa el SessionManager para mejor performance
 func AddFeatureSessionOptimized(vm *goja.Runtime, c echo.Context) {
-	fmt.Println("[AddFeatureSessionOptimized] Starting to add optimized session features")
+	log.Println("[AddFeatureSessionOptimized] Starting to add optimized session features")
 	sm := syncsession.Manager
 
 	vm.Set("set_session", func(name, k, v string) {
@@ -21,7 +22,26 @@ func AddFeatureSessionOptimized(vm *goja.Runtime, c echo.Context) {
 
 	vm.Set("get_session", func(name, k string) string {
 		val, _ := sm.GetValue(name, k, c)
-		return fmt.Sprint(val)
+		switch v := val.(type) {
+		case string:
+			return v
+		case int:
+			return strconv.Itoa(v)
+		case int64:
+			return strconv.FormatInt(v, 10)
+		case float64:
+			return strconv.FormatFloat(v, 'f', -1, 64)
+		case bool:
+			if v {
+				return "true"
+			}
+			return "false"
+		default:
+			if v == nil {
+				return ""
+			}
+			return "<complex-value>"
+		}
 	})
 
 	vm.Set("open_session", func(name string) *map[string]interface{} {
@@ -67,7 +87,7 @@ func AddFeatureSessionOptimized(vm *goja.Runtime, c echo.Context) {
 	vm.Set("get_profile", func() map[string]string {
 		return GetProfileOptimized(c)
 	})
-	fmt.Println("[AddFeatureSessionOptimized] get_profile function added")
+	log.Println("[AddFeatureSessionOptimized] get_profile function added")
 
 	vm.Set("exist_profile", func() bool {
 		profile, _ := sm.GetValue(literals.AUTH_SESSION, "profile", c)

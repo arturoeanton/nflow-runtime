@@ -19,16 +19,10 @@ func (s *StepPluginCallback) Run(cc *model.Controller, actor *model.Node, c echo
 	currentProcess.State = "run"
 	time.Sleep(1 * time.Second)
 	
-	// Proteger lectura en actor.Data
-	ActorDataMutex.RLock()
+	// Ya no necesitamos mutex porque el actor es una copia
 	name := actor.Data["dromedary_name"].(string)
-	dataCopy := make(map[string]interface{})
-	for k, v := range actor.Data {
-		dataCopy[k] = v
-	}
-	ActorDataMutex.RUnlock()
 	
-	dataJs, _ := json.Marshal(dataCopy)
+	dataJs, _ := json.Marshal(actor.Data)
 
 	output := "output_2"
 	if len(actor.Outputs) == 1 {
