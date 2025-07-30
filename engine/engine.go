@@ -67,7 +67,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			var p map[string]interface{}
 			json.Unmarshal([]byte(data), &p)
 			if _, ok := p["error_exit"]; ok {
-				currentProcess.FlagExit = 1
+				currentProcess.SetFlagExit(1)
 			}
 
 		}(uuid1, p)
@@ -451,7 +451,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		}
 	}()
 
-	if currentProcess.FlagExit == 1 {
+	if currentProcess.GetFlagExit() == 1 {
 		currentProcess.Close()
 		panic("FlagExit")
 	}

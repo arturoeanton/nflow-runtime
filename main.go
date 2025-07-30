@@ -12,6 +12,7 @@ import (
 	"github.com/arturoeanton/nflow-runtime/commons"
 	"github.com/arturoeanton/nflow-runtime/engine"
 	"github.com/arturoeanton/nflow-runtime/literals"
+	"github.com/arturoeanton/nflow-runtime/process"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
@@ -182,6 +183,10 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 	engine.InitializePlaybookRepository(db)
+	
+	// Inicializar ProcessRepository
+	process.InitializeRepository()
+	log.Println("ProcessRepository initialized")
 	
 	// Inicializar Session Manager
 	log.Println("Starting Session Manager cleanup routine...")

@@ -1,6 +1,7 @@
 package process
 
 import (
+	"log"
 	"strings"
 	"sync"
 
@@ -18,107 +19,102 @@ type Process struct {
 	Callback       chan string     `json:"-"`
 	FlagExit       int             `json:"-"`
 	Ws             *websocket.Conn `json:"-"`
+	mu             sync.Mutex      `json:"-"` // Mutex para proteger campos modificables
 }
 
 var (
-	processes         map[string]*Process = make(map[string]*Process)
-	processesMapMutex                     = sync.Mutex{}
+	// repo es la instancia global del repository
+	repo ProcessRepository
 )
+
+// InitializeRepository inicializa el repository de procesos
+func InitializeRepository() {
+	if repo == nil {
+		repo = NewProcessRepository()
+	}
+}
+
+// GetRepository retorna el repository actual
+func GetRepository() ProcessRepository {
+	if repo == nil {
+		InitializeRepository()
+	}
+	return repo
+}
 
 func KillWID(c echo.Context) error {
 	WKill(c.Param("wid"))
-	
-	// Crear copia segura de processes
-	processesMapMutex.Lock()
-	processesCopy := make(map[string]*Process)
-	for k, v := range processes {
-		processesCopy[k] = v
-	}
-	processesMapMutex.Unlock()
-	
-	c.JSON(200, processesCopy)
+
+	// Obtener todos los procesos del repository
+	processes := GetRepository().GetAll()
+
+	c.JSON(200, processes)
 	return nil
 }
 
 func WKill(wid string) {
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	process, ok := processes[wid]
+	process, ok := GetRepository().Get(wid)
 	if ok {
+		// Proteger acceso a campos del proceso
+		process.mu.Lock()
 		if process.Ws != nil {
 			process.Ws.Close()
 		}
 		process.FlagExit = 1
+		process.mu.Unlock()
+		
 		process.SendCallback(`{"error_exit":"exit"}`)
 	}
 }
 
 func WKillAll() {
-	// Primero obtener todas las keys para evitar locks anidados
-	processesMapMutex.Lock()
-	keys := make([]string, 0, len(processes))
-	for key := range processes {
-		keys = append(keys, key)
-	}
-	processesMapMutex.Unlock()
-	
-	// Ahora matar cada proceso
+	// Obtener todas las keys del repository
+	keys := GetRepository().GetAllKeys()
+
+	// Matar cada proceso
 	for _, key := range keys {
 		WKill(key)
 	}
 }
 
 func GetProcesses(c echo.Context) error {
-	processesMapMutex.Lock()
-	processesCopy := make(map[string]*Process)
-	for k, v := range processes {
-		processesCopy[k] = v
-	}
-	processesMapMutex.Unlock()
-	
-	c.JSON(200, processesCopy)
+	processes := GetRepository().GetAll()
+	c.JSON(200, processes)
 	return nil
 }
 
 func GetProcess(c echo.Context) error {
 	wid := c.Param("wid")
-	
-	processesMapMutex.Lock()
-	process := processes[wid]
-	processesMapMutex.Unlock()
-	
+
+	process, exists := GetRepository().Get(wid)
+	if !exists {
+		c.JSON(404, echo.Map{"error": "process not found"})
+		return nil
+	}
+
 	c.JSON(200, process)
 	return nil
 }
 
 func GetProcessPayload(c echo.Context) error {
 	wid := c.Param("wid")
-	
-	processesMapMutex.Lock()
-	process, exists := processes[wid]
-	processesMapMutex.Unlock()
-	
+
+	process, exists := GetRepository().Get(wid)
 	if !exists {
 		c.JSON(404, echo.Map{"error": "process not found"})
 		return nil
 	}
-	
+
 	c.JSON(200, process.Payload)
 	return nil
 }
 
 func GetProcessID(wid string) (*Process, bool) {
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	p, ok := processes[wid]
-	return p, ok
+	return GetRepository().Get(wid)
 }
 
 func SetProcessID(wid string, p *Process) {
-
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	processes[wid] = p
+	GetRepository().Set(wid, p)
 }
 
 func CreateProcess(wid string) *Process {
@@ -129,9 +125,7 @@ func CreateProcess(wid string) *Process {
 		Type:           "",
 		Killeable:      true,
 	}
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	processes[wid] = p
+	GetRepository().Set(wid, p)
 	return p
 }
 
@@ -141,19 +135,17 @@ func CreateProcessWithCallback(wid string) *Process {
 		State:          "wait",
 		UUIDBoxCurrent: "",
 		Type:           "",
-		Callback:       make(chan string),
+		Callback:       make(chan string, 1), // Buffer de 1 para evitar bloqueos
 		Killeable:      true,
 	}
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	processes[wid] = p
+	GetRepository().Set(wid, p)
 	return p
 }
 
 func Ps() string {
 	var b strings.Builder
-	
-	processesMapMutex.Lock()
+
+	processes := GetRepository().GetAll()
 	for key, p := range processes {
 		// Evitar fmt para reducir race conditions
 		b.WriteString("\n")
@@ -168,23 +160,40 @@ func Ps() string {
 			b.WriteString("<nil>")
 		}
 	}
-	processesMapMutex.Unlock()
-	
+
 	return b.String()
 }
 
 func (p *Process) SendCallback(data string) {
 	if p.Callback != nil {
-		p.Callback <- data
+		select {
+		case p.Callback <- data:
+			// Enviado exitosamente
+		default:
+			// No hay receptor, no bloqueamos
+			log.Printf("Warning: Callback channel full or no receiver for process %s", p.UUID)
+		}
 	}
 }
 
 func (p *Process) Close() {
-	processesMapMutex.Lock()
-	defer processesMapMutex.Unlock()
-	delete(processes, p.UUID)
+	GetRepository().Delete(p.UUID)
 }
 
 func (p *Process) Kill() {
 	WKill(p.UUID)
+}
+
+// GetFlagExit devuelve el valor de FlagExit de forma thread-safe
+func (p *Process) GetFlagExit() int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.FlagExit
+}
+
+// SetFlagExit establece el valor de FlagExit de forma thread-safe
+func (p *Process) SetFlagExit(value int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.FlagExit = value
 }
