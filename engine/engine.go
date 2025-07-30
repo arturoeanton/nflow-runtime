@@ -31,7 +31,6 @@ import (
 
 var (
 	registry *require.Registry
-	wg       sync.WaitGroup = sync.WaitGroup{}
 )
 
 // GetRequireRegistry retorna el registry de require
@@ -557,6 +556,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 //   - fork: Whether this is a forked execution
 func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, vars model.Vars, currentProcess *process.Process, payload goja.Value, fork bool) {
 	var err error
+	var wg sync.WaitGroup
 	prevBox := ""
 	if fork {
 		logger.Verbose("Processing fork")
