@@ -103,8 +103,18 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	}()
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, echo.Map{
-			"message": err.Error(),
+		// Verificar si es un error de límite de recursos
+		statusCode := http.StatusInternalServerError
+		errorMessage := err.Error()
+		
+		if IsResourceLimitError(err) {
+			statusCode = http.StatusRequestTimeout
+			errorMessage = "Script execution exceeded resource limits: " + errorMessage
+			log.Printf("Resource limit exceeded in workflow: %v", err)
+		}
+		
+		c.JSON(statusCode, echo.Map{
+			"message": errorMessage,
 			"actor":   actor,
 		})
 		currentProcess.State = "error"

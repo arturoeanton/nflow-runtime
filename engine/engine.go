@@ -31,6 +31,11 @@ var (
 	wg       sync.WaitGroup = sync.WaitGroup{}
 )
 
+// GetRequireRegistry retorna el registry de require
+func GetRequireRegistry() *require.Registry {
+	return registry
+}
+
 // formatDuration formatea milisegundos como string sin usar fmt.Sprintf
 func formatDuration(ms int64) string {
 	return strconv.FormatInt(ms, 10) + "m"
@@ -91,9 +96,18 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		}
 	}(uuid1)
 
-	// Create a fresh VM for each request
+	// Create a fresh VM for each request with security limits
 	// This ensures all features are properly initialized
-	vm := goja.New()
+	limits := GetLimitsFromConfig()
+	sandboxConfig := GetSandboxConfigFromConfig()
+	
+	vm, tracker, err := CreateSecureVM(limits, sandboxConfig)
+	if err != nil {
+		log.Printf("Error creating secure VM: %v", err)
+		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create execution environment"})
+		return nil
+	}
+	defer tracker.Stop()
 	
 	// Initialize VM with all required modules
 	if registry == nil {
@@ -103,7 +117,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	}
 	
 	registry.Enable(vm)
-	console.Enable(vm)
+	// No necesitamos console.Enable porque el sandbox provee su propia versión segura
 	
 	// Add all features
 	if syncsession.Manager != nil {

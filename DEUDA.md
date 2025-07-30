@@ -24,20 +24,20 @@
 - **Impacto**: Dificulta el debugging en producción
 - **Solución propuesta**: Implementar sistema centralizado de manejo de errores
 
-### 2. **Configuración hardcodeada**
-- **Problema**: Algunos valores están hardcodeados (timeouts, límites)
-- **Impacto**: Requiere recompilación para ajustes
-- **Solución propuesta**: Mover todos los valores a configuración
+### 2. ~~**Configuración hardcodeada**~~ ✅ RESUELTO
+- ~~**Problema**: Algunos valores están hardcodeados (timeouts, límites)~~
+- ~~**Impacto**: Requiere recompilación para ajustes~~
+- **Solución implementada**: Límites de recursos y sandboxing ahora configurables en config.toml
 
 ### 3. **Falta de métricas detalladas**
 - **Problema**: Solo hay métricas básicas del VM pool
 - **Impacto**: Visibilidad limitada del comportamiento en producción
-- **Solución propuesta**: Implementar métricas con Prometheus
+- **Solución propuesta**: Implementar métricas con Prometheus (ahora incluir métricas de seguridad)
 
-### 4. **Gestión de memoria en VMs**
-- **Problema**: Las VMs no tienen límites de memoria configurables
-- **Impacto**: Un script malicioso puede consumir toda la memoria
-- **Solución propuesta**: Implementar límites de recursos por VM
+### 4. ~~**Gestión de memoria en VMs**~~ ✅ RESUELTO
+- ~~**Problema**: Las VMs no tienen límites de memoria configurables~~
+- ~~**Impacto**: Un script malicioso puede consumir toda la memoria~~
+- **Solución implementada**: Sistema completo de límites (memoria, tiempo, operaciones) + sandboxing
 
 ## 🟢 Deuda Menor
 
@@ -66,12 +66,26 @@
 | Categoría | Cantidad | Esfuerzo Estimado |
 |-----------|----------|-------------------|
 | Crítica   | 3        | 2-3 semanas       |
-| Media     | 4        | 3-4 semanas       |
+| Media     | 2 (-2)   | 2-3 semanas       |
 | Menor     | 4        | 1-2 semanas       |
 
-## 🎯 Prioridades Recomendadas
+## ✅ Deuda Resuelta Recientemente
+
+1. **Límites de recursos en VMs** - Implementado sistema completo con configuración
+2. **Sandboxing de JavaScript** - Whitelist de funciones y módulos seguros
+3. **Configuración hardcodeada** - Ahora todo configurable en config.toml
+
+## 🎯 Prioridades Recomendadas (Actualizado)
 
 1. **Inmediato**: Arreglar tests de syncsession
-2. **Corto plazo**: Implementar tests de integración y métricas
-3. **Mediano plazo**: Mejorar manejo de errores y configuración
-4. **Largo plazo**: Documentación completa y limpieza de código
+2. **Corto plazo**: 
+   - Tests de integración con workflows reales
+   - Métricas detalladas (incluyendo seguridad)
+   - Rate limiting por usuario
+3. **Mediano plazo**: 
+   - Manejo de errores centralizado
+   - Documentación OpenAPI
+   - Health check endpoint
+4. **Largo plazo**: 
+   - Limpieza de código
+   - Migración completa a inglés

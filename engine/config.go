@@ -24,11 +24,21 @@ type ConfigWorkspace struct {
 
 // VMPoolConfig configures the VM pool
 type VMPoolConfig struct {
-	MaxSize         int  `toml:"max_size"`         // Maximum number of VMs in pool (default: 50)
-	PreloadSize     int  `toml:"preload_size"`     // Number of VMs to preload (default: max_size/2)
-	IdleTimeout     int  `toml:"idle_timeout"`     // Minutes before idle VM is removed (default: 10)
-	CleanupInterval int  `toml:"cleanup_interval"` // Minutes between cleanup runs (default: 5)
-	EnableMetrics   bool `toml:"enable_metrics"`   // Enable VM pool metrics logging
+	MaxSize         int   `toml:"max_size"`         // Maximum number of VMs in pool (default: 50)
+	PreloadSize     int   `toml:"preload_size"`     // Number of VMs to preload (default: max_size/2)
+	IdleTimeout     int   `toml:"idle_timeout"`     // Minutes before idle VM is removed (default: 10)
+	CleanupInterval int   `toml:"cleanup_interval"` // Minutes between cleanup runs (default: 5)
+	EnableMetrics   bool  `toml:"enable_metrics"`   // Enable VM pool metrics logging
+	
+	// Resource limits
+	MaxMemoryMB         int   `toml:"max_memory_mb"`          // Max memory per VM in MB (default: 128)
+	MaxExecutionSeconds int   `toml:"max_execution_seconds"`  // Max execution time in seconds (default: 30)
+	MaxOperations       int64 `toml:"max_operations"`         // Max JS operations (default: 10M)
+	
+	// Sandbox settings
+	EnableFileSystem bool `toml:"enable_filesystem"` // Allow filesystem access (default: false)
+	EnableNetwork    bool `toml:"enable_network"`    // Allow network access (default: false)
+	EnableProcess    bool `toml:"enable_process"`    // Allow process access (default: false)
 }
 
 type DatabaseNflow struct {

@@ -23,6 +23,16 @@ max_size = 50              # Maximum VMs in pool
 preload_size = 25          # VMs to create at startup
 idle_timeout = 10          # Minutes before removing idle VMs
 cleanup_interval = 5       # Minutes between cleanup runs
-enable_metrics = true     # Log pool metrics
+enable_metrics = true      # Log pool metrics
+
+# Resource limits (seguridad)
+max_memory_mb = 128        # Max memory per VM in MB (default: 128)
+max_execution_seconds = 30 # Max execution time in seconds (default: 30)
+max_operations = 10000000  # Max JS operations (default: 10M)
+
+# Sandbox settings (seguridad)
+enable_filesystem = false  # Allow filesystem access (default: false)
+enable_network = false     # Allow network access (default: false) 
+enable_process = false     # Allow process access (default: false)
 
   
