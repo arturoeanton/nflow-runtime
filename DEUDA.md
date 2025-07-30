@@ -41,20 +41,20 @@
 
 ## 🟢 Deuda Menor
 
-### 1. **Logging verboso en producción**
-- **Problema**: Muchos logs de debug activos siempre
-- **Impacto**: Performance y ruido en logs
-- **Solución propuesta**: Implementar niveles de log configurables
+### 1. ~~**Logging verboso en producción**~~ ✅ RESUELTO
+- ~~**Problema**: Muchos logs de debug activos siempre~~
+- ~~**Impacto**: Performance y ruido en logs~~
+- **Solución implementada**: Sistema de logging estructurado con flag -v para modo verbose
 
 ### 2. **Código comentado no eliminado**
 - **Problema**: Hay código comentado en varios archivos
 - **Impacto**: Reduce legibilidad
 - **Solución propuesta**: Limpieza de código
 
-### 3. **Nombres de variables en inglés/español**
-- **Problema**: Mezcla de idiomas en el código
-- **Impacto**: Inconsistencia y confusión
-- **Solución propuesta**: Estandarizar a inglés
+### 3. ~~**Nombres de variables en inglés/español**~~ ✅ RESUELTO
+- ~~**Problema**: Mezcla de idiomas en el código~~
+- ~~**Impacto**: Inconsistencia y confusión~~
+- **Solución implementada**: Todo el código y comentarios ahora están en inglés
 
 ### 4. **Falta de benchmarks automatizados**
 - **Problema**: No hay CI/CD que ejecute benchmarks
@@ -67,13 +67,16 @@
 |-----------|----------|-------------------|
 | Crítica   | 3        | 2-3 semanas       |
 | Media     | 2 (-2)   | 2-3 semanas       |
-| Menor     | 4        | 1-2 semanas       |
+| Menor     | 2 (-2)   | 1 semana          |
 
 ## ✅ Deuda Resuelta Recientemente
 
 1. **Límites de recursos en VMs** - Implementado sistema completo con configuración
 2. **Sandboxing de JavaScript** - Whitelist de funciones y módulos seguros
 3. **Configuración hardcodeada** - Ahora todo configurable en config.toml
+4. **Logging verboso** - Implementado sistema de logging estructurado con modo verbose (-v)
+5. **Código en español** - Todo el código y comentarios traducidos a inglés
+6. **Documentación de código** - Agregada documentación godoc completa
 
 ## 🎯 Prioridades Recomendadas (Actualizado)
 
