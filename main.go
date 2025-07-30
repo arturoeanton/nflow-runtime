@@ -1,8 +1,11 @@
+// Package main implements the nFlow Runtime server.
+// nFlow Runtime executes workflows created in the nFlow visual designer.
+// It provides a REST API for workflow execution with support for
+// JavaScript-based actions, security sandboxing, and resource limits.
 package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,6 +15,7 @@ import (
 	"github.com/arturoeanton/nflow-runtime/commons"
 	"github.com/arturoeanton/nflow-runtime/engine"
 	"github.com/arturoeanton/nflow-runtime/literals"
+	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/arturoeanton/nflow-runtime/process"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/go-redis/redis"
@@ -26,8 +30,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Ya no necesitamos variables globales para playbooks
+var (
+	// verbose enables verbose logging when set via -v flag
+	verbose = flag.Bool("v", false, "Enable verbose logging")
+)
 
+// CheckError handles error responses in a standardized way.
+// It sends a JSON error response if err is not nil and returns true,
+// otherwise returns false. This helps maintain consistent error handling
+// across all API endpoints.
 func CheckError(c echo.Context, err error, code int) bool {
 	if err != nil {
 		c.JSON(code, echo.Map{
@@ -39,18 +50,23 @@ func CheckError(c echo.Context, err error, code int) bool {
 	return false
 }
 
+// run is the main handler for all workflow execution requests.
+// It processes incoming HTTP requests, loads the appropriate workflow,
+// and executes it with the provided parameters. This function handles
+// all HTTP methods (GET, POST, PUT, etc.) and routes them to the
+// corresponding workflow based on the URL path.
 func run(c echo.Context) error {
 	ctx := c.Request().Context()
 	db, err := engine.GetDB()
 	if err != nil {
-		log.Println(err)
+		logger.Error("Failed to get database connection:", err)
 		c.HTML(http.StatusNotFound, literals.NOT_FOUND)
 		return nil
 	}
 
 	conn, err := db.Conn(ctx)
 	if err != nil {
-		log.Println(err)
+		logger.Error("Failed to get database connection:", err)
 		c.HTML(http.StatusNotFound, literals.NOT_FOUND)
 		return nil
 	}
@@ -61,7 +77,7 @@ func run(c echo.Context) error {
 	// Obtener el repository
 	repo := engine.GetPlaybookRepository()
 	if repo == nil {
-		log.Println("PlaybookRepository not initialized")
+		logger.Error("PlaybookRepository not initialized")
 		c.HTML(http.StatusInternalServerError, "Internal Server Error")
 		return nil
 	}
@@ -151,7 +167,7 @@ func run(c echo.Context) error {
 		return nil
 	}
 
-	log.Println("Run endpoint:", endpoint, "nflowNextNodeRun:", runeable)
+	logger.Verbose("Run endpoint:", endpoint, "nflowNextNodeRun:", runeable)
 
 	uuid1 := uuid.New().String()
 	e := runeable.Run(c, vars, nflowNextNodeRun, endpoint, uuid1, nil)
@@ -160,22 +176,30 @@ func run(c echo.Context) error {
 
 func main() {
 	flag.Parse()
+	
+	// Initialize logger with verbose flag
+	logger.Initialize(*verbose)
+	logger.Info("Starting nFlow Runtime")
+	if *verbose {
+		logger.Verbose("Verbose logging enabled")
+	}
+	
 	configPath := "config.toml"
 	
-	// Inicializar ConfigRepository
+	// Initialize ConfigRepository
 	configRepo := engine.GetConfigRepository()
 	
-	// Cargar configuración
+	// Load configuration
 	var config engine.ConfigWorkspace
 	if utils.Exists(configPath) {
 		data, _ := utils.FileToString(configPath)
 		if _, err := toml.Decode(data, &config); err != nil {
-			log.Println(err)
+			logger.Error("Failed to decode config.toml:", err)
 		}
 		configRepo.SetConfig(config)
 	}
 	
-	// Inicializar Redis
+	// Initialize Redis
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.RedisConfig.Host,
 		Password: config.RedisConfig.Password, // no password set
@@ -187,26 +211,26 @@ func main() {
 
 	engine.LoadPlugins()
 	
-	// Inicializar la base de datos y el repository
+	// Initialize database and repository
 	db, err := engine.GetDB()
 	if err != nil {
-		log.Fatal("Failed to initialize database:", err)
+		logger.Fatal("Failed to initialize database:", err)
 	}
 	engine.InitializePlaybookRepository(db)
 	
-	// Inicializar ProcessRepository
+	// Initialize ProcessRepository
 	process.InitializeRepository()
-	log.Println("ProcessRepository initialized")
+	logger.Info("ProcessRepository initialized")
 	
-	// Inicializar Session Manager
-	log.Println("Starting Session Manager cleanup routine...")
+	// Initialize Session Manager
+	logger.Info("Starting Session Manager cleanup routine...")
 	go syncsession.Manager.StartCleanupRoutine()
 	
-	// VM pooling está deshabilitado por ahora
-	// Se crea una nueva VM para cada request para garantizar estabilidad
-	log.Println("VM pooling disabled - creating fresh VM per request for stability")
+	// VM pooling is disabled for now
+	// A fresh VM is created for each request to ensure stability
+	logger.Info("VM pooling disabled - creating fresh VM per request for stability")
 
-	// Crear servidor Echo
+	// Create Echo server
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -214,7 +238,7 @@ func main() {
 
 	e.Any("/*", run)
 
-	// Iniciar servidor
-	log.Println("Starting nFlow Runtime Example on :8080")
+	// Start server
+	logger.Info("Starting nFlow Runtime Example on :8080")
 	e.Logger.Fatal(e.Start(":8080"))
 }

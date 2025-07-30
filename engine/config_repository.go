@@ -1,3 +1,6 @@
+// Package engine provides the core workflow execution engine for nFlow Runtime.
+// This file implements a thread-safe repository pattern for managing global
+// configuration and resources, eliminating race conditions.
 package engine
 
 import (
@@ -7,7 +10,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-// ConfigRepository maneja el acceso thread-safe a la configuración y recursos globales
+// ConfigRepository manages thread-safe access to configuration and global resources
 type ConfigRepository interface {
 	GetConfig() *ConfigWorkspace
 	SetConfig(config ConfigWorkspace)
@@ -17,7 +20,7 @@ type ConfigRepository interface {
 	SetDB(database *sql.DB)
 }
 
-// configRepository implementación concreta del repository
+// configRepository concrete implementation of the repository
 type configRepository struct {
 	mu          sync.RWMutex
 	config      ConfigWorkspace
@@ -31,7 +34,7 @@ var (
 	configRepoOnce sync.Once
 )
 
-// GetConfigRepository retorna la instancia singleton del repository
+// GetConfigRepository returns the singleton instance of the repository
 func GetConfigRepository() ConfigRepository {
 	configRepoOnce.Do(func() {
 		configRepo = &configRepository{}
@@ -39,37 +42,37 @@ func GetConfigRepository() ConfigRepository {
 	return configRepo
 }
 
-// GetConfig obtiene la configuración de forma thread-safe
+// GetConfig retrieves the configuration in a thread-safe manner
 func (r *configRepository) GetConfig() *ConfigWorkspace {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	// Retornamos una copia para evitar modificaciones externas
+	// Return a copy to avoid external modifications
 	configCopy := r.config
 	return &configCopy
 }
 
-// SetConfig establece la configuración de forma thread-safe
+// SetConfig sets the configuration in a thread-safe manner
 func (r *configRepository) SetConfig(config ConfigWorkspace) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.config = config
 }
 
-// GetRedisClient obtiene el cliente Redis de forma thread-safe
+// GetRedisClient retrieves the Redis client in a thread-safe manner
 func (r *configRepository) GetRedisClient() *redis.Client {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.redisClient
 }
 
-// SetRedisClient establece el cliente Redis de forma thread-safe
+// SetRedisClient sets the Redis client in a thread-safe manner
 func (r *configRepository) SetRedisClient(client *redis.Client) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.redisClient = client
 }
 
-// GetDB obtiene la conexión a la base de datos, creándola si es necesario
+// GetDB retrieves the database connection, creating it if necessary
 func (r *configRepository) GetDB() (*sql.DB, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -85,21 +88,21 @@ func (r *configRepository) GetDB() (*sql.DB, error) {
 	return r.db, nil
 }
 
-// SetDB establece la conexión a la base de datos
+// SetDB sets the database connection
 func (r *configRepository) SetDB(database *sql.DB) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.db = database
 }
 
-// Helper functions para mantener compatibilidad
+// Helper functions to maintain compatibility
 
-// GetConfig retorna la configuración actual (helper para compatibilidad)
+// GetConfig returns the current configuration (compatibility helper)
 func GetConfig() *ConfigWorkspace {
 	return GetConfigRepository().GetConfig()
 }
 
-// GetRedisClient retorna el cliente Redis actual (helper para compatibilidad)
+// GetRedisClient returns the current Redis client (compatibility helper)
 func GetRedisClient() *redis.Client {
 	return GetConfigRepository().GetRedisClient()
 }

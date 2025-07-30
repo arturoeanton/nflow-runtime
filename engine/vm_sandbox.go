@@ -1,13 +1,17 @@
+// Package engine provides the core workflow execution engine for nFlow Runtime.
+// This file implements JavaScript sandboxing to restrict dangerous operations
+// and provide a secure execution environment for user scripts.
 package engine
 
 import (
 	"errors"
-	"log"
+
+	"github.com/arturoeanton/nflow-runtime/logger"
 
 	"github.com/dop251/goja"
 )
 
-// SandboxConfig define la configuración del sandbox
+// SandboxConfig defines the sandbox configuration
 type SandboxConfig struct {
 	AllowedGlobals   map[string]bool
 	AllowedModules   map[string]bool
@@ -17,7 +21,7 @@ type SandboxConfig struct {
 	EnableProcess    bool
 }
 
-// DefaultSandboxConfig retorna una configuración segura por defecto
+// DefaultSandboxConfig returns a secure default configuration
 func DefaultSandboxConfig() SandboxConfig {
 	return SandboxConfig{
 		AllowedGlobals: map[string]bool{
@@ -51,7 +55,7 @@ func DefaultSandboxConfig() SandboxConfig {
 			"url":         true,
 			"util":        true,
 			"path":        true,
-			// Bloqueados por defecto: fs, net, child_process, cluster, dgram, dns, http, https, os, process, tls
+			// Blocked by default: fs, net, child_process, cluster, dgram, dns, http, https, os, process, tls
 		},
 		BlockedFunctions: []string{
 			"eval",
@@ -65,13 +69,13 @@ func DefaultSandboxConfig() SandboxConfig {
 	}
 }
 
-// VMSandbox gestiona el sandbox de una VM
+// VMSandbox manages the sandbox for a VM
 type VMSandbox struct {
 	config SandboxConfig
 	vm     *goja.Runtime
 }
 
-// NewVMSandbox crea un nuevo sandbox
+// NewVMSandbox creates a new sandbox
 func NewVMSandbox(vm *goja.Runtime, config SandboxConfig) *VMSandbox {
 	return &VMSandbox{
 		config: config,
@@ -79,23 +83,23 @@ func NewVMSandbox(vm *goja.Runtime, config SandboxConfig) *VMSandbox {
 	}
 }
 
-// Apply aplica las restricciones del sandbox a la VM
+// Apply applies sandbox restrictions to the VM
 func (s *VMSandbox) Apply() error {
-	// Remover funciones peligrosas
+	// Remove dangerous functions
 	for _, fn := range s.config.BlockedFunctions {
 		s.vm.Set(fn, goja.Undefined())
 	}
 	
-	// Configurar require seguro
+	// Configure secure require
 	s.vm.Set("require", s.sandboxedRequire)
 	
-	// Remover globales no permitidos
+	// Remove disallowed globals
 	s.removeDisallowedGlobals()
 	
-	// Agregar console seguro
+	// Add secure console
 	s.addSafeConsole()
 	
-	// Bloquear acceso a process si está deshabilitado
+	// Block access to process if disabled
 	if !s.config.EnableProcess {
 		s.vm.Set("process", goja.Undefined())
 	}
@@ -103,7 +107,7 @@ func (s *VMSandbox) Apply() error {
 	return nil
 }
 
-// sandboxedRequire es una versión segura de require
+// sandboxedRequire is a secure version of require
 func (s *VMSandbox) sandboxedRequire(call goja.FunctionCall) goja.Value {
 	if len(call.Arguments) == 0 {
 		panic(s.vm.NewTypeError("require expects 1 argument"))
@@ -111,43 +115,43 @@ func (s *VMSandbox) sandboxedRequire(call goja.FunctionCall) goja.Value {
 	
 	moduleName := call.Arguments[0].String()
 	
-	// Verificar si el módulo está permitido
+	// Check if module is allowed
 	if !s.config.AllowedModules[moduleName] {
 		panic(s.vm.NewGoError(errors.New("module '" + moduleName + "' is not allowed in sandbox")))
 	}
 	
-	// Si llegamos aquí, permitir el require normal
-	// Nota: En producción, deberías interceptar y proveer versiones seguras de los módulos
-	// Por ahora, simplemente retornamos un objeto vacío para módulos permitidos
+	// If we get here, allow normal require
+	// Note: In production, you should intercept and provide secure versions of modules
+	// For now, we simply return an empty object for allowed modules
 	return s.vm.NewObject()
 }
 
-// removeDisallowedGlobals remueve globales no permitidos
+// removeDisallowedGlobals removes disallowed globals
 func (s *VMSandbox) removeDisallowedGlobals() {
 	globalObj := s.vm.GlobalObject()
 	
-	// Obtener todas las propiedades del objeto global
+	// Get all properties of the global object
 	for _, key := range globalObj.Keys() {
 		if !s.config.AllowedGlobals[key] {
-			// Si no está en la whitelist, remover
+			// If not in whitelist, remove
 			globalObj.Delete(key)
 		}
 	}
 }
 
-// addSafeConsole agrega una versión segura de console
+// addSafeConsole adds a secure version of console
 func (s *VMSandbox) addSafeConsole() {
 	console := s.vm.NewObject()
 	
-	// Log seguro que no expone información sensible
+	// Secure log that doesn't expose sensitive information
 	console.Set("log", func(args ...interface{}) {
-		// Sanitizar output antes de loguear
+		// Sanitize output before logging
 		safeArgs := make([]interface{}, len(args)+1)
 		safeArgs[0] = "[Sandbox]"
 		for i, arg := range args {
 			safeArgs[i+1] = s.sanitizeOutput(arg)
 		}
-		log.Println(safeArgs...)
+		logger.Info(safeArgs...)
 	})
 	
 	console.Set("error", func(args ...interface{}) {
@@ -156,7 +160,7 @@ func (s *VMSandbox) addSafeConsole() {
 		for i, arg := range args {
 			safeArgs[i+1] = s.sanitizeOutput(arg)
 		}
-		log.Println(safeArgs...)
+		logger.Info(safeArgs...)
 	})
 	
 	console.Set("warn", func(args ...interface{}) {
@@ -165,7 +169,7 @@ func (s *VMSandbox) addSafeConsole() {
 		for i, arg := range args {
 			safeArgs[i+1] = s.sanitizeOutput(arg)
 		}
-		log.Println(safeArgs...)
+		logger.Info(safeArgs...)
 	})
 	
 	console.Set("info", func(args ...interface{}) {
@@ -174,37 +178,37 @@ func (s *VMSandbox) addSafeConsole() {
 		for i, arg := range args {
 			safeArgs[i+1] = s.sanitizeOutput(arg)
 		}
-		log.Println(safeArgs...)
+		logger.Info(safeArgs...)
 	})
 	
 	s.vm.Set("console", console)
 }
 
-// sanitizeOutput sanitiza el output para evitar leaks de información
+// sanitizeOutput sanitizes output to prevent information leaks
 func (s *VMSandbox) sanitizeOutput(v interface{}) interface{} {
 	switch val := v.(type) {
 	case string:
-		// Remover paths del sistema
+		// Remove system paths
 		if len(val) > 1000 {
 			return val[:1000] + "...(truncated)"
 		}
 		return val
 	case error:
-		// No exponer stack traces completos
+		// Don't expose full stack traces
 		return "Error: " + val.Error()
 	default:
 		return v
 	}
 }
 
-// CreateSecureVM crea una VM con sandbox y límites aplicados
+// CreateSecureVM creates a VM with sandbox and limits applied
 func CreateSecureVM(limits VMResourceLimits, sandboxConfig SandboxConfig) (*goja.Runtime, *VMResourceTracker, error) {
 	vm := goja.New()
 	
-	// Aplicar límites de recursos
+	// Apply resource limits
 	tracker := SetupVMWithLimits(vm, limits)
 	
-	// Aplicar sandbox
+	// Apply sandbox
 	sandbox := NewVMSandbox(vm, sandboxConfig)
 	if err := sandbox.Apply(); err != nil {
 		tracker.Stop()
@@ -214,13 +218,13 @@ func CreateSecureVM(limits VMResourceLimits, sandboxConfig SandboxConfig) (*goja
 	return vm, tracker, nil
 }
 
-// GetSandboxConfigFromConfig obtiene la configuración del sandbox desde config
+// GetSandboxConfigFromConfig gets sandbox configuration from config
 func GetSandboxConfigFromConfig() SandboxConfig {
 	config := GetConfig()
 	sandboxConfig := DefaultSandboxConfig()
 	
-	// Aquí podrías sobrescribir con valores de configuración
-	// Por ejemplo:
+	// Here you could override with configuration values
+	// For example:
 	if config.VMPoolConfig.EnableFileSystem {
 		sandboxConfig.EnableFileSystem = true
 		sandboxConfig.AllowedModules["fs"] = true

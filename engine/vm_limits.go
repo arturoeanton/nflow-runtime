@@ -1,3 +1,6 @@
+// Package engine provides the core workflow execution engine for nFlow Runtime.
+// This file contains resource limit management for JavaScript VMs to prevent
+// resource exhaustion attacks and ensure stable operation.
 package engine
 
 import (
@@ -10,27 +13,27 @@ import (
 	"github.com/dop251/goja"
 )
 
-// VMResourceLimits define los límites de recursos para una VM
+// VMResourceLimits defines resource limits for a VM
 type VMResourceLimits struct {
-	MaxMemoryBytes    int64         // Máximo de memoria en bytes (0 = sin límite)
-	MaxExecutionTime  time.Duration // Tiempo máximo de ejecución (0 = sin límite)
-	MaxOperations     int64         // Máximo de operaciones JS (0 = sin límite)
-	MaxStackDepth     int           // Profundidad máxima del stack (0 = sin límite)
-	CheckInterval     int64         // Cada cuántas operaciones verificar límites
+	MaxMemoryBytes    int64         // Maximum memory in bytes (0 = no limit)
+	MaxExecutionTime  time.Duration // Maximum execution time (0 = no limit)
+	MaxOperations     int64         // Maximum JS operations (0 = no limit)
+	MaxStackDepth     int           // Maximum stack depth (0 = no limit)
+	CheckInterval     int64         // How many operations between limit checks
 }
 
-// DefaultVMResourceLimits retorna límites por defecto seguros
+// DefaultVMResourceLimits returns safe default limits
 func DefaultVMResourceLimits() VMResourceLimits {
 	return VMResourceLimits{
 		MaxMemoryBytes:   128 * 1024 * 1024, // 128MB
-		MaxExecutionTime: 30 * time.Second,  // 30 segundos
-		MaxOperations:    10_000_000,        // 10M operaciones
-		MaxStackDepth:    1000,              // 1000 niveles de recursión
-		CheckInterval:    1000,              // Verificar cada 1000 operaciones
+		MaxExecutionTime: 30 * time.Second,  // 30 seconds
+		MaxOperations:    10_000_000,        // 10M operations
+		MaxStackDepth:    1000,              // 1000 recursion levels
+		CheckInterval:    1000,              // Check every 1000 operations
 	}
 }
 
-// VMResourceTracker rastrea el uso de recursos de una VM
+// VMResourceTracker tracks resource usage of a VM
 type VMResourceTracker struct {
 	startTime        time.Time
 	operationCount   int64
@@ -42,7 +45,7 @@ type VMResourceTracker struct {
 	interrupted      atomic.Bool
 }
 
-// Errores de límites
+// Limit errors
 var (
 	ErrMemoryLimitExceeded    = errors.New("memory limit exceeded")
 	ErrTimeLimitExceeded      = errors.New("execution time limit exceeded")
@@ -50,7 +53,7 @@ var (
 	ErrExecutionInterrupted   = errors.New("execution interrupted")
 )
 
-// IsResourceLimitError verifica si un error es por límite de recursos
+// IsResourceLimitError checks if an error is due to resource limits
 func IsResourceLimitError(err error) bool {
 	if err == nil {
 		return false
@@ -63,11 +66,11 @@ func IsResourceLimitError(err error) bool {
 		errStr == "RuntimeError: execution terminated"
 }
 
-// NewVMResourceTracker crea un nuevo tracker de recursos
+// NewVMResourceTracker creates a new resource tracker
 func NewVMResourceTracker(limits VMResourceLimits) *VMResourceTracker {
 	ctx, cancel := context.WithCancel(context.Background())
 	
-	// Capturar memoria baseline
+	// Capture baseline memory
 	runtime.GC()
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -81,7 +84,7 @@ func NewVMResourceTracker(limits VMResourceLimits) *VMResourceTracker {
 		memoryBaseline: m.Alloc,
 	}
 	
-	// Si hay límite de tiempo, configurar timeout
+	// If there's a time limit, configure timeout
 	if limits.MaxExecutionTime > 0 {
 		go tracker.watchTimeout()
 	}
@@ -89,19 +92,19 @@ func NewVMResourceTracker(limits VMResourceLimits) *VMResourceTracker {
 	return tracker
 }
 
-// SetupVMWithLimits configura una VM con límites de recursos
+// SetupVMWithLimits configures a VM with resource limits
 func SetupVMWithLimits(vm *goja.Runtime, limits VMResourceLimits) *VMResourceTracker {
 	tracker := NewVMResourceTracker(limits)
 	
-	// Iniciar goroutine para verificar límites periódicamente
+	// Start goroutine to check limits periodically
 	go tracker.monitorLimits(vm)
 	
 	return tracker
 }
 
-// monitorLimits monitorea los límites e interrumpe la VM si es necesario
+// monitorLimits monitors limits and interrupts the VM if necessary
 func (t *VMResourceTracker) monitorLimits(vm *goja.Runtime) {
-	ticker := time.NewTicker(10 * time.Millisecond) // Verificar cada 10ms
+	ticker := time.NewTicker(10 * time.Millisecond) // Check every 10ms
 	defer ticker.Stop()
 	
 	for {
@@ -117,25 +120,25 @@ func (t *VMResourceTracker) monitorLimits(vm *goja.Runtime) {
 	}
 }
 
-// CheckLimits verifica si se han excedido los límites
+// CheckLimits checks if limits have been exceeded
 func (t *VMResourceTracker) CheckLimits() bool {
-	// Si ya fue interrumpido, retornar inmediatamente
+	// If already interrupted, return immediately
 	if t.interrupted.Load() {
 		return true
 	}
 	
-	// Incrementar contador de operaciones
+	// Increment operation counter
 	ops := atomic.AddInt64(&t.operationCount, 1)
 	
-	// Verificar límite de operaciones inmediatamente si se excedió
+	// Check operation limit immediately if exceeded
 	if t.limits.MaxOperations > 0 && ops > t.limits.MaxOperations {
 		t.interrupted.Store(true)
 		return true
 	}
 	
-	// Solo verificar memoria cada N operaciones para evitar overhead
+	// Only check memory every N operations to avoid overhead
 	if ops%t.checkInterval == 0 {
-		// Verificar límite de memoria
+		// Check memory limit
 		if t.limits.MaxMemoryBytes > 0 {
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
@@ -148,7 +151,7 @@ func (t *VMResourceTracker) CheckLimits() bool {
 		}
 	}
 	
-	// Verificar si el tiempo se excedió
+	// Check if time exceeded
 	if t.limits.MaxExecutionTime > 0 {
 		if time.Since(t.startTime) > t.limits.MaxExecutionTime {
 			t.interrupted.Store(true)
@@ -156,7 +159,7 @@ func (t *VMResourceTracker) CheckLimits() bool {
 		}
 	}
 	
-	// Verificar si fue cancelado
+	// Check if cancelled
 	select {
 	case <-t.ctx.Done():
 		t.interrupted.Store(true)
@@ -166,7 +169,7 @@ func (t *VMResourceTracker) CheckLimits() bool {
 	}
 }
 
-// watchTimeout monitorea el tiempo de ejecución
+// watchTimeout monitors execution time
 func (t *VMResourceTracker) watchTimeout() {
 	timer := time.NewTimer(t.limits.MaxExecutionTime)
 	defer timer.Stop()
@@ -180,7 +183,7 @@ func (t *VMResourceTracker) watchTimeout() {
 	}
 }
 
-// GetStats retorna estadísticas actuales
+// GetStats returns current statistics
 func (t *VMResourceTracker) GetStats() VMResourceStats {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -193,12 +196,12 @@ func (t *VMResourceTracker) GetStats() VMResourceStats {
 	}
 }
 
-// Stop detiene el tracker y libera recursos
+// Stop stops the tracker and releases resources
 func (t *VMResourceTracker) Stop() {
 	t.cancel()
 }
 
-// VMResourceStats contiene estadísticas de uso
+// VMResourceStats contains usage statistics
 type VMResourceStats struct {
 	ElapsedTime    time.Duration
 	OperationCount int64
@@ -206,12 +209,12 @@ type VMResourceStats struct {
 	Interrupted    bool
 }
 
-// GetLimitsFromConfig obtiene límites desde la configuración
+// GetLimitsFromConfig gets limits from configuration
 func GetLimitsFromConfig() VMResourceLimits {
 	config := GetConfig()
 	limits := DefaultVMResourceLimits()
 	
-	// Sobrescribir con valores de configuración si existen
+	// Override with configuration values if they exist
 	if config.VMPoolConfig.MaxMemoryMB > 0 {
 		limits.MaxMemoryBytes = int64(config.VMPoolConfig.MaxMemoryMB) * 1024 * 1024
 	}

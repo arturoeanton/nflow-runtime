@@ -5,7 +5,9 @@ import (
 	"log"
 )
 
-// ConfigWorkspace is ...
+// ConfigWorkspace represents the complete configuration structure for nFlow Runtime.
+// It is loaded from the config.toml file and contains all settings for databases,
+// services, plugins, and security configurations.
 type ConfigWorkspace struct {
 	ConfigBasedate       ConfigBasedate    `toml:"database"`
 	ConfigMail           ConfigMail        `toml:"mail"`
@@ -22,7 +24,8 @@ type ConfigWorkspace struct {
 	VMPoolConfig         VMPoolConfig      `toml:"vm_pool"`
 }
 
-// VMPoolConfig configures the VM pool
+// VMPoolConfig configures the JavaScript VM pool for workflow execution.
+// It includes settings for pool size, resource limits, and security sandboxing.
 type VMPoolConfig struct {
 	MaxSize         int   `toml:"max_size"`         // Maximum number of VMs in pool (default: 50)
 	PreloadSize     int   `toml:"preload_size"`     // Number of VMs to preload (default: max_size/2)

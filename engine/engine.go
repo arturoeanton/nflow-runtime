@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/arturoeanton/nflow-runtime/logger"
 	"sync"
 	"time"
 
@@ -85,8 +86,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		p.Close()
 	}()
 
+	// Set workflow ID header for tracking. This anonymous function handles
+	// concurrency differently based on context type to avoid race conditions.
+	// IsolatedContext doesn't need mutex protection as it doesn't share state.
 	func(uuid1 string) {
-		// Solo usar mutex si no es un contexto aislado
+		// Only use mutex if not an isolated context
 		if _, isIsolated := c.(*IsolatedContext); !isIsolated {
 			EchoSessionsMutex.Lock()
 			defer EchoSessionsMutex.Unlock()
@@ -103,13 +107,15 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	
 	vm, tracker, err := CreateSecureVM(limits, sandboxConfig)
 	if err != nil {
-		log.Printf("Error creating secure VM: %v", err)
+		logger.Errorf("Error creating secure VM: %v", err)
 		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create execution environment"})
 		return nil
 	}
 	defer tracker.Stop()
 	
-	// Initialize VM with all required modules
+	// Initialize VM with all required modules. The registry is a singleton
+	// that provides Node.js-compatible modules to the JavaScript environment.
+	// This includes console and util modules for basic functionality.
 	if registry == nil {
 		registry = new(require.Registry)
 		registry.RegisterNativeModule("console", console.Require)
@@ -117,9 +123,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	}
 	
 	registry.Enable(vm)
-	// No necesitamos console.Enable porque el sandbox provee su propia versión segura
+	// We don't need console.Enable because the sandbox provides its own secure version
 	
-	// Add all features
+	// Add all features to the VM. These features provide various APIs
+	// that workflows can use. The optimized session version uses the
+	// syncsession.Manager for better performance and thread safety.
 	if syncsession.Manager != nil {
 		AddFeatureSessionOptimized(vm, c)
 	} else {
@@ -131,36 +139,46 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	AddFeatureTemplate(vm, c)
 	AddGlobals(vm, c)
 	
-	// Add plugin features
+	// Add plugin features to the VM. Plugins can extend the JavaScript
+	// environment with custom functions and objects. Each plugin returns
+	// a map of feature names to their implementations.
 	for _, p := range Plugins {
 		for key, fx := range p.AddFeatureJS() {
 			vm.Set(key, fx)
 		}
 	}
 
-	// Set endpoint
+	// Set endpoint and request data in the VM. These global variables
+	// are accessible to all JavaScript code in the workflow.
 	vm.Set("nflow_endpoint", endpoint)
 
+	// Parse and expose POST data to the workflow
 	postData := make(map[string]interface{})
 	func() {
 		c.Bind(&postData)
 		vm.Set("post_data", postData)
 	}()
 
+	// Set path variables extracted from the URL
 	vm.Set("vars", vars)
 	vm.Set("path_vars", vars)
 
+	// Set workflow instance ID for tracking
 	vm.Set("wid", uuid1)
 
+	// Provide workflow kill function to allow workflows to terminate other workflows
 	vm.Set("wkill", func(wid string) {
 		process.WKill(wid)
 	})
 
+	// Get the playbook and determine the starting node. If no specific node
+	// is requested (next == ""), start from the beginning of the workflow.
+	// The playbook is a map of node IDs to their configurations.
 	pb := *cc.Playbook
 	nodeAuth := pb[next]
 	if next == "" {
 		ActorDataMutex.RLock()
-		log.Printf("Start Data: %+v", cc.Start.Data)
+		logger.Verbosef("Start Data: %+v", cc.Start.Data)
 		ActorDataMutex.RUnlock()
 		if len(cc.Start.Outputs["output_1"].Connections) == 0 {
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "No output connections found for the start node."})
@@ -170,7 +188,8 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		nodeAuth = cc.Start
 	}
 
-	// Exceute auth of default.js?
+	// Check if authentication is required for this node. The nflow_auth flag
+	// in node data determines if authentication should be enforced.
 	ActorDataMutex.RLock()
 	flag, hasAuthFlag := nodeAuth.Data["nflow_auth"]
 	ActorDataMutex.RUnlock()
@@ -186,10 +205,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			}
 		}
 		if flagString != "false" {
-			//execute auth of default.js
+			// Execute authentication from default.js. This retrieves the user's
+			// profile from the session and makes it available to the workflow.
 			var profile interface{}
 			func() {
-				// Si es un contexto aislado, no acceder a sesión real
+				// If it's an isolated context, don't access real session
 				if _, isIsolated := c.(*IsolatedContext); isIsolated {
 					profile = nil
 					return
@@ -200,7 +220,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 				
 				auth_session, err := session.Get("auth-session", c)
 				if err != nil {
-					log.Println(err)
+					logger.Error("Error in start data:", err)
 					profile = nil
 					return
 				}
@@ -218,7 +238,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			ctx := c.Request().Context()
 			db, err := GetDB()
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 				return nil
 			}
 			conn, err := db.Conn(ctx)
@@ -245,7 +265,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			}
 
 			next = vm.Get("next").String()
-			log.Println("Next node:", next)
+			logger.Verbose("Next node:", next)
 			if next == "login" {
 				return c.Redirect(http.StatusTemporaryRedirect, "/nflow_login")
 			}
@@ -268,27 +288,30 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	var logId string
 	var orderBox int
 
+	// Generate log ID and order box values. This anonymous function handles
+	// the difference between isolated contexts (used in concurrent execution)
+	// and regular contexts that access session data.
 	func() {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 			}
 		}()
 
-		// Si es un contexto aislado, generar valores por defecto
+		// If it's an isolated context, generate default values
 		if _, isIsolated := c.(*IsolatedContext); isIsolated {
 			logId = uuid.New().String()
 			orderBox = 1
 			return
 		}
 
-		// Para contextos normales, usar mutex
+		// For normal contexts, use mutex
 		EchoSessionsMutex.Lock()
 		defer EchoSessionsMutex.Unlock()
 
 		log_session, err := session.Get("log-session", c)
 		if err != nil {
-			log.Println(err)
+			logger.Error("Error processing node:", err)
 			// En caso de error, usar valores por defecto
 			logId = uuid.New().String()
 			orderBox = 1
@@ -341,7 +364,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		func() {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Println(err)
+					logger.Error("Error in start data:", err)
 				}
 			}()
 			ip = c.Request().RemoteAddr
@@ -361,7 +384,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 
 			db, err := GetDB()
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 				return
 			}
 			ctx := context.Background()
@@ -391,7 +414,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 
 			)
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 			}
 
 		}(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host, diff, orderBox, jsonPayload)
@@ -403,7 +426,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 
 			defer func() {
 				if err := recover(); err != nil {
-					log.Println(err)
+					logger.Error("Error in start data:", err)
 				}
 			}()
 
@@ -411,7 +434,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 			ctx := context.Background()
 			db, err := GetDB()
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 				return
 			}
 			conn, err := db.Conn(ctx)
@@ -454,7 +477,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 			code += "\nlog()"
 			_, err = logVM.RunString(code)
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 			}
 
 		}(logProfile, actor, boxId, boxName, boxType, connectionNext, diff)
@@ -463,8 +486,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	defer func() {
 		err := recover()
 		if err != nil {
-			log.Println(err)
-			log.Println("step_00010 ****", err)
+			logger.Error("Error processing node:", err)
+			logger.Error("step_00010 error:", err)
 		}
 	}()
 
@@ -478,7 +501,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	// Crear una copia profunda del actor para evitar race conditions
 	actor, err := originalActor.DeepCopy()
 	if err != nil {
-		log.Printf("Error creating actor copy: %v", err)
+		logger.Errorf("Error creating actor copy: %v", err)
 		// Si falla la copia, usar el original con mutex
 		actor = originalActor
 	}
@@ -487,7 +510,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	currentProcess.UUIDBoxCurrent = next
 	boxId = next
 
-	// Ya no necesitamos mutex si tenemos una copia
+	// Extract node name if available. Since we have a copy of the actor,
+	// we don't need mutex protection for accessing its data.
 	if nameBox, ok := actor.Data["name_box"]; ok {
 		boxName = nameBox.(string)
 		sbLog.WriteString("- NameBox:" + boxName)
@@ -499,6 +523,8 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	}
 	boxType = currentProcess.Type
 
+	// Execute the node based on its type. Each node type has a specific
+	// implementation in the Steps registry that defines how it should be executed.
 	sbLog.WriteString(" - Type:" + currentProcess.Type)
 	if s, ok := Steps[currentProcess.Type]; ok {
 		connectionNext, payload, err = s.Run(cc, actor, c, vm, connectionNext, vars, currentProcess, payload)
@@ -523,14 +549,27 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	return connectionNext, payload, nil
 }
 
+// Execute runs the main workflow execution loop. It processes nodes sequentially,
+// following the connections between them until there are no more nodes to execute.
+// The function handles forking for parallel execution and maintains the workflow state.
+// Parameters:
+//   - cc: The controller containing the workflow definition
+//   - c: Echo context for HTTP request/response
+//   - vm: JavaScript VM for executing node code
+//   - next: ID of the next node to execute
+//   - vars: Variables extracted from the URL path
+//   - currentProcess: Current process instance tracking execution
+//   - payload: Data passed between nodes
+//   - fork: Whether this is a forked execution
 func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, vars model.Vars, currentProcess *process.Process, payload goja.Value, fork bool) {
 	var err error
 	prevBox := ""
 	if fork {
-		log.Println("fork")
+		logger.Verbose("Processing fork")
 	}
+	// Main execution loop - continues until there are no more nodes to process
 	for next != "" {
-
+		// Set current and previous node IDs in the VM for use in node scripts
 		vm.Set("current_box", next)
 		vm.Set("prev_box", prevBox)
 
@@ -558,7 +597,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 				var s *sessions.Session
 				s, err = session.Get("nflow_form", c)
 				if err != nil {
-					log.Println(err)
+					logger.Error("Error in start data:", err)
 				} else if s != nil && s.Values != nil {
 					for k, v := range s.Values {
 						if k == "break" {
@@ -582,7 +621,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 			break
 		}
 		if fork {
-			log.Println("fork")
+			logger.Verbose("Processing fork")
 		}
 
 		// cut
@@ -602,7 +641,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 					
 					s, err := session.Get("nflow_form", c)
 					if err != nil {
-						log.Println(err)
+						logger.Error("Error in start data:", err)
 						return
 					}
 					for k, v := range rawPayload {
@@ -642,7 +681,7 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 			
 			s, err := session.Get("nflow_form", c)
 			if err != nil {
-				log.Println(err)
+				logger.Error("Error processing node:", err)
 				return
 			}
 			s.Values = make(map[interface{}]interface{})
