@@ -46,6 +46,8 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 		scriptName, hasScript := actor.Data["script"]
 
 		if hasScript {
+			//*** if actor has a script, we load it from the database                       *****
+			//*** we can load other places too example: filesystem, mongo,  etc.            *****
 			config := GetConfig()
 			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetModuleByName, scriptName.(string))
 			var form string

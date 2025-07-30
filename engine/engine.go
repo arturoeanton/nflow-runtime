@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+	"os"
 	"strings"
 
-	"github.com/arturoeanton/nflow-runtime/logger"
 	"sync"
 	"time"
+
+	"github.com/arturoeanton/gocommons/utils"
+	"github.com/arturoeanton/nflow-runtime/logger"
 
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
@@ -35,11 +37,6 @@ var (
 // GetRequireRegistry retorna el registry de require
 func GetRequireRegistry() *require.Registry {
 	return registry
-}
-
-// formatDuration formatea milisegundos como string sin usar fmt.Sprintf
-func formatDuration(ms int64) string {
-	return strconv.FormatInt(ms, 10) + "m"
 }
 
 func init() {
@@ -235,26 +232,22 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			vm.Set("auth_flag", flagString)
 			vm.Set("url_access", c.Request().URL.Path)
 
-			ctx := c.Request().Context()
-			db, err := GetDB()
-			if err != nil {
-				logger.Error("Error processing node:", err)
-				return nil
+			code := ""
+			triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
+			if triggersFold == "" {
+				triggersFold = "triggers/"
 			}
-			conn, err := db.Conn(ctx)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-				return nil
-			}
-			defer conn.Close()
-			config := GetConfig()
-			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetApp, "app")
-			var code string
-			var jsonCode string
-			err = row.Scan(&jsonCode, &code)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
-				return nil
+			if utils.Exists(triggersFold + "auth.js") {
+				data, err := utils.FileToString(triggersFold + "auth.js")
+				if err != nil {
+					logger.Error("Error reading auth.js:", err)
+					return nil
+				}
+				if data == "" {
+					logger.Error("auth.js is empty")
+					return nil
+				}
+				code += data
 			}
 
 			code += "\nauth()"
@@ -431,23 +424,24 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 			}()
 
 			//log.Printf("%s - time: %v", sbLog.String(), diff)
-			ctx := context.Background()
-			db, err := GetDB()
-			if err != nil {
-				logger.Error("Error processing node:", err)
-				return
+			code := ""
+			triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
+			if triggersFold == "" {
+				triggersFold = "triggers/"
 			}
-			conn, err := db.Conn(ctx)
-			if err != nil {
-				return
-			}
-			defer conn.Close()
-			config := GetConfig()
-			row := conn.QueryRowContext(ctx, config.DatabaseNflow.QueryGetApp, "app")
-			var code string
-			var jsonCode string
-			err = row.Scan(&jsonCode, &code)
-			if err != nil {
+			if utils.Exists(triggersFold + "log.js") {
+				data, err := utils.FileToString(triggersFold + "log.js")
+				if err != nil {
+					logger.Error("Error reading log.js:", err)
+					return
+				}
+				if data == "" {
+					logger.Error("log.js is empty")
+					return
+				}
+				code += data
+			} else {
+				logger.Info("log.js not found, using default logging")
 				return
 			}
 

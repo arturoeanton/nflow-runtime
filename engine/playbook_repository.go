@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"sync"
 
+	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/arturoeanton/nflow-runtime/model"
 )
 
@@ -75,30 +76,31 @@ func (r *playbookRepository) SetReloaded(appName string) {
 
 // LoadPlaybook carga un playbook desde la base de datos si es necesario
 func (r *playbookRepository) LoadPlaybook(ctx context.Context, appName string) (map[string]map[string]*model.Playbook, error) {
-	// Verificar si ya está cargado y no necesita recarga
+	// Verify if the playbook needs to be reloaded
 	if !r.NeedsReload(appName) {
 		if playbooks, err := r.Get(appName); err == nil && playbooks != nil {
 			return playbooks, nil
 		}
 	}
 
-	// Cargar desde la base de datos
 	conn, err := r.db.Conn(ctx)
 	if err != nil {
+		logger.Error("Failed to get database connection:", err)
 		return nil, err
 	}
 	defer conn.Close()
 
 	playbooks, err := GetPlaybook(ctx, conn, appName)
 	if err != nil {
+		logger.Error("Failed to load playbook from database:", err)
 		return nil, err
 	}
-
-	// Guardar en cache
+	// Save to cache
 	r.Set(appName, playbooks)
 	r.SetReloaded(appName)
 
 	return playbooks, nil
+
 }
 
 // InvalidateCache invalida el cache para forzar recarga

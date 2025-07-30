@@ -3,7 +3,9 @@ package engine
 import (
 	"context"
 	"log"
+	"os"
 
+	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/dop251/goja"
 	"github.com/labstack/echo/v4"
 )
@@ -39,7 +41,36 @@ func GetTemplateFromDB(paramName string) string {
 func AddFeatureTemplate(vm *goja.Runtime, c echo.Context) {
 
 	vm.Set("get_template", func(paramName string) string {
+
+		templatePath := os.Getenv("NFLOW_TEMPLATE_PATH")
+		if templatePath == "" {
+			templatePath = "./templates/"
+		}
+
+		filename := templatePath + paramName
+		s, shouldReturn := checkAndGetFileTemplate(filename)
+		if shouldReturn {
+			return s
+		}
+		filename = templatePath + paramName + ".html"
+		s, shouldReturn = checkAndGetFileTemplate(filename)
+		if shouldReturn {
+			return s
+		}
+
 		return GetTemplateFromDB(paramName)
 	})
 
+}
+
+func checkAndGetFileTemplate(filename string) (string, bool) {
+	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+		content, err := os.ReadFile(filename)
+		if err != nil {
+			logger.Error("Failed to read template file:", err)
+			return "", true
+		}
+		return string(content), true
+	}
+	return "", false
 }

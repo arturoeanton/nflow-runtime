@@ -1,0 +1,1399 @@
+{
+  "drawflow": {
+    "Home": {
+      "data": {
+        "19ad1116-1095-421b-870c-2b8808490039": {
+          "class": "",
+          "data": {
+            "html_form": "{{index .profile \"username\"}}\n<div>\n  <input type='input' name='n1'/>\n  <input type='input' name='n3'/>\n  <input type='submit'/>\n</div> ",
+            "name_box": "",
+            "nflow_auth": "false",
+            "script": "form",
+            "template": "form1.html",
+            "type": "js"
+          },
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"input\" df-template=\"form1.html\" name=\"template\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "id": "19ad1116-1095-421b-870c-2b8808490039",
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "name": "",
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -9477,
+          "pos_y": -9819,
+          "typenode": false
+        },
+        "5e9ff886-4991-4795-89c9-e02bb71bd6ed": {
+          "class": "",
+          "data": {
+            "name_box": "",
+            "nflow_auth": "false",
+            "script": "Validate Login",
+            "type": "js"
+          },
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div>Validate Login</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> Validate Login</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr>\n\n<!-- add your form -->\n    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "id": "5e9ff886-4991-4795-89c9-e02bb71bd6ed",
+          "inputs": {},
+          "name": "",
+          "outputs": {},
+          "pos_x": -9141,
+          "pos_y": -9371,
+          "typenode": false
+        },
+        "de5bcff2-76b7-4cc9-b970-84b0dcfaeeee": {
+          "class": "",
+          "data": {
+            "code": "function main(){\n  \tconsole.log(\"paso\")\n\tpayload[\"n1\"] = payload[\"n1\"] + \"_! modificado por js jeje\"\n  \tpayload[\"otro_campo\"] = \"agregado por js.\"\n  \n}",
+            "name_box": "",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "id": "de5bcff2-76b7-4cc9-b970-84b0dcfaeeee",
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "name": "",
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -9240,
+          "pos_y": -9821,
+          "typenode": false
+        },
+        "f51a1499-7246-4ed0-84f9-4df8c9d61e81": {
+          "class": "",
+          "data": {
+            "html_form": "{{index .profile \"username\"}}\n<div>\n  <input type='input' name='n1'/>\n  <input type='input' name='n3'/>\n  <input type='submit'/>\n</div> ",
+            "name_box": "",
+            "nflow_auth": "false",
+            "script": "form",
+            "template": "form1.html",
+            "type": "js"
+          },
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"input\" df-template=\"form1.html\" name=\"template\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "id": "f51a1499-7246-4ed0-84f9-4df8c9d61e81",
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "name": "",
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -9230,
+          "pos_y": -9818,
+          "typenode": false
+        },
+        "b0d21122-2e47-4bcc-9d7b-0fc94cc6bee2": {
+          "id": "b0d21122-2e47-4bcc-9d7b-0fc94cc6bee2",
+          "data": {
+            "method": "ANY",
+            "name_box": "/pepe sin login",
+            "nflow_auth": "false",
+            "type": "starter",
+            "urlpattern": "/pepe11"
+          },
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkcyan;\"></div><span class=\"material-icons\">video_settings</span>Form Start</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"video_settings\"></i> Form Start</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n<p>Url</p>\n<input type=\"text\"  name=\"urlpattern\" df-urlpattern>\n<button  class=\"btn-export\" onclick='setFieldNode();save();window.open(window.location+\"/..\"+getElemenByNameOfChiled(this.parentElement,\"urlpattern\")[0].value)'> OPEN </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {},
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "1bab77cc-fc1b-4a0e-8ded-8f2ec79c2da6",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 60,
+          "pos_y": 525
+        },
+        "fb3e4212-7c40-45ca-89b8-d5e8f3cd79fc": {
+          "id": "fb3e4212-7c40-45ca-89b8-d5e8f3cd79fc",
+          "name": "json",
+          "data": {
+            "field": "",
+            "http_code": "200",
+            "name_box": "done",
+            "script": "json",
+            "type": "js"
+          },
+          "class": "json",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkviolet;\"></div><span class=\"material-icons\">source</span>JSON Render</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JSON Render</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n<input type=\"text\" name=\"field\" df-field=\"\">\n<input type=\"number\" name=\"http_code\" df-http_code=\"200\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "24c2bafe-1111-4732-86cc-3b695b579c37",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {},
+          "pos_x": 2050,
+          "pos_y": 450
+        },
+        "8d8e901c-3c4d-45fb-9a7e-c0af4f5e57bc": {
+          "id": "8d8e901c-3c4d-45fb-9a7e-c0af4f5e57bc",
+          "name": "",
+          "data": {
+            "field": "Done",
+            "http_code": "200",
+            "script": "json",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkviolet;\"></div><span class=\"material-icons\">source</span>JSON Render</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JSON Render</div>\n\t\t<div class=\"box\">\n\t\t  <input type=\"text\" name=\"field\" df-field=\"\">\n<input type=\"number\" name=\"http_code\" df-http_code=\"200\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {},
+          "pos_x": -8367,
+          "pos_y": -9731
+        },
+        "d784ae92-a0c3-4dba-831b-80e9b2a86dda": {
+          "id": "d784ae92-a0c3-4dba-831b-80e9b2a86dda",
+          "name": "",
+          "data": {
+            "field": "Done",
+            "http_code": "200",
+            "script": "json",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkviolet;\"></div><span class=\"material-icons\">source</span>JSON Render</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JSON Render</div>\n\t\t<div class=\"box\">\n\t\t  <input type=\"text\" name=\"field\" df-field=\"\">\n<input type=\"number\" name=\"http_code\" df-http_code=\"200\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {},
+          "pos_x": -8379,
+          "pos_y": -9720
+        },
+        "9d50be67-3a6a-4890-ad31-ebe6cf77f796": {
+          "id": "9d50be67-3a6a-4890-ad31-ebe6cf77f796",
+          "name": "_start_form",
+          "data": {
+            "method": "ANY",
+            "name_box": "Start",
+            "nflow_auth": "true",
+            "reset_order_box": "true",
+            "type": "starter",
+            "urlpattern": "/home"
+          },
+          "class": "_start_form",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkcyan;\"></div><span class=\"material-icons\">video_settings</span>Form Start</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"video_settings\"></i> Form Start</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n<p>Url</p>\n<input type=\"text\"  name=\"urlpattern\" df-urlpattern>\n<button  class=\"btn-export\" onclick='setFieldNode();save();window.open(window.location+\"/..\"+getElemenByNameOfChiled(this.parentElement,\"urlpattern\")[0].value)'> OPEN </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {},
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "1bab77cc-fc1b-4a0e-8ded-8f2ec79c2da6",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 60,
+          "pos_y": 375
+        },
+        "69e791a9-0d6f-4e7c-880f-4f2fc73c47bd": {
+          "id": "69e791a9-0d6f-4e7c-880f-4f2fc73c47bd",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  User:<input type='input' name='username'/><br/>\n  Passwrod:<input type='password' name='password'/><br/>\n  <input type='submit' value=\"Login\"/>\n</div>",
+            "name_box": "Form",
+            "script": "form",
+            "template": "login_template",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"input\" df-template=\"form1.html\" name=\"template\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8868,
+          "pos_y": -9743
+        },
+        "8da0710d-4553-4e28-9c1f-ef3adf80566f": {
+          "id": "8da0710d-4553-4e28-9c1f-ef3adf80566f",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  User:<input type='input' name='username'/><br/>\n  Passwrod:<input type='password' name='password'/><br/>\n  <input type='submit' value=\"Login\"/>\n</div>",
+            "name_box": "Form",
+            "script": "form",
+            "template": "login_template",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"input\" df-template=\"form1.html\" name=\"template\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8868,
+          "pos_y": -9743
+        },
+        "05a6aa10-2362-48a4-b5bd-6aef3f11a11b": {
+          "id": "05a6aa10-2362-48a4-b5bd-6aef3f11a11b",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  User:<input type='input' name='username'/><br/>\n  Passwrod:<input type='password' name='password'/><br/>\n  <input type='submit' value=\"Login\"/>\n</div>",
+            "name_box": "Form",
+            "script": "form",
+            "template": "login_template",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"input\" df-template=\"form1.html\" name=\"template\">\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8808,
+          "pos_y": -9745
+        },
+        "20e8fd4c-467e-455d-8341-e6891bbbc3df": {
+          "id": "20e8fd4c-467e-455d-8341-e6891bbbc3df",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  <input type='input' name='n1'/>\n  <input type='input' name='n3'/>\n  <input type='submit'/>\n  Nuevo\n</div>",
+            "name_box": "Form Datos1",
+            "script": "form",
+            "template": "form1",
+            "type": "js",
+            "templateui": ""
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -9235,
+          "pos_y": -9864
+        },
+        "ec98d614-cd5b-41b9-9268-c58f957d0e83": {
+          "id": "ec98d614-cd5b-41b9-9268-c58f957d0e83",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  <input type='input' name='n1'/>\n  <input type='input' name='n3'/>\n  <input type='submit'/>\n  Nuevo\n</div>",
+            "name_box": "Form Datos1",
+            "script": "form",
+            "template": "form1",
+            "type": "js",
+            "templateui": ""
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8964,
+          "pos_y": -9844
+        },
+        "1a4f2557-6063-499a-8863-eec03b6212d6": {
+          "id": "1a4f2557-6063-499a-8863-eec03b6212d6",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  <input type='input' name='n1'/>\n  <input type='input' name='n3'/>\n  <input type='submit'/>\n  Nuevo\n</div>",
+            "name_box": "Form Datos1",
+            "script": "form",
+            "template": "form1",
+            "type": "js",
+            "templateui": ""
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8692,
+          "pos_y": -9827
+        },
+        "1a478067-71bb-4133-8dea-835ab8357795": {
+          "id": "1a478067-71bb-4133-8dea-835ab8357795",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  User:<input type='input' name='username'/><br/>\n  Passwrod:<input type='password' name='password'/><br/>\n  <input type='submit' value=\"Login\"/>\n</div>",
+            "name_box": "form login",
+            "script": "form",
+            "template": "login_template",
+            "type": "js",
+            "templateui": ""
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -9465,
+          "pos_y": -9116
+        },
+        "012715af-7917-4a12-8afc-b5f5406d4094": {
+          "id": "012715af-7917-4a12-8afc-b5f5406d4094",
+          "name": "",
+          "data": {
+            "html_form": "Paso 2:<br><div>\n  <label for=\"tipo\">Verificar por:</label>\n  <select id=\"tipo\" name=\"tipo\" required onchange=\"toggleInput()\">\n    <option value=\"\" disabled selected>Seleccionar</option>\n    <option value=\"celular\">Celular</option>\n    <option value=\"mail\">Mail</option>\n  </select>\n\n  <div id=\"celularDiv\" style=\"display:none;\">\n    <label for=\"celular\">Número de celular:</label>\n    <input type=\"tel\" id=\"celular\" name=\"celular\">\n  </div>\n\n  <div id=\"mailDiv\" style=\"display:none;\">\n    <label for=\"mail\">Correo electrónico:</label>\n    <input type=\"email\" id=\"mail\" name=\"mail\">\n  </div>\n\n  <input type=\"submit\" value=\"Siguiente\">\n</div>\n\n<script>\n  function toggleInput() {\n    var tipo = document.getElementById('tipo').value;\n    document.getElementById('celularDiv').style.display = (tipo === 'celular') ? 'block' : 'none';\n    document.getElementById('mailDiv').style.display = (tipo === 'mail') ? 'block' : 'none';\n    \n    // Aquí podrías también hacer requeridos los campos dependiendo de la selección\n    document.getElementById('celular').required = (tipo === 'celular');\n    document.getElementById('mail').required = (tipo === 'mail');\n  }\n</script>",
+            "name_box": "Paso 2",
+            "script": "form",
+            "template": "formTrackingUrlWithoutNext",
+            "type": "js",
+            "templateui": "formTrackingUrlWithoutNext"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "01fcfeeb-4d8c-4852-af73-3c410a4dd354",
+                  "input": "output_2"
+                },
+                {
+                  "node": "1bab77cc-fc1b-4a0e-8ded-8f2ec79c2da6",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "d7feaf40-7246-485a-8b03-0ead0ae68ef0",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 560,
+          "pos_y": 435
+        },
+        "92886a75-5b38-43de-8b7d-6ba9ba05726a": {
+          "id": "92886a75-5b38-43de-8b7d-6ba9ba05726a",
+          "name": "",
+          "data": {
+            "html_form": "Paso 3 - Celular:<br>\n<div>\n    <label for=\"codigo\">Código de verificación:</label>\n    <input type=\"text\" id=\"codigo\" name=\"codigo\" required>\n    <input type=\"submit\" value=\"Siguiente\">\n</div>",
+            "name_box": "Paso 3 Celular",
+            "script": "form",
+            "template": "formTrackingUrlWithoutNext",
+            "type": "js",
+            "templateui": "formTrackingUrlWithoutNext"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "7231ae61-3658-48bc-8653-8944cf337530",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "01fcfeeb-4d8c-4852-af73-3c410a4dd354",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 1287,
+          "pos_y": 313
+        },
+        "937b61f6-4b0c-467f-b336-fe2233252d8c": {
+          "id": "937b61f6-4b0c-467f-b336-fe2233252d8c",
+          "name": "",
+          "data": {
+            "html_form": "Paso 3 - Mail:<br>\n<div>\n    <label for=\"codigo\">Código de verificación:</label>\n    <input type=\"text\" id=\"codigo\" name=\"codigo\" required>\n    <input type=\"submit\" value=\"Siguiente\">\n</div>",
+            "name_box": "Paso 3.Mail",
+            "script": "form",
+            "template": "formTrackingUrlWithoutNext",
+            "type": "js",
+            "templateui": "formTrackingUrlWithoutNext"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "99fb5dbc-43fa-4fa3-b9c3-2e125b480aa8",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "01fcfeeb-4d8c-4852-af73-3c410a4dd354",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 1290,
+          "pos_y": 510
+        },
+        "7231ae61-3658-48bc-8653-8944cf337530": {
+          "id": "7231ae61-3658-48bc-8653-8944cf337530",
+          "name": "",
+          "data": {
+            "name_box": "fork Celular",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "d7feaf40-7246-485a-8b03-0ead0ae68ef0",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "92886a75-5b38-43de-8b7d-6ba9ba05726a",
+                  "output": "input_1"
+                }
+              ]
+            },
+            "output_2": {
+              "connections": [
+                {
+                  "node": "7d18e9b5-3533-4c4c-91c1-f6d90b27f77e",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 1040,
+          "pos_y": 360
+        },
+        "58f92637-9ef0-4c82-8ca0-0023c2576ded": {
+          "id": "58f92637-9ef0-4c82-8ca0-0023c2576ded",
+          "name": "",
+          "data": {
+            "name_box": "fork",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8719,
+          "pos_y": -9886
+        },
+        "7d18e9b5-3533-4c4c-91c1-f6d90b27f77e": {
+          "id": "7d18e9b5-3533-4c4c-91c1-f6d90b27f77e",
+          "name": "",
+          "data": {
+            "code": "function main(){\n   console.log(\"Enviando codigo - \"+JSON.stringify(payload))\n}",
+            "name_box": "Envio SMS",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "7231ae61-3658-48bc-8653-8944cf337530",
+                  "input": "output_2"
+                }
+              ]
+            }
+          },
+          "outputs": {},
+          "pos_x": 1285,
+          "pos_y": 403
+        },
+        "c0687576-f866-467f-8cf2-530cf98460b3": {
+          "id": "c0687576-f866-467f-8cf2-530cf98460b3",
+          "name": "",
+          "data": {
+            "code": "function main(){\n   console.log(\"aca\")\n}",
+            "name_box": "second",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {},
+          "pos_x": -8623,
+          "pos_y": -9772
+        },
+        "99fb5dbc-43fa-4fa3-b9c3-2e125b480aa8": {
+          "id": "99fb5dbc-43fa-4fa3-b9c3-2e125b480aa8",
+          "name": "",
+          "data": {
+            "name_box": "fork Mail",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "d7feaf40-7246-485a-8b03-0ead0ae68ef0",
+                  "input": "output_2"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "937b61f6-4b0c-467f-b336-fe2233252d8c",
+                  "output": "input_1"
+                }
+              ]
+            },
+            "output_2": {
+              "connections": [
+                {
+                  "node": "040ce079-1e50-4fbc-8597-73b49ad8abd8",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 1040,
+          "pos_y": 540
+        },
+        "040ce079-1e50-4fbc-8597-73b49ad8abd8": {
+          "id": "040ce079-1e50-4fbc-8597-73b49ad8abd8",
+          "name": "",
+          "data": {
+            "code": "function main(){\n   console.log(\"Enviando mail - \"+JSON.stringify(payload))\n}",
+            "name_box": "Envio Mail",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "99fb5dbc-43fa-4fa3-b9c3-2e125b480aa8",
+                  "input": "output_2"
+                }
+              ]
+            }
+          },
+          "outputs": {},
+          "pos_x": 1288,
+          "pos_y": 603
+        },
+        "24c2bafe-1111-4732-86cc-3b695b579c37": {
+          "id": "24c2bafe-1111-4732-86cc-3b695b579c37",
+          "name": "",
+          "data": {
+            "html_form": "<style>\n  body {\n    font-family: Arial, sans-serif;\n  }\n  #form4 {\n    background: #ffffff;\n    padding: 20px;\n    border-radius: 10px;\n    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n  }\n  label {\n    font-weight: bold;\n    display: block;\n    margin-bottom: 8px;\n  }\n  input[type=\"number\"],\n  input[type=\"text\"] {\n    width: 100%;\n    padding: 10px;\n    margin-bottom: 20px;\n    border: 1px solid #ccc;\n    border-radius: 5px;\n  }\n  input[type=\"submit\"] {\n    background-color: #007bff;\n    color: #ffffff;\n    padding: 12px 20px;\n    border: none;\n    border-radius: 5px;\n    cursor: pointer;\n  }\n  input[type=\"submit\"]:hover {\n    background-color: #0056b3;\n  }\n</style>\n\n\nPaso 4:<br>\n<div id=\"form4\">\n  <label for=\"cantidad\">Cantidad de dinero prestada:</label>\n  <input type=\"number\" id=\"cantidad\" name=\"cantidad\" required>\n\n  <label for=\"cuotas\">Número de Cuotas (Min: <span id=\"minCuotas\"></span>, Max: <span id=\"maxCuotas\"></span>):</label>\n  <input type=\"number\" id=\"cuotas\" name=\"cuotas\" required >\n\n\n  <label for=\"interes\">Interés:</label>\n  <input type=\"text\" id=\"interes\" name=\"interes\" readonly>\n\n  <label for=\"valorCuota\">Valor de cada cuota:</label>\n  <input type=\"text\" id=\"valorCuota\" name=\"valorCuota\" readonly>\n\n  <label for=\"valorTotal\">Valor total de las cuotas:</label>\n  <input type=\"text\" id=\"valorTotal\" name=\"valorTotal\" readonly>\n\n  <input type=\"submit\" value=\"Finalizar\">\n</div>\n\n\n\n<script>\n  const MIN_C = 1; // Mínimo de cuotas\n  const MAX_C = 36; // Máximo de cuotas\n  cuotas.value = MIN_C;\n  document.getElementById('minCuotas').textContent = MIN_C;\n  document.getElementById('maxCuotas').textContent = MAX_C;\n\n  document.getElementById('cuotas').addEventListener('input', calcularCuotasYInteres);\n  document.getElementById('cantidad').addEventListener('input', calcularCuotasYInteres);\n\n  function calcularCuotasYInteres() {\n    var cuotas = parseInt(document.getElementById('cuotas').value);\n    var cantidad = parseFloat(document.getElementById('cantidad').value);\n    \n    if (cuotas < MIN_C || cuotas > MAX_C || isNaN(cuotas) || isNaN(cantidad)) {\n      alert(\"Por favor, ingrese una cantidad y cuotas válidas.\");\n      return;\n    }\n\n    var interes = calcularInteres(cuotas);\n    var valorInteres = interes * cantidad;\n    var valorTotal = cantidad + valorInteres;\n    var valorCuota = valorTotal / cuotas;\n\n    document.getElementById('interes').value = valorInteres.toFixed(2);\n    document.getElementById('valorCuota').value = valorCuota.toFixed(2);\n    document.getElementById('valorTotal').value = valorTotal.toFixed(2);\n  }\n\n  function calcularInteres(cuotas) {\n    if (cuotas <= 3) return 0.05;\n    if (cuotas <= 6) return 0.10;\n    if (cuotas <= 12) return 0.20;\n    if (cuotas <= 24) return 0.50;\n    return 1; // Puedes ajustar este valor según tus necesidades\n  }\n</script>",
+            "name_box": "Paso 4",
+            "script": "form",
+            "template": "formSingleURL",
+            "type": "js",
+            "templateui": "formSingleURL"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "01fcfeeb-4d8c-4852-af73-3c410a4dd354",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "fb3e4212-7c40-45ca-89b8-d5e8f3cd79fc",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 1810,
+          "pos_y": 450
+        },
+        "5ce783df-89e5-43bf-8533-bbe261b6d8e5": {
+          "id": "5ce783df-89e5-43bf-8533-bbe261b6d8e5",
+          "name": "",
+          "data": {
+            "html_form": "Paso 3 - Celular:<br>\n<div>\n    <label for=\"codigo\">Código de verificación:</label>\n    <input type=\"text\" id=\"codigo\" name=\"codigo\" required>\n    <input type=\"submit\" value=\"Siguiente\">\n</div>",
+            "name_box": "Paso 3.Celular",
+            "script": "form",
+            "template": "form1",
+            "type": "js",
+            "templateui": ""
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8234,
+          "pos_y": -9973
+        },
+        "01fcfeeb-4d8c-4852-af73-3c410a4dd354": {
+          "id": "01fcfeeb-4d8c-4852-af73-3c410a4dd354",
+          "name": "",
+          "data": {
+            "code": "function main(){\n  \tconsole.log(\"validacion codigo\")\n  \tconsole.log(JSON.stringify(payload))\n  \tif (payload[\"codigo\"]  != \"1111\") {\n      next = \"output_2\"\n    }\n  \tpayload[\"paso_codigo\"] = \"ok\"\n  \n  \t\n  \n}",
+            "name_box": "Validacion Tipo",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "937b61f6-4b0c-467f-b336-fe2233252d8c",
+                  "input": "output_1"
+                },
+                {
+                  "node": "92886a75-5b38-43de-8b7d-6ba9ba05726a",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "24c2bafe-1111-4732-86cc-3b695b579c37",
+                  "output": "input_1"
+                }
+              ]
+            },
+            "output_2": {
+              "connections": [
+                {
+                  "node": "012715af-7917-4a12-8afc-b5f5406d4094",
+                  "output": "input_1",
+                  "points": [
+                    {
+                      "pos_x": 1755,
+                      "pos_y": 751
+                    },
+                    {
+                      "pos_x": 550,
+                      "pos_y": 750
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "pos_x": 1560,
+          "pos_y": 450
+        },
+        "ae837f90-dd22-4ddd-ab92-115a8c115bd3": {
+          "id": "ae837f90-dd22-4ddd-ab92-115a8c115bd3",
+          "name": "",
+          "data": {
+            "field": "codigo",
+            "name_box": "Validacion Codigo",
+            "script": "if_equals",
+            "type": "js",
+            "value": "1111"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div>if equals</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> if equals</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n<!-- add your form -->\nField:<input type=\"text\" name=\"field\" df-field=\"\" class=\"nflow_field\"><br>\nValue:<input type=\"text\" name=\"value\" df-value=\"\" class=\"nflow_field\">    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8515,
+          "pos_y": -10019
+        },
+        "2c543d74-e5d8-4755-bf89-edb2ee8496bc": {
+          "id": "2c543d74-e5d8-4755-bf89-edb2ee8496bc",
+          "name": "",
+          "data": {
+            "code": "function main(){\n  \tconsole.log(\" Payload:\" +JSON.stringify(payload))\n  \n  \n  \t\n  \n}",
+            "name_box": "",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            }
+          },
+          "pos_x": -8261,
+          "pos_y": -9989
+        },
+        "5a73e0e1-d997-4a80-8784-be30339a6885": {
+          "id": "5a73e0e1-d997-4a80-8784-be30339a6885",
+          "name": "",
+          "data": {
+            "name_box": "fork Celular",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8751,
+          "pos_y": -9951
+        },
+        "d0dcf80c-4e7a-46ec-8e17-59cfc4473454": {
+          "id": "d0dcf80c-4e7a-46ec-8e17-59cfc4473454",
+          "name": "",
+          "data": {
+            "name_box": "fork Mail",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8766,
+          "pos_y": -9775
+        },
+        "ece14675-0797-469f-8cd3-4aa88d56a1fc": {
+          "id": "ece14675-0797-469f-8cd3-4aa88d56a1fc",
+          "name": "",
+          "data": {
+            "name_box": "fork Mail",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8686,
+          "pos_y": -9883
+        },
+        "8d562c8e-dddc-469e-929c-1490c6963dc6": {
+          "id": "8d562c8e-dddc-469e-929c-1490c6963dc6",
+          "name": "",
+          "data": {
+            "name_box": "fork Mail",
+            "nflow_auth": "false",
+            "type": "gorutine"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkmagenta;\"></div><span class=\"material-icons\">share</span>Parallel</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"share\"></i> Parallel</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8651,
+          "pos_y": -9830
+        },
+        "dd511c62-23c3-442a-ae40-4833f504067b": {
+          "id": "dd511c62-23c3-442a-ae40-4833f504067b",
+          "name": "",
+          "data": {
+            "script": "_end",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div>End</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> End</div>\n\t\t<div class=\"box\">\n\t\t  <hr>\n\n<!-- add your form -->\n    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {},
+          "pos_x": -9482,
+          "pos_y": -9560
+        },
+        "d7feaf40-7246-485a-8b03-0ead0ae68ef0": {
+          "id": "d7feaf40-7246-485a-8b03-0ead0ae68ef0",
+          "name": "_js_code",
+          "data": {
+            "code": "function main(){\n  \tconsole.log(\"validacion tipo\")\n  \tconsole.log(JSON.stringify(payload))\n  \tif (payload[\"tipo\"]  != \"celular\") {\n      next = \"output_2\"\n    }\n  \tpayload[\"paso_codigo\"] = \"ok\"\n  \tconsole.log(\"termino validacion tipo\")\n}",
+            "name_box": "validacion Tipo",
+            "nflow_auth": "false",
+            "type": "js"
+          },
+          "class": "_js_code",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div><span class=\"material-icons\">source</span>JS Code</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"source\"></i> JS Code</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr/>\n    <textarea class=\"hide_component\" name=\"code\" df-code></textarea>\n    <button class=\"btn-export\" name=\"open\" onclick='open_coder(this)'> CODE </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "012715af-7917-4a12-8afc-b5f5406d4094",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "7231ae61-3658-48bc-8653-8944cf337530",
+                  "output": "input_1"
+                }
+              ]
+            },
+            "output_2": {
+              "connections": [
+                {
+                  "node": "99fb5dbc-43fa-4fa3-b9c3-2e125b480aa8",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 800,
+          "pos_y": 435
+        },
+        "3ca5a7b4-1e80-4d39-9dfd-6749b2945be3": {
+          "id": "3ca5a7b4-1e80-4d39-9dfd-6749b2945be3",
+          "name": "",
+          "data": {
+            "field": "tipo",
+            "name_box": "Validacion Tipo",
+            "script": "if_equals",
+            "type": "js",
+            "value": "celular"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div>if equals</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> if equals</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n<!-- add your form -->\nField:<input type=\"text\" name=\"field\" df-field=\"\" class=\"nflow_field\"><br>\nValue:<input type=\"text\" name=\"value\" df-value=\"\" class=\"nflow_field\">    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -9218,
+          "pos_y": -9607
+        },
+        "c3595dcb-d594-4623-8b48-5548db61c170": {
+          "id": "c3595dcb-d594-4623-8b48-5548db61c170",
+          "name": "",
+          "data": {
+            "field": "tipo",
+            "name_box": "Validacion Tipo",
+            "script": "if_equals",
+            "type": "js",
+            "value": "celular"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div>if equals</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> if equals</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n<!-- add your form -->\nField:<input type=\"text\" name=\"field\" df-field=\"\" class=\"nflow_field\"><br>\nValue:<input type=\"text\" name=\"value\" df-value=\"\" class=\"nflow_field\">    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8968,
+          "pos_y": -9570
+        },
+        "8fe35819-9a78-4e61-868d-a6054f793a1c": {
+          "id": "8fe35819-9a78-4e61-868d-a6054f793a1c",
+          "name": "",
+          "data": {
+            "field": "tipo",
+            "name_box": "Validacion Tipo",
+            "script": "if_equals",
+            "type": "js",
+            "value": "celular"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkred;\"></div>if equals</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> if equals</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n<!-- add your form -->\nField:<input type=\"text\" name=\"field\" df-field=\"\" class=\"nflow_field\"><br>\nValue:<input type=\"text\" name=\"value\" df-value=\"\" class=\"nflow_field\">    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": []
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": []
+            },
+            "output_2": {
+              "connections": []
+            }
+          },
+          "pos_x": -8975,
+          "pos_y": -9461
+        },
+        "1bab77cc-fc1b-4a0e-8ded-8f2ec79c2da6": {
+          "id": "1bab77cc-fc1b-4a0e-8ded-8f2ec79c2da6",
+          "name": "form",
+          "data": {
+            "html_form": "Paso 1:<br>\n<div>\n  <label for=\"nombre\">Nombre:</label>\n  <input type=\"text\" id=\"nombre\" name=\"nombre\" required>\n  <!-- Agregar más campos según sea necesario -->\n  <input type=\"submit\" value=\"Siguiente\">\n\n</div>",
+            "name_box": "Datos Personales",
+            "script": "form",
+            "template": "formTrackingUrlWithoutNext",
+            "type": "js",
+            "templateui": "formTrackingUrlWithoutNext"
+          },
+          "class": "form",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "9d50be67-3a6a-4890-ad31-ebe6cf77f796",
+                  "input": "output_1"
+                },
+                {
+                  "node": "b0d21122-2e47-4bcc-9d7b-0fc94cc6bee2",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "012715af-7917-4a12-8afc-b5f5406d4094",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 340,
+          "pos_y": 435
+        }
+      }
+    },
+    "Login": {
+      "data": {
+        "9a28df0c-691b-4985-ae49-1735c0b4b050": {
+          "id": "9a28df0c-691b-4985-ae49-1735c0b4b050",
+          "name": "",
+          "data": {
+            "method": "ANY",
+            "name_box": "Login",
+            "nflow_auth": "false",
+            "type": "starter",
+            "urlpattern": "/nflow_login"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkcyan;\"></div><span class=\"material-icons\">video_settings</span>Form Start</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"video_settings\"></i> Form Start</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n<p>Url</p>\n<input type=\"text\"  name=\"urlpattern\" df-urlpattern>\n<button  class=\"btn-export\" onclick='setFieldNode();save();window.open(window.location+\"/..\"+getElemenByNameOfChiled(this.parentElement,\"urlpattern\")[0].value)'> OPEN </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {},
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "5507c0cf-dd5f-4d45-8375-b17cf09f9ef5",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 450,
+          "pos_y": 165
+        },
+        "130b08b8-9107-4ec3-9a3c-035561aa07a0": {
+          "id": "130b08b8-9107-4ec3-9a3c-035561aa07a0",
+          "name": "",
+          "data": {
+            "method": "ANY",
+            "name_box": "Logout",
+            "nflow_auth": "false",
+            "type": "starter",
+            "urlpattern": "/logout"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkcyan;\"></div><span class=\"material-icons\">video_settings</span>Form Start</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"video_settings\"></i> Form Start</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<div class=\"nflow_auth\">Auth:<input type=\"checkbox\" df-nflow_auth=\"false\" name=\"nflow_auth\"></div>\n<hr/>\n<p>Url</p>\n<input type=\"text\"  name=\"urlpattern\" df-urlpattern>\n<button  class=\"btn-export\" onclick='setFieldNode();save();window.open(window.location+\"/..\"+getElemenByNameOfChiled(this.parentElement,\"urlpattern\")[0].value)'> OPEN </button>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {},
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "bd719875-e1f7-4ac5-8f34-a2bdb511cff3",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 450,
+          "pos_y": 285
+        },
+        "5507c0cf-dd5f-4d45-8375-b17cf09f9ef5": {
+          "id": "5507c0cf-dd5f-4d45-8375-b17cf09f9ef5",
+          "name": "",
+          "data": {
+            "html_form": "<div>\n  Username:<input type=\"text\" name=\"username\" required/>\n  Password:<input type=\"password\" name=\"password\" required/>\n  <input type=\"submit\" value=\"Login\"/>\n</div>",
+            "name_box": "form login",
+            "script": "form",
+            "template": "login_template",
+            "type": "js",
+            "templateui": "login_template"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "9a28df0c-691b-4985-ae49-1735c0b4b050",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "60135809-d795-4e1a-a9b0-81c5c8ae0bfd",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 700,
+          "pos_y": 165
+        },
+        "60135809-d795-4e1a-a9b0-81c5c8ae0bfd": {
+          "id": "60135809-d795-4e1a-a9b0-81c5c8ae0bfd",
+          "name": "",
+          "data": {
+            "name_box": "Validate Login",
+            "script": "Validate Login",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div>Validate Login</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> Validate Login</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "5507c0cf-dd5f-4d45-8375-b17cf09f9ef5",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {},
+          "pos_x": 930,
+          "pos_y": 165
+        },
+        "bd719875-e1f7-4ac5-8f34-a2bdb511cff3": {
+          "id": "bd719875-e1f7-4ac5-8f34-a2bdb511cff3",
+          "name": "",
+          "data": {
+            "name_box": "logout",
+            "script": "Logout",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div>logout</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> logout</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "130b08b8-9107-4ec3-9a3c-035561aa07a0",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "1c7bd5a6-a85f-453e-9023-087122661d2d",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 700,
+          "pos_y": 285
+        },
+        "1c7bd5a6-a85f-453e-9023-087122661d2d": {
+          "id": "1c7bd5a6-a85f-453e-9023-087122661d2d",
+          "name": "",
+          "data": {
+            "html_form": "<form method=\"GET\" action=\"/home\">\n  \t<input type=\"submit\" value=\"Home\" />\n</form>",
+            "name_box": "logout_form",
+            "script": "form",
+            "template": "logout_template",
+            "type": "js",
+            "templateui": "logout_template"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div><span class=\"material-icons\">book</span>Form</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"book\"></i> Form</div>\n\t\t<div class=\"box\">\n\t\t  Name:<input type=\"text\" name=\"name_box\" df-name_box=\"\" class=\"nflow_field\">\n<hr>\n\n<!-- add your form -->\n<textarea class=\"hide_component\" name=\"html_form\" df-html_form=\"<div><input type='input' name='n1'/><input type='submit'/></div>\"> </textarea>\n<button class=\"btn-export\" onclick=\"open_coder(this, `htmlmixed`)\"> CODE</button>\n<input type=\"hidden\" df-template=\"form1\" name=\"template\">\n\n<select name=\"templateui\" onchange=\"document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value = this.value\">\n</select>\n<button class=\"\" onclick=\"open_template(this,document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value)\"> Template Code</button>\n<br><br>\n<button class=\"\" onclick=\"var name_new_template = prompt('Please enter the name of template', 'template1'); if (name_new_template != null) { create_template(name_new_template,'{{.form_code | unescapeHTML}}')}\"> New Template </button>\n\n<button class=\"\" onclick=\"if (confirm('Are you secure remove template?')){ delete_template(document.querySelector('#panel_prop > div > div.box > input[name=\\'template\\']').value )}\">\n  Remove Template</button>\n\n<script id=\"script_prop\">\nfetch(\"/nflow/templates\")\n    .then(response => response.json())\n    .then(data => {\n        var s = document.querySelector(\"#panel_prop > div > div.box > select[name='templateui']\")\n\t\tvar val = editor.getNodeFromId(id_box_in_prop).data[\"template\"]\n        console.log(\"Val:\"+val);\n        for (var i in data){\n            var item = data[i]\n            var checked= undefined;\n            if (item[\"name\"] == val){\n              checked = true;\n            }\n            s.add(new Option(item[\"name\"], item[\"name\"]),checked)\n            console.log(item)\n        }\n  \t\ts.value=val\n  \t\n  \t});\n</script>\n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "bd719875-e1f7-4ac5-8f34-a2bdb511cff3",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {
+            "output_1": {
+              "connections": [
+                {
+                  "node": "bff5d2e7-9a22-4c6d-8a0f-75db3f1182cd",
+                  "output": "input_1"
+                }
+              ]
+            }
+          },
+          "pos_x": 930,
+          "pos_y": 285
+        },
+        "bff5d2e7-9a22-4c6d-8a0f-75db3f1182cd": {
+          "id": "bff5d2e7-9a22-4c6d-8a0f-75db3f1182cd",
+          "name": "",
+          "data": {
+            "script": "_end",
+            "type": "js"
+          },
+          "class": "",
+          "html": "<div>\n  \n\n        <div class=\"title-box\">      <div class=\"mark_color_box\" style=\"background:darkorange;\"></div>End</div>\n            <div>\n                <input type=\"text\" value=\"\" name=\"input_box\" df-name_box=\"\" class=\"df_name_box\"\n                readOnly\n                />\n            </div>\n            </div>\n            <div class=\"form_prop_of_box\" style=\"display:none\">\n                <div>\n\t\t<div class=\"title-box\"><i class=\"\"></i> End</div>\n\t\t<div class=\"box\">\n\t\t  <hr>\n\n<!-- add your form -->\n    \n\t\t</div>\n\t  </div>\n            </div>\n        ",
+          "typenode": false,
+          "inputs": {
+            "input_1": {
+              "connections": [
+                {
+                  "node": "1c7bd5a6-a85f-453e-9023-087122661d2d",
+                  "input": "output_1"
+                }
+              ]
+            }
+          },
+          "outputs": {},
+          "pos_x": 1160,
+          "pos_y": 285
+        }
+      }
+    }
+  }
+}

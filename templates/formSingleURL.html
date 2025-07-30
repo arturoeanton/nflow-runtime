@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Panel</title>
+	<script type="text/javascript">
+       
+      
+      //sessionStorage.setItem('myData', JSON.stringify({ key: 'value' }));
+
+      // Agrega un estado al historial para permitir la detección del botón de retroceso
+      history.pushState({ page: 1 }, "state1", "?f=run");
+
+      window.onpopstate = function(event) {
+      // Detecta el intento de navegar hacia atrás y vuelve a agregar el mismo estado
+      history.pushState({ page: 1 }, "state1", "?f=run");
+
+      // Recupera tus datos si es necesario
+      //var myData = JSON.parse(sessionStorage.getItem('myData'));
+};
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .navbar {
+            background-color: #4CAF50;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+        }
+        .navbar a {
+            float: right;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        .navbar p {
+            color: white;
+            margin: 0;
+            padding: 14px 16px;
+        }
+        .profile-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+            margin: auto;
+        }
+        .profile-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .profile-container input[type='submit'] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <p>{{index .profile "username"}}</p>
+        <a href="/logout" class="logout">logout</a>
+    </div>
+  	<br><br>
+    <div class="profile-container">
+      <br>
+      
+        <form method="post" id="form_main" action="{{.url}}" >
+            <input type="hidden" name="nflow_next_node_run" value="{{.next}}" />
+             {{.form_code | unescapeHTML }} 
+        </form>
+    </div>
+</body>
+</html>

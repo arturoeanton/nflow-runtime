@@ -85,7 +85,6 @@ func comparePath(template string, real string) (bool, model.Vars) {
 }
 
 func GetWorkflow(c echo.Context, playbooks map[string]map[string]*model.Playbook, wfPath string, method string, appName string) (model.Runeable, model.Vars, int, string, error) {
-
 	for key, flows := range playbooks {
 		for _, pb := range flows {
 			for _, item := range *pb {

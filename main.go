@@ -5,8 +5,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/arturoeanton/nflow-runtime/engine"
 	"github.com/arturoeanton/nflow-runtime/literals"
 	"github.com/arturoeanton/nflow-runtime/logger"
+	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/go-redis/redis"
@@ -33,6 +36,7 @@ import (
 var (
 	// verbose enables verbose logging when set via -v flag
 	verbose = flag.Bool("v", false, "Enable verbose logging")
+	app     = flag.String("a", "app", "Application name / Filename for the playbooks")
 )
 
 // CheckError handles error responses in a standardized way.
@@ -55,7 +59,7 @@ func CheckError(c echo.Context, err error, code int) bool {
 // and executes it with the provided parameters. This function handles
 // all HTTP methods (GET, POST, PUT, etc.) and routes them to the
 // corresponding workflow based on the URL path.
-func run(c echo.Context) error {
+func run(c echo.Context, appJson string) error {
 	ctx := c.Request().Context()
 	db, err := engine.GetDB()
 	if err != nil {
@@ -71,8 +75,6 @@ func run(c echo.Context) error {
 		return nil
 	}
 	defer conn.Close()
-
-	appJson := "app"
 
 	// Obtener el repository
 	repo := engine.GetPlaybookRepository()
@@ -217,10 +219,17 @@ func main() {
 		logger.Fatal("Failed to initialize database:", err)
 	}
 	engine.InitializePlaybookRepository(db)
+	logger.Info("PlaybookRepository initialized")
 
 	// Initialize ProcessRepository
 	process.InitializeRepository()
 	logger.Info("ProcessRepository initialized")
+
+	appJson, shouldReturn := checkAndLoadFileApp()
+	if shouldReturn {
+		return
+	}
+	logger.Info("Using playbook app:", appJson)
 
 	// Initialize Session Manager
 	logger.Info("Starting Session Manager cleanup routine...")
@@ -236,9 +245,48 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
 
-	e.Any("/*", run)
+	e.Any("/*", func(c echo.Context) error {
+		return run(c, appJson)
+	})
 
 	// Start server
 	logger.Info("Starting nFlow Runtime Example on :8080")
 	e.Logger.Fatal(e.Start(":8080"))
+}
+
+func checkAndLoadFileApp() (string, bool) {
+	appJson := *app
+
+	if strings.HasSuffix(appJson, ".json") { // If a file is provided, use it directly
+		if _, err := os.Stat(appJson); os.IsNotExist(err) {
+			logger.Error("Playbook file does not exist:", appJson)
+			logger.Error("Please provide a valid playbook file using -a flag")
+			return "", true
+		}
+
+		logger.Info("Using playbook file:", appJson)
+
+		// Load from file
+		data, err := os.ReadFile(appJson)
+		if err != nil {
+			logger.Error("Failed to read playbook file:", err)
+			return "", true
+		}
+		flowJson := string(data)
+		drawflow := make(map[string]map[string]map[string]*model.Playbook)
+		err = json.Unmarshal([]byte(flowJson), &drawflow)
+		if err != nil {
+			logger.Error("Failed to parse playbook JSON:", err)
+			return "", true
+		}
+		repo := engine.GetPlaybookRepository()
+		if repo == nil {
+			logger.Error("PlaybookRepository not initialized")
+			return "", true
+		}
+		// Guardar en cache
+		repo.Set(appJson, drawflow["drawflow"])
+		repo.SetReloaded(appJson)
+	}
+	return appJson, false
 }

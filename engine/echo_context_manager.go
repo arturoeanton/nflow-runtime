@@ -12,7 +12,6 @@ import (
 type EchoContextManager struct {
 	mu         sync.RWMutex
 	context    echo.Context
-	sessionMu  sync.Mutex
 	responseMu sync.Mutex
 	requestMu  sync.RWMutex
 }
