@@ -31,6 +31,15 @@ import (
 
 var (
 	registry *require.Registry
+	registryOnce sync.Once
+	
+	// Cache for auth.js to avoid repeated file reads
+	authCodeCache struct {
+		sync.RWMutex
+		code      string
+		loaded    bool
+		lastCheck time.Time
+	}
 )
 
 // Helper function to debug output keys
@@ -54,10 +63,13 @@ func GetRequireRegistry() *require.Registry {
 }
 
 func init() {
-	// Initialize registry globally
-	registry = new(require.Registry)
-	registry.RegisterNativeModule("console", console.Require)
-	registry.RegisterNativeModule("util", util.Require)
+	// Initialize registry once with sync.Once for thread safety
+	registryOnce.Do(func() {
+		registry = new(require.Registry)
+		registry.RegisterNativeModule("console", console.Require)
+		registry.RegisterNativeModule("util", util.Require)
+	})
+	logger.Info("Started goja")
 }
 
 // Run ejecuta el workflow
@@ -97,19 +109,15 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		p.Close()
 	}()
 
-	// Set workflow ID header for tracking. This anonymous function handles
-	// concurrency differently based on context type to avoid race conditions.
-	// IsolatedContext doesn't need mutex protection as it doesn't share state.
-	func(uuid1 string) {
-		// Only use mutex if not an isolated context
-		if _, isIsolated := c.(*IsolatedContext); !isIsolated {
-			EchoSessionsMutex.Lock()
-			defer EchoSessionsMutex.Unlock()
-		}
+	// Set workflow ID header for tracking
+	if _, isIsolated := c.(*IsolatedContext); !isIsolated {
+		// Check if header already exists before locking
 		if c.Response().Header().Get("Nflow-Wid-1") == "" {
+			EchoSessionsMutex.Lock()
 			c.Response().Header().Add("Nflow-Wid-1", uuid1)
+			EchoSessionsMutex.Unlock()
 		}
-	}(uuid1)
+	}
 
 	// Create a fresh VM for each request with security limits
 	// This ensures all features are properly initialized
@@ -124,15 +132,14 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	}
 	defer tracker.Stop()
 
-	// Initialize VM with all required modules. The registry is a singleton
-	// that provides Node.js-compatible modules to the JavaScript environment.
-	// This includes console and util modules for basic functionality.
-	if registry == nil {
-		registry = new(require.Registry)
-		registry.RegisterNativeModule("console", console.Require)
-		registry.RegisterNativeModule("util", util.Require)
-	}
-
+	// Initialize VM with all required modules
+	registryOnce.Do(func() {
+		if registry == nil {
+			registry = new(require.Registry)
+			registry.RegisterNativeModule("console", console.Require)
+			registry.RegisterNativeModule("util", util.Require)
+		}
+	})
 	registry.Enable(vm)
 	// We don't need console.Enable because the sandbox provides its own secure version
 
@@ -165,10 +172,8 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 
 	// Parse and expose POST data to the workflow
 	postData := make(map[string]interface{})
-	func() {
-		c.Bind(&postData)
-		vm.Set("post_data", postData)
-	}()
+	c.Bind(&postData)
+	vm.Set("post_data", postData)
 
 	// Set path variables extracted from the URL
 	vm.Set("vars", vars)
@@ -267,55 +272,18 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			}
 		}
 		if flagString != "false" {
-			// Execute authentication from default.js. This retrieves the user's
-			// profile from the session and makes it available to the workflow.
-			var profile interface{}
-			func() {
-				// If it's an isolated context, don't access real session
-				if _, isIsolated := c.(*IsolatedContext); isIsolated {
-					profile = nil
-					return
-				}
-
-				EchoSessionsMutex.Lock()
-				defer EchoSessionsMutex.Unlock()
-
-				auth_session, err := session.Get("auth-session", c)
-				if err != nil {
-					logger.Error("Error in start data:", err)
-					profile = nil
-					return
-				}
-
-				auth_session.Values["redirect_url"] = c.Request().URL.Path
-				auth_session.Save(c.Request(), c.Response())
-
-				profile = auth_session.Values["profile"]
-			}()
+			// Execute authentication from default.js
+			profile := getAuthProfile(c)
 			vm.Set("profile", profile)
 			vm.Set("next", next)
 			vm.Set("auth_flag", flagString)
 			vm.Set("url_access", c.Request().URL.Path)
 
-			code := ""
-			triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
-			if triggersFold == "" {
-				triggersFold = "triggers/"
+			// Get auth code with caching
+			code := getCachedAuthCode()
+			if code == "" {
+				return nil
 			}
-			if utils.Exists(triggersFold + "auth.js") {
-				data, err := utils.FileToString(triggersFold + "auth.js")
-				if err != nil {
-					logger.Error("Error reading auth.js:", err)
-					return nil
-				}
-				if data == "" {
-					logger.Error("auth.js is empty")
-					return nil
-				}
-				code += data
-			}
-
-			code += "\nauth()"
 			_, err = vm.RunString(code)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
@@ -677,4 +645,168 @@ func Execute(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string
 
 	}
 
+}
+
+// Helper functions for better performance and code organization
+
+// getCachedAuthCode returns the auth.js code with caching to avoid repeated file reads
+func getCachedAuthCode() string {
+	// Check cache with read lock
+	authCodeCache.RLock()
+	if authCodeCache.loaded && time.Since(authCodeCache.lastCheck) < 5*time.Minute {
+		code := authCodeCache.code
+		authCodeCache.RUnlock()
+		return code
+	}
+	authCodeCache.RUnlock()
+	
+	// Load with write lock
+	authCodeCache.Lock()
+	defer authCodeCache.Unlock()
+	
+	// Double-check after acquiring write lock
+	if authCodeCache.loaded && time.Since(authCodeCache.lastCheck) < 5*time.Minute {
+		return authCodeCache.code
+	}
+	
+	// Load from file
+	triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
+	if triggersFold == "" {
+		triggersFold = "triggers/"
+	}
+	
+	authFile := triggersFold + "auth.js"
+	if !utils.Exists(authFile) {
+		authCodeCache.loaded = true
+		authCodeCache.code = ""
+		authCodeCache.lastCheck = time.Now()
+		return ""
+	}
+	
+	data, err := utils.FileToString(authFile)
+	if err != nil || data == "" {
+		logger.Error("Error reading auth.js:", err)
+		return ""
+	}
+	
+	// Update cache
+	authCodeCache.code = data + "\nauth()"
+	authCodeCache.loaded = true
+	authCodeCache.lastCheck = time.Now()
+	
+	return authCodeCache.code
+}
+
+// getAuthProfile extracts the user profile from session with proper locking
+func getAuthProfile(c echo.Context) interface{} {
+	// If it's an isolated context, don't access real session
+	if _, isIsolated := c.(*IsolatedContext); isIsolated {
+		return nil
+	}
+
+	EchoSessionsMutex.Lock()
+	defer EchoSessionsMutex.Unlock()
+
+	authSession, err := session.Get("auth-session", c)
+	if err != nil {
+		logger.Error("Error in start data:", err)
+		return nil
+	}
+
+	authSession.Values["redirect_url"] = c.Request().URL.Path
+	authSession.Save(c.Request(), c.Response())
+
+	return authSession.Values["profile"]
+}
+
+// mergeSessionPayload merges session data with the current payload
+func mergeSessionPayload(c echo.Context, vm *goja.Runtime, payload goja.Value) goja.Value {
+	payloadMap := make(map[string]interface{})
+	
+	// Extract existing payload
+	if payload != nil {
+		PayloadSessionMutex.Lock()
+		payloadMap = payload.Export().(map[string]interface{})
+		PayloadSessionMutex.Unlock()
+	}
+	
+	// Skip session merge for isolated contexts
+	if _, isIsolated := c.(*IsolatedContext); isIsolated {
+		return payload
+	}
+	
+	// Merge session data
+	EchoSessionsMutex.Lock()
+	defer EchoSessionsMutex.Unlock()
+	
+	s, err := session.Get("nflow_form", c)
+	if err == nil && s != nil && s.Values != nil {
+		for k, v := range s.Values {
+			if k != "break" {
+				if key, ok := k.(string); ok {
+					payloadMap[key] = v
+				}
+			}
+		}
+	}
+	
+	// Convert back to goja value
+	PayloadSessionMutex.Lock()
+	defer PayloadSessionMutex.Unlock()
+	return vm.ToValue(payloadMap)
+}
+
+// savePayloadToSession saves the payload to session and returns true if break is requested
+func savePayloadToSession(c echo.Context, payload goja.Value) bool {
+	if payload == nil {
+		return false
+	}
+	
+	rawPayload, ok := payload.Export().(map[string]interface{})
+	if !ok {
+		return false
+	}
+	
+	// Skip for isolated contexts
+	if _, isIsolated := c.(*IsolatedContext); !isIsolated {
+		EchoSessionsMutex.Lock()
+		defer EchoSessionsMutex.Unlock()
+		
+		s, err := session.Get("nflow_form", c)
+		if err == nil {
+			for k, v := range rawPayload {
+				s.Values[k] = v
+			}
+			s.Save(c.Request(), c.Response())
+		}
+	}
+	
+	// Check for break flag
+	if breakVal, exists := rawPayload["break"]; exists {
+		switch v := breakVal.(type) {
+		case bool:
+			return v
+		case string:
+			return v == "true"
+		}
+	}
+	
+	return false
+}
+
+// cleanupSession clears the session values
+func cleanupSession(c echo.Context) {
+	// Skip for isolated contexts
+	if _, isIsolated := c.(*IsolatedContext); isIsolated {
+		return
+	}
+	
+	EchoSessionsMutex.Lock()
+	defer EchoSessionsMutex.Unlock()
+	
+	s, err := session.Get("nflow_form", c)
+	if err == nil {
+		s.Values = make(map[interface{}]interface{})
+		s.Save(c.Request(), c.Response())
+	}
 }

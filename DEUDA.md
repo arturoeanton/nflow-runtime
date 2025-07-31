@@ -56,6 +56,21 @@
   - Sistema de batching optimizado para inserciones en DB
   - Non-blocking channel writes para evitar bloqueos
 
+### 6. ~~**Optimización de engine.go y main.go**~~ ✅ RESUELTO
+- ~~**Problema**: Código con oportunidades de mejora en performance y legibilidad~~
+- ~~**Impacto**: Mayor consumo de recursos y código difícil de mantener~~
+- **Solución implementada**:
+  - **engine.go**: 
+    - Cache de auth.js para evitar I/O repetitivo
+    - Inicialización con sync.Once para registros
+    - Funciones helper para mejor organización
+    - Límites de iteración para prevenir loops infinitos
+  - **main.go**:
+    - Cache de parsing de URLs
+    - Eliminación de goroutines innecesarias en parsing
+    - Extracción de funciones helper
+    - Mejor organización de código
+
 ### 2. **Código comentado no eliminado**
 - **Problema**: Hay código comentado en varios archivos
 - **Impacto**: Reduce legibilidad
@@ -77,7 +92,7 @@
 |-----------|----------|-------------------|
 | Crítica   | 3        | 2-3 semanas       |
 | Media     | 2 (-2)   | 2-3 semanas       |
-| Menor     | 2 (-2)   | 1 semana          |
+| Menor     | 2 (-3)   | 1 semana          |
 
 ## ✅ Deuda Resuelta Recientemente
 
@@ -89,6 +104,8 @@
 6. **Documentación de código** - Agregada documentación godoc completa
 7. **Sistema de tracking optimizado** - Configurable, sin impacto cuando está deshabilitado
 8. **Función defer optimizada en engine.go** - Eliminadas goroutines y operaciones DB redundantes
+9. **Optimización completa de engine.go** - Cache de auth.js, mejor organización, prevención de loops infinitos
+10. **Optimización completa de main.go** - Cache de URLs, eliminación de goroutines innecesarias, código más limpio
 
 ## 🎯 Prioridades Recomendadas (Actualizado)
 
