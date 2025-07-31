@@ -122,41 +122,41 @@ func RegisterDebugEndpoints(e *echo.Echo, config *engine.ConfigWorkspace, appJso
 	// System information
 	debug.GET("/info", handleDebugInfo)
 	debug.GET("/config", handleDebugConfig(config))
-	
+
 	// Repository information
 	debug.GET("/repositories", handleDebugRepositories)
 	debug.GET("/playbooks", handleDebugPlaybooks(appJson))
 	debug.GET("/playbook/:flow", handleDebugPlaybook(appJson))
-	
+
 	// Cache management
 	debug.POST("/cache/invalidate", handleCacheInvalidate)
 	debug.POST("/cache/invalidate/:flow", handleCacheInvalidateFlow)
 	debug.GET("/cache/stats", handleCacheStats)
-	
+
 	// Process management
 	debug.GET("/processes", handleDebugProcesses)
 	debug.GET("/process/:wid", handleDebugProcess)
 	debug.DELETE("/process/:wid", handleDebugKillProcess)
-	
-	// Session management  
+
+	// Session management
 	debug.GET("/sessions", handleDebugSessions)
 	debug.DELETE("/sessions", handleDebugClearSessions)
-	
+
 	// VM Pool information
 	debug.GET("/vm-pool", handleDebugVMPool)
-	
+
 	// Database information
 	debug.GET("/database/stats", handleDebugDatabaseStats)
 	debug.GET("/database/connections", handleDebugDatabaseConnections)
-	
+
 	// Runtime information
 	debug.GET("/runtime", handleDebugRuntime)
 	debug.GET("/goroutines", handleDebugGoroutines)
 	debug.GET("/memory", handleDebugMemory)
-	
+
 	// Tracker information
 	debug.GET("/tracker/stats", handleDebugTrackerStats)
-	
+
 	// URL cache information
 	debug.GET("/url-cache", handleDebugURLCache)
 	debug.DELETE("/url-cache", handleDebugClearURLCache)
@@ -214,9 +214,9 @@ func handleDebugConfig(config *engine.ConfigWorkspace) echo.HandlerFunc {
 				"enable_pprof": config.DebugConfig.EnablePprof,
 			},
 			"monitor": echo.Map{
-				"enabled":                config.MonitorConfig.Enabled,
-				"health_check_path":      config.MonitorConfig.HealthCheckPath,
-				"metrics_path":           config.MonitorConfig.MetricsPath,
+				"enabled":                 config.MonitorConfig.Enabled,
+				"health_check_path":       config.MonitorConfig.HealthCheckPath,
+				"metrics_path":            config.MonitorConfig.MetricsPath,
 				"enable_detailed_metrics": config.MonitorConfig.EnableDetailedMetrics,
 			},
 		}
@@ -236,11 +236,11 @@ func handleDebugRepositories(c echo.Context) error {
 			"cache_size":  playbookRepo.GetCacheSize(),
 		},
 		"process_repository": echo.Map{
-			"initialized":    true,
+			"initialized":      true,
 			"active_processes": len(process.GetProcessList()),
 		},
 	}
-	
+
 	return c.JSON(http.StatusOK, info)
 }
 
@@ -258,10 +258,10 @@ func handleDebugPlaybooks(appJson string) echo.HandlerFunc {
 		}
 
 		summary := echo.Map{
-			"app":          appJson,
-			"total_flows":  0,
-			"total_nodes":  0,
-			"flows":        []echo.Map{},
+			"app":         appJson,
+			"total_flows": 0,
+			"total_nodes": 0,
+			"flows":       []echo.Map{},
 		}
 
 		flows := []echo.Map{}
@@ -273,8 +273,8 @@ func handleDebugPlaybooks(appJson string) echo.HandlerFunc {
 					nodeCount := len(*pb)
 					totalNodes += nodeCount
 					flows = append(flows, echo.Map{
-						"key":       key,
-						"flow_key":  flowKey,
+						"key":        key,
+						"flow_key":   flowKey,
 						"node_count": nodeCount,
 					})
 				}
@@ -293,7 +293,7 @@ func handleDebugPlaybook(appJson string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		flow := c.Param("flow")
 		ctx := c.Request().Context()
-		
+
 		repo := engine.GetPlaybookRepository()
 		if repo == nil {
 			return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Repository not available"})
@@ -364,23 +364,23 @@ func handleCacheStats(c echo.Context) error {
 
 func handleDebugProcesses(c echo.Context) error {
 	processes := process.GetProcessList()
-	
+
 	summary := echo.Map{
 		"total":     len(processes),
 		"processes": processes,
 	}
-	
+
 	return c.JSON(http.StatusOK, summary)
 }
 
 func handleDebugProcess(c echo.Context) error {
 	wid := c.Param("wid")
 	proc, exists := process.GetProcessID(wid)
-	
+
 	if !exists {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Process not found"})
 	}
-	
+
 	return c.JSON(http.StatusOK, proc)
 }
 
@@ -423,7 +423,7 @@ func handleDebugDatabaseStats(c echo.Context) error {
 
 	stats := db.Stats()
 	return c.JSON(http.StatusOK, echo.Map{
-		"open_connections":      stats.OpenConnections,
+		"open_connections":     stats.OpenConnections,
 		"in_use":               stats.InUse,
 		"idle":                 stats.Idle,
 		"wait_count":           stats.WaitCount,
@@ -443,7 +443,7 @@ func handleDebugDatabaseConnections(c echo.Context) error {
 	// Test database connection
 	ctx := c.Request().Context()
 	err = db.PingContext(ctx)
-	
+
 	return c.JSON(http.StatusOK, echo.Map{
 		"connected": err == nil,
 		"error":     formatError(err),
@@ -456,8 +456,8 @@ func handleDebugRuntime(c echo.Context) error {
 	runtime.ReadMemStats(&m)
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"goroutines":    runtime.NumGoroutine(),
-		"cpus":          runtime.NumCPU(),
+		"goroutines": runtime.NumGoroutine(),
+		"cpus":       runtime.NumCPU(),
 		"memory": echo.Map{
 			"alloc":         m.Alloc,
 			"total_alloc":   m.TotalAlloc,
@@ -477,7 +477,7 @@ func handleDebugRuntime(c echo.Context) error {
 func handleDebugGoroutines(c echo.Context) error {
 	buf := make([]byte, 1<<16)
 	stackSize := runtime.Stack(buf, true)
-	
+
 	return c.String(http.StatusOK, string(buf[:stackSize]))
 }
 
@@ -486,17 +486,17 @@ func handleDebugMemory(c echo.Context) error {
 	runtime.ReadMemStats(&m)
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"alloc_mb":        m.Alloc / 1024 / 1024,
-		"total_alloc_mb":  m.TotalAlloc / 1024 / 1024,
-		"sys_mb":          m.Sys / 1024 / 1024,
-		"heap_alloc_mb":   m.HeapAlloc / 1024 / 1024,
-		"heap_sys_mb":     m.HeapSys / 1024 / 1024,
-		"heap_idle_mb":    m.HeapIdle / 1024 / 1024,
-		"heap_inuse_mb":   m.HeapInuse / 1024 / 1024,
+		"alloc_mb":         m.Alloc / 1024 / 1024,
+		"total_alloc_mb":   m.TotalAlloc / 1024 / 1024,
+		"sys_mb":           m.Sys / 1024 / 1024,
+		"heap_alloc_mb":    m.HeapAlloc / 1024 / 1024,
+		"heap_sys_mb":      m.HeapSys / 1024 / 1024,
+		"heap_idle_mb":     m.HeapIdle / 1024 / 1024,
+		"heap_inuse_mb":    m.HeapInuse / 1024 / 1024,
 		"heap_released_mb": m.HeapReleased / 1024 / 1024,
-		"heap_objects":    m.HeapObjects,
-		"gc_runs":         m.NumGC,
-		"gc_cpu_fraction": m.GCCPUFraction,
+		"heap_objects":     m.HeapObjects,
+		"gc_runs":          m.NumGC,
+		"gc_cpu_fraction":  m.GCCPUFraction,
 	})
 }
 
@@ -517,7 +517,7 @@ func handleDebugURLCache(c echo.Context) error {
 
 	entries := urlCache.GetEntries()
 	result := make([]echo.Map, 0, len(entries))
-	
+
 	for _, entry := range entries {
 		result = append(result, echo.Map{
 			"url":      entry.URL,
@@ -555,4 +555,3 @@ func getDBDriver(db *sql.DB) string {
 	// In production, you might want to store this information
 	return "unknown"
 }
-

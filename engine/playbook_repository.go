@@ -139,7 +139,7 @@ func (r *playbookRepository) InvalidateAllCache() {
 func (r *playbookRepository) GetCacheSize() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	return len(r.playbooks)
 }
 

@@ -171,38 +171,38 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 		if activeCount >= m.maxSize {
 			// Pool is at capacity, wait for a VM to become available
 			log.Printf("[VM Manager] Pool at capacity, waiting for available VM...\n")
-			
+
 			// Wait with timeout for a VM to become available
 			timeout := time.NewTimer(5 * time.Second)
 			defer timeout.Stop()
-			
+
 			select {
 			case instance := <-m.pool:
 				log.Printf("[VM Manager] Got VM from pool after waiting: %s\n", instance.ID)
-				
+
 				m.mu.Lock()
 				instance.InUse = true
 				instance.LastUsed = time.Now()
 				instance.UseCount++
 				m.activeVMs[instance.ID] = instance
 				m.mu.Unlock()
-				
+
 				m.updateStats(func(s *VMStats) {
 					s.InUse++
 					s.Available--
 					s.TotalUses++
 				})
-				
+
 				m.resetVM(instance.VM, c)
 				return instance, nil
-				
+
 			case <-timeout.C:
 				// Log current pool state for debugging
 				m.mu.RLock()
-				log.Printf("[VM Manager] Timeout waiting for VM. Active VMs: %d, Pool size: %d\n", 
+				log.Printf("[VM Manager] Timeout waiting for VM. Active VMs: %d, Pool size: %d\n",
 					len(m.activeVMs), len(m.pool))
 				m.mu.RUnlock()
-				
+
 				return nil, fmt.Errorf("VM pool exhausted: timeout waiting for available VM (max: %d)", m.maxSize)
 			}
 		}
@@ -361,7 +361,7 @@ func (m *VMManager) resetVM(vm *goja.Runtime, c echo.Context) {
 			log.Printf("[VM Reset] Function '%s' is defined\n", fn)
 		}
 	}
-	
+
 	// Also verify 'c' is available
 	cVal := vm.Get("c")
 	if cVal == nil || cVal == goja.Undefined() || cVal == goja.Null() {
@@ -452,16 +452,16 @@ func (m *VMManager) logMetrics() {
 			Errors:    m.stats.Errors,
 		}
 		m.stats.mu.RUnlock()
-		
+
 		m.mu.RLock()
 		activeVMs := len(m.activeVMs)
 		poolSize := len(m.pool)
 		m.mu.RUnlock()
-		
+
 		log.Printf("[VM Pool Metrics] Created: %d, InUse: %d, Available: %d, TotalUses: %d, Errors: %d | ActiveVMs: %d, PoolSize: %d, MaxSize: %d\n",
 			stats.Created, stats.InUse, stats.Available, stats.TotalUses, stats.Errors,
 			activeVMs, poolSize, m.maxSize)
-		
+
 		// Warn if pool is getting full
 		if activeVMs > int(float64(m.maxSize)*0.8) {
 			log.Printf("[VM Pool WARNING] Pool usage above 80%%: %d/%d VMs in use\n", activeVMs, m.maxSize)

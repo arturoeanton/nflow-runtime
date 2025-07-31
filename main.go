@@ -84,7 +84,7 @@ func (u *urlCacheAdapter) GetSize() int {
 func (u *urlCacheAdapter) GetEntries() []endpoints.URLCacheEntry {
 	urlCache.RLock()
 	defer urlCache.RUnlock()
-	
+
 	entries := make([]endpoints.URLCacheEntry, 0, len(urlCache.cache))
 	for url, result := range urlCache.cache {
 		entries = append(entries, endpoints.URLCacheEntry{
@@ -329,8 +329,8 @@ func main() {
 	if config.RateLimitConfig.Enabled {
 		rateLimiter = ratelimit.NewRateLimiter(&config.RateLimitConfig, redisClient)
 		logger.Info("Rate limiting enabled")
-		logger.Infof("IP rate limit: %d requests per %d minute(s)", 
-			config.RateLimitConfig.IPRateLimit, 
+		logger.Infof("IP rate limit: %d requests per %d minute(s)",
+			config.RateLimitConfig.IPRateLimit,
 			config.RateLimitConfig.IPWindowMinutes)
 	}
 
@@ -338,12 +338,12 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	
+
 	// Add rate limiting middleware before session middleware
 	if config.RateLimitConfig.Enabled && rateLimiter != nil {
 		e.Use(ratelimit.Middleware(&config.RateLimitConfig, rateLimiter))
 	}
-	
+
 	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
 
 	// Register monitoring endpoints (health and metrics)
@@ -386,25 +386,25 @@ func main() {
 	if config.DebugConfig.Enabled {
 		logger.Info("Debug endpoints enabled at /debug/*")
 	}
-	
+
 	// Add shutdown handler
 	go func() {
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
-	
+
 	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-	
+
 	// Cleanup rate limiter
 	if rateLimiter != nil {
 		rateLimiter.Close()
 		logger.Info("Rate limiter closed")
 	}
-	
+
 	logger.Info("Server shutting down")
 }
 

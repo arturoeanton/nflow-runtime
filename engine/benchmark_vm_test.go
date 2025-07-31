@@ -15,9 +15,9 @@ import (
 func BenchmarkVMPool(b *testing.B) {
 	// Initialize VM manager
 	vmManager := NewVMManagerWithConfig(200, &VMPoolConfig{
-		MaxSize:      200,
-		PreloadSize:  100,
-		IdleTimeout:  10,
+		MaxSize:       200,
+		PreloadSize:   100,
+		IdleTimeout:   10,
 		EnableMetrics: false,
 	})
 
@@ -57,8 +57,8 @@ func BenchmarkVMPool(b *testing.B) {
 func BenchmarkVMCreation(b *testing.B) {
 	b.Run("WithPool", func(b *testing.B) {
 		vmManager := NewVMManagerWithConfig(200, &VMPoolConfig{
-			MaxSize:      200,
-			PreloadSize:  100,
+			MaxSize:       200,
+			PreloadSize:   100,
 			EnableMetrics: false,
 		})
 		e := echo.New()
@@ -96,8 +96,8 @@ func BenchmarkVMCreation(b *testing.B) {
 // TestVMPoolConcurrency tests concurrent access with heavy load
 func TestVMPoolConcurrency(t *testing.T) {
 	vmManager := NewVMManagerWithConfig(200, &VMPoolConfig{
-		MaxSize:      200,
-		PreloadSize:  100,
+		MaxSize:       200,
+		PreloadSize:   100,
 		EnableMetrics: true,
 	})
 
@@ -204,7 +204,7 @@ func TestBabelCachePerformance(t *testing.T) {
 	if secondDuration > firstDuration/10 {
 		t.Logf("Cache performance not optimal: first=%v, second=%v", firstDuration, secondDuration)
 	} else {
-		t.Logf("Cache performance good: first=%v, second=%v (%.2fx speedup)", 
+		t.Logf("Cache performance good: first=%v, second=%v (%.2fx speedup)",
 			firstDuration, secondDuration, float64(firstDuration)/float64(secondDuration))
 	}
 }

@@ -18,7 +18,7 @@ var (
 	semVMOnce sync.Once
 
 	// Cache for babel transforms
-	babelCache     = make(map[string]string)
+	babelCache      = make(map[string]string)
 	babelCacheMutex sync.RWMutex
 
 	// Cache for compiled programs

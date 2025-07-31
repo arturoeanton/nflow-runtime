@@ -121,7 +121,7 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 	// Use VM from pool for better performance
 	vmManager := GetVMManager()
 	var vm *goja.Runtime
-	
+
 	// Acquire VM from pool
 	vmInstance, err := vmManager.AcquireVM(c)
 	if err != nil {
@@ -130,9 +130,9 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		return nil
 	}
 	defer vmManager.ReleaseVM(vmInstance)
-	
+
 	vm = vmInstance.VM
-	
+
 	// TODO: Fix resource limits for pooled VMs
 	// Currently disabled because trackers are interfering with pooled VMs
 	// limits := GetLimitsFromConfig()

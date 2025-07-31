@@ -28,7 +28,7 @@ func Middleware(config *engine.RateLimitConfig, rateLimiter RateLimiter) echo.Mi
 
 			// Get client IP
 			ip := getClientIP(c)
-			
+
 			// Check if IP is excluded
 			if IsIPExcluded(ip, config.ExcludedIPs) {
 				return next(c)
@@ -36,11 +36,11 @@ func Middleware(config *engine.RateLimitConfig, rateLimiter RateLimiter) echo.Mi
 
 			// Check rate limit
 			allowed, retryAfter := rateLimiter.AllowIP(ip)
-			
+
 			if !allowed {
 				// Log rate limit exceeded
 				logger.Verbosef("Rate limit exceeded for IP: %s, path: %s", ip, path)
-				
+
 				// Set headers
 				if config.RetryAfterHeader && retryAfter > 0 {
 					c.Response().Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())))
@@ -48,15 +48,15 @@ func Middleware(config *engine.RateLimitConfig, rateLimiter RateLimiter) echo.Mi
 				c.Response().Header().Set("X-RateLimit-Limit", strconv.Itoa(config.IPRateLimit))
 				c.Response().Header().Set("X-RateLimit-Remaining", "0")
 				c.Response().Header().Set("X-RateLimit-Reset", strconv.FormatInt(time.Now().Add(retryAfter).Unix(), 10))
-				
+
 				// Return error response
 				message := config.ErrorMessage
 				if message == "" {
 					message = "Rate limit exceeded. Please try again later."
 				}
-				
+
 				return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
-					"error": message,
+					"error":       message,
 					"retry_after": int(retryAfter.Seconds()),
 				})
 			}
@@ -74,7 +74,7 @@ func getClientIP(c echo.Context) string {
 	if ip != "" {
 		return ip
 	}
-	
+
 	// Check X-Forwarded-For header
 	xff := c.Request().Header.Get("X-Forwarded-For")
 	if xff != "" {
@@ -84,10 +84,10 @@ func getClientIP(c echo.Context) string {
 		}
 		return strings.TrimSpace(xff)
 	}
-	
+
 	// Fall back to RemoteAddr
 	ip = c.Request().RemoteAddr
-	
+
 	// Remove port if present
 	if idx := strings.LastIndex(ip, ":"); idx != -1 {
 		// Check if it's IPv6
@@ -104,6 +104,6 @@ func getClientIP(c echo.Context) string {
 			return ip[:idx]
 		}
 	}
-	
+
 	return ip
 }

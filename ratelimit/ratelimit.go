@@ -16,10 +16,10 @@ import (
 type RateLimiter interface {
 	// AllowIP checks if an IP address is allowed to make a request
 	AllowIP(ip string) (allowed bool, retryAfter time.Duration)
-	
+
 	// Reset resets the rate limiter for an IP
 	ResetIP(ip string)
-	
+
 	// Close cleans up resources
 	Close()
 }
@@ -29,7 +29,7 @@ func NewRateLimiter(config *engine.RateLimitConfig, redisClient *redis.Client) R
 	if !config.Enabled {
 		return &noopRateLimiter{}
 	}
-	
+
 	switch config.Backend {
 	case "redis":
 		if redisClient == nil {
@@ -64,9 +64,9 @@ type memoryRateLimiter struct {
 
 // bucket represents a token bucket for rate limiting
 type bucket struct {
-	tokens    int
-	lastFill  time.Time
-	mu        sync.Mutex
+	tokens   int
+	lastFill time.Time
+	mu       sync.Mutex
 }
 
 func newMemoryRateLimiter(config *engine.RateLimitConfig) RateLimiter {
@@ -75,16 +75,16 @@ func newMemoryRateLimiter(config *engine.RateLimitConfig) RateLimiter {
 		ipBuckets: make(map[string]*bucket),
 		done:      make(chan struct{}),
 	}
-	
+
 	// Start cleanup routine
 	cleanupInterval := time.Duration(config.CleanupInterval) * time.Minute
 	if cleanupInterval <= 0 {
 		cleanupInterval = 10 * time.Minute
 	}
-	
+
 	rl.cleanupTicker = time.NewTicker(cleanupInterval)
 	go rl.cleanup()
-	
+
 	return rl
 }
 
@@ -92,7 +92,7 @@ func (m *memoryRateLimiter) AllowIP(ip string) (bool, time.Duration) {
 	limit := m.config.IPRateLimit
 	window := time.Duration(m.config.IPWindowMinutes) * time.Minute
 	burst := m.config.IPBurstSize
-	
+
 	m.mu.Lock()
 	b, exists := m.ipBuckets[ip]
 	if !exists {
@@ -103,31 +103,30 @@ func (m *memoryRateLimiter) AllowIP(ip string) (bool, time.Duration) {
 		m.ipBuckets[ip] = b
 	}
 	m.mu.Unlock()
-	
+
 	return m.allowFromBucket(b, limit, window, burst)
 }
-
 
 func (m *memoryRateLimiter) allowFromBucket(b *bucket, limit int, window time.Duration, burst int) (bool, time.Duration) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	
+
 	now := time.Now()
 	elapsed := now.Sub(b.lastFill)
-	
+
 	// Refill tokens based on elapsed time
 	tokensToAdd := int(elapsed / window * time.Duration(limit))
 	if tokensToAdd > 0 {
 		b.tokens = min(b.tokens+tokensToAdd, limit+burst)
 		b.lastFill = now
 	}
-	
+
 	// Check if we have tokens available
 	if b.tokens > 0 {
 		b.tokens--
 		return true, 0
 	}
-	
+
 	// Calculate retry after
 	retryAfter := window - elapsed%window
 	return false, retryAfter
@@ -158,10 +157,10 @@ func (m *memoryRateLimiter) cleanup() {
 func (m *memoryRateLimiter) cleanupBuckets() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	now := time.Now()
 	windowIP := time.Duration(m.config.IPWindowMinutes) * time.Minute
-	
+
 	// Clean up IP buckets
 	for ip, b := range m.ipBuckets {
 		b.mu.Lock()
@@ -170,7 +169,7 @@ func (m *memoryRateLimiter) cleanupBuckets() {
 		}
 		b.mu.Unlock()
 	}
-	
+
 	logger.Verbosef("Rate limiter cleanup: %d IP buckets", len(m.ipBuckets))
 }
 
@@ -191,25 +190,24 @@ func (r *redisRateLimiter) AllowIP(ip string) (bool, time.Duration) {
 	key := fmt.Sprintf("ratelimit:ip:%s", ip)
 	limit := r.config.IPRateLimit
 	window := time.Duration(r.config.IPWindowMinutes) * time.Minute
-	
+
 	return r.checkLimit(key, limit, window)
 }
-
 
 func (r *redisRateLimiter) checkLimit(key string, limit int, window time.Duration) (bool, time.Duration) {
 	now := time.Now()
 	windowStart := now.Add(-window)
-	
+
 	// Remove old entries
 	r.redisClient.ZRemRangeByScore(key, "0", fmt.Sprintf("%d", windowStart.Unix()))
-	
+
 	// Count current entries
 	count, err := r.redisClient.ZCard(key).Result()
 	if err != nil {
 		logger.Error("Redis rate limit error:", err)
 		return true, 0 // Fail open
 	}
-	
+
 	if count >= int64(limit) {
 		// Get oldest entry to calculate retry after
 		oldest, err := r.redisClient.ZRange(key, 0, 0).Result()
@@ -220,14 +218,14 @@ func (r *redisRateLimiter) checkLimit(key string, limit int, window time.Duratio
 		}
 		return false, window
 	}
-	
+
 	// Add current request
 	r.redisClient.ZAdd(key, redis.Z{
 		Score:  float64(now.Unix()),
 		Member: now.UnixNano(),
 	})
 	r.redisClient.Expire(key, window)
-	
+
 	return true, 0
 }
 
@@ -254,18 +252,18 @@ func IsIPExcluded(ip string, excludedIPs string) bool {
 	if excludedIPs == "" {
 		return false
 	}
-	
+
 	clientIP := net.ParseIP(ip)
 	if clientIP == nil {
 		return false
 	}
-	
+
 	for _, excluded := range strings.Split(excludedIPs, ",") {
 		excluded = strings.TrimSpace(excluded)
 		if excluded == "" {
 			continue
 		}
-		
+
 		// Check for CIDR notation
 		if strings.Contains(excluded, "/") {
 			_, ipNet, err := net.ParseCIDR(excluded)
@@ -279,7 +277,7 @@ func IsIPExcluded(ip string, excludedIPs string) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -288,13 +286,13 @@ func IsPathExcluded(path string, excludedPaths string) bool {
 	if excludedPaths == "" {
 		return false
 	}
-	
+
 	for _, excluded := range strings.Split(excludedPaths, ",") {
 		excluded = strings.TrimSpace(excluded)
 		if excluded != "" && strings.HasPrefix(path, excluded) {
 			return true
 		}
 	}
-	
+
 	return false
 }
