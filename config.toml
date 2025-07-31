@@ -26,13 +26,22 @@ cleanup_interval = 5       # Minutes between cleanup runs
 enable_metrics = true      # Log pool metrics
 
 # Resource limits (seguridad)
-max_memory_mb = 128        # Max memory per VM in MB (default: 128)
-max_execution_seconds = 30 # Max execution time in seconds (default: 30)
-max_operations = 10000000  # Max JS operations (default: 10M)
+max_memory_mb = 12800        # Max memory per VM in MB (default: 128)
+max_execution_seconds = 3000 # Max execution time in seconds (default: 30)
+max_operations = 1000000000  # Max JS operations (default: 10M)
 
 # Sandbox settings (seguridad)
 enable_filesystem = false  # Allow filesystem access (default: false)
 enable_network = false     # Allow network access (default: false) 
 enable_process = false     # Allow process access (default: false)
+
+[tracker]
+enabled = false            # Enable/disable tracker (default: false)
+workers = 4               # Number of worker goroutines (default: 4)
+batch_size = 100          # Batch size for database inserts (default: 100)
+flush_interval = 250      # Flush interval in milliseconds (default: 250)
+channel_buffer = 100000   # Channel buffer size (default: 100000)
+verbose_logging = false   # Enable verbose logging (default: false)
+stats_interval = 300      # Stats reporting interval in seconds (default: 300)
 
   

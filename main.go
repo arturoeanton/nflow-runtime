@@ -7,6 +7,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -218,6 +219,8 @@ func main() {
 
 	engine.LoadPlugins()
 
+	engine.StartTracker(70) // Start tracker with 70 workers
+
 	// Initialize database and repository
 	db, err := engine.GetDB()
 	if err != nil {
@@ -249,6 +252,162 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
+
+	// Debug endpoint to invalidate cache and see all starter nodes
+	e.GET("/debug/invalidate-cache", func(c echo.Context) error {
+		repo := engine.GetPlaybookRepository()
+		if repo != nil {
+			repo.InvalidateAllCache()
+			return c.JSON(200, echo.Map{"message": "Cache invalidated"})
+		}
+		return c.JSON(500, echo.Map{"error": "Repository not available"})
+	})
+	
+	// Debug endpoint to return cleaned JSON for database storage
+	e.GET("/debug/clean-json", func(c echo.Context) error {
+		ctx := c.Request().Context()
+		repo := engine.GetPlaybookRepository()
+		if repo == nil {
+			return c.JSON(500, echo.Map{"error": "Repository not available"})
+		}
+		
+		// Force reload to get fresh data from database
+		repo.InvalidateAllCache()
+		appPlaybooks, err := repo.LoadPlaybook(ctx, appJson)
+		if err != nil {
+			return c.JSON(500, echo.Map{"error": err.Error()})
+		}
+		
+		// Clean the playbooks by removing corrupted starter nodes
+		cleanedPlaybooks := make(map[string]map[string]*model.Playbook)
+		removedCount := 0
+		
+		for key, flows := range appPlaybooks {
+			cleanedFlows := make(map[string]*model.Playbook)
+			for flowKey, pb := range flows {
+				if pb == nil {
+					cleanedFlows[flowKey] = pb
+					continue
+				}
+				
+				cleanedPlaybook := make(model.Playbook)
+				for nodeID, node := range *pb {
+					if node == nil || node.Data == nil {
+						cleanedPlaybook[nodeID] = node
+						continue
+					}
+					
+					// Check if this is a corrupted starter node
+					if nodeType, ok := node.Data["type"]; ok && nodeType == "starter" {
+						// Check if it has proper connections
+						if node.Outputs == nil {
+							logger.Verbosef("DEBUG: Removing starter node %s - no outputs", nodeID)
+							removedCount++
+							continue
+						}
+						
+						output1, exists := node.Outputs["output_1"]
+						if !exists || output1 == nil {
+							logger.Verbosef("DEBUG: Removing starter node %s - no output_1", nodeID)
+							removedCount++
+							continue
+						}
+						
+						if output1.Connections == nil || len(output1.Connections) == 0 {
+							logger.Verbosef("DEBUG: Removing starter node %s - empty connections", nodeID) 
+							removedCount++
+							continue
+						}
+					}
+					
+					// Node is valid, keep it
+					cleanedPlaybook[nodeID] = node
+				}
+				
+				cleanedFlows[flowKey] = &cleanedPlaybook
+			}
+			cleanedPlaybooks[key] = cleanedFlows
+		}
+		
+		// Wrap in drawflow structure for database storage
+		result := map[string]interface{}{
+			"drawflow": cleanedPlaybooks,
+		}
+		
+		return c.JSON(200, map[string]interface{}{
+			"message": fmt.Sprintf("Cleaned JSON ready for database storage. Removed %d corrupted starter nodes.", removedCount),
+			"removed_nodes": removedCount,
+			"clean_json": result,
+		})
+	})
+	
+	// Debug endpoint to show all starter nodes
+	e.GET("/debug/starters", func(c echo.Context) error {
+		ctx := c.Request().Context()
+		repo := engine.GetPlaybookRepository()
+		if repo == nil {
+			return c.JSON(500, echo.Map{"error": "Repository not available"})
+		}
+		
+		// Force reload to see fresh data
+		repo.InvalidateAllCache()
+		appPlaybooks, err := repo.LoadPlaybook(ctx, appJson)
+		if err != nil {
+			return c.JSON(500, echo.Map{"error": err.Error()})
+		}
+		
+		starters := []map[string]interface{}{}
+		
+		for key, flows := range appPlaybooks {
+			for flowKey, pb := range flows {
+				if pb == nil {
+					continue
+				}
+				for nodeID, node := range *pb {
+					if node == nil || node.Data == nil {
+						continue
+					}
+					if nodeType, ok := node.Data["type"]; ok && nodeType == "starter" {
+						starter := map[string]interface{}{
+							"flow_key": key,
+							"sub_key": flowKey,
+							"node_id": nodeID,
+							"urlpattern": node.Data["urlpattern"],
+							"method": node.Data["method"],
+							"name": node.Data["name_box"],
+							"has_outputs": node.Outputs != nil,
+						}
+						
+						if node.Outputs != nil {
+							if output1, exists := node.Outputs["output_1"]; exists && output1 != nil {
+								starter["connections_count"] = len(output1.Connections)
+								starter["has_connections"] = len(output1.Connections) > 0
+								if len(output1.Connections) > 0 {
+									starter["first_connection"] = map[string]string{
+										"node": output1.Connections[0].Node,
+										"output": output1.Connections[0].Output,
+									}
+								}
+							} else {
+								starter["connections_count"] = "no_output_1"
+								starter["has_connections"] = false
+							}
+						} else {
+							starter["connections_count"] = "no_outputs"
+							starter["has_connections"] = false
+						}
+						
+						starters = append(starters, starter)
+					}
+				}
+			}
+		}
+		
+		return c.JSON(200, map[string]interface{}{
+			"total_starters": len(starters),
+			"starters": starters,
+		})
+	})
 
 	e.Any("/*", func(c echo.Context) error {
 		return run(c, appJson)

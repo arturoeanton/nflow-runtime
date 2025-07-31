@@ -46,6 +46,16 @@
 - ~~**Impacto**: Performance y ruido en logs~~
 - **Solución implementada**: Sistema de logging estructurado con flag -v para modo verbose
 
+### 5. ~~**Sistema de tracking con impacto en performance**~~ ✅ RESUELTO
+- ~~**Problema**: El tracker generaba logs excesivos y creaba goroutines por cada request~~
+- ~~**Impacto**: Degradación significativa del performance bajo alta carga~~
+- **Solución implementada**: 
+  - Tracker configurable desde config.toml (deshabilitado por defecto)
+  - Logging condicional solo cuando verbose_logging = true
+  - Eliminadas goroutines innecesarias en la función defer
+  - Sistema de batching optimizado para inserciones en DB
+  - Non-blocking channel writes para evitar bloqueos
+
 ### 2. **Código comentado no eliminado**
 - **Problema**: Hay código comentado en varios archivos
 - **Impacto**: Reduce legibilidad
@@ -77,6 +87,8 @@
 4. **Logging verboso** - Implementado sistema de logging estructurado con modo verbose (-v)
 5. **Código en español** - Todo el código y comentarios traducidos a inglés
 6. **Documentación de código** - Agregada documentación godoc completa
+7. **Sistema de tracking optimizado** - Configurable, sin impacto cuando está deshabilitado
+8. **Función defer optimizada en engine.go** - Eliminadas goroutines y operaciones DB redundantes
 
 ## 🎯 Prioridades Recomendadas (Actualizado)
 

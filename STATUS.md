@@ -24,6 +24,7 @@
 - ✅ **Concurrencia alta** - Sin race conditions
 - ✅ **Latencia baja** - <100ms para workflows simples
 - ✅ **Con límites de recursos** - VMs limitadas a 128MB/30s por defecto (configurable)
+- ✅ **Tracking optimizado** - Sin impacto en performance cuando está deshabilitado
 
 ### Métricas de Performance
 ```
@@ -93,6 +94,7 @@ Memory footprint:      ~50MB base + VMs
 - [x] Manejo de errores básico
 - [x] Límites de recursos configurables
 - [x] Sandboxing de código JavaScript
+- [x] Sistema de tracking configurable
 - [ ] Monitoreo y alertas
 - [ ] Logs estructurados
 - [ ] Métricas de negocio
@@ -108,7 +110,7 @@ Memory footprint:      ~50MB base + VMs
 
 ### Estado: **80% Listo para Producción**
 
-## 🎯 Recomendaciones Inmediatas (Actualizado 30/07/2025)
+## 🎯 Recomendaciones Inmediatas (Actualizado 31/07/2025)
 
 1. **Seguridad Adicional** (3-4 días)
    - Implementar rate limiting por usuario
@@ -145,3 +147,13 @@ nFlow Runtime está en un estado **funcionalmente estable** pero requiere trabaj
 5. **Código en inglés**: Todo el código y comentarios traducidos
 6. **Logging estructurado**: Sistema de logs con modo verbose (-v)
 7. **Documentación completa**: Godoc, READMEs bilingües, comentarios explicativos
+8. **Sistema de tracking optimizado**: 
+   - Configurable desde config.toml (habilitado/deshabilitado)
+   - Sin impacto en performance cuando está deshabilitado
+   - Logging condicional basado en configuración
+   - Batching eficiente para inserciones en DB
+9. **Optimización de la función defer en engine.go**:
+   - Eliminadas goroutines innecesarias
+   - Reducción de allocaciones de memoria
+   - Extracción eficiente de datos del request
+   - Mayor legibilidad y mantenibilidad del código

@@ -22,6 +22,7 @@ type ConfigWorkspace struct {
 	HttpsDesingnerConfig HttpsConfig       `toml:"https_designer"`
 	DatabaseNflow        DatabaseNflow     `toml:"database_nflow"`
 	VMPoolConfig         VMPoolConfig      `toml:"vm_pool"`
+	TrackerConfig        TrackerConfig     `toml:"tracker"`
 }
 
 // VMPoolConfig configures the JavaScript VM pool for workflow execution.
@@ -42,6 +43,18 @@ type VMPoolConfig struct {
 	EnableFileSystem bool `toml:"enable_filesystem"` // Allow filesystem access (default: false)
 	EnableNetwork    bool `toml:"enable_network"`    // Allow network access (default: false)
 	EnableProcess    bool `toml:"enable_process"`    // Allow process access (default: false)
+}
+
+// TrackerConfig configures the performance tracking system.
+// It allows fine-tuning of the tracker's behavior to minimize performance impact.
+type TrackerConfig struct {
+	Enabled        bool `toml:"enabled"`         // Enable/disable tracker (default: false)
+	Workers        int  `toml:"workers"`         // Number of worker goroutines (default: 4)
+	BatchSize      int  `toml:"batch_size"`      // Batch size for database inserts (default: 100)
+	FlushInterval  int  `toml:"flush_interval"`  // Flush interval in milliseconds (default: 250)
+	ChannelBuffer  int  `toml:"channel_buffer"`  // Channel buffer size (default: 100000)
+	VerboseLogging bool `toml:"verbose_logging"` // Enable verbose logging (default: false)
+	StatsInterval  int  `toml:"stats_interval"`  // Stats reporting interval in seconds (default: 300)
 }
 
 type DatabaseNflow struct {

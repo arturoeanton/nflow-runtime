@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 
+	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/labstack/echo-contrib/session"
@@ -18,6 +20,8 @@ import (
 var (
 	// playbookRepo es la instancia global del repository
 	playbookRepo PlaybookRepository
+	// jsonUnmarshalMutex protects concurrent JSON unmarshaling operations
+	jsonUnmarshalMutex sync.Mutex
 )
 
 // InitializePlaybookRepository inicializa el repository con la base de datos
@@ -52,12 +56,21 @@ func GetPlaybook(ctx context.Context, conn *sql.Conn, pbName string) (map[string
 		return nil, err
 	}
 
+	// CRITICAL: Protect JSON unmarshaling from concurrent access
+	// Multiple goroutines calling json.Unmarshal concurrently can corrupt slice data
+	jsonUnmarshalMutex.Lock()
+	
 	data := make(map[string]map[string]map[string]*model.Playbook)
 	err = json.Unmarshal([]byte(flowJson), &data)
+	
+	jsonUnmarshalMutex.Unlock()
+	
 	if err != nil {
+		logger.Errorf("JSON unmarshal error for playbook %s: %v", pbName, err)
 		return nil, err
 	}
 
+	logger.Verbosef("Successfully unmarshaled playbook %s with %d flows", pbName, len(data["drawflow"]))
 	return data["drawflow"], nil
 }
 
@@ -92,6 +105,23 @@ func GetWorkflow(c echo.Context, playbooks map[string]map[string]*model.Playbook
 				typeItem := data["type"].(string)
 
 				if typeItem == "starter" {
+					// CRITICAL: Validate that this starter node has proper connections
+					// Skip corrupted starter nodes that have empty connections
+					if item.Outputs == nil {
+						logger.Verbosef("DEBUG: Skipping starter node - no outputs")
+						continue
+					}
+					
+					output1, hasOutput1 := item.Outputs["output_1"]
+					if !hasOutput1 || output1 == nil {
+						logger.Verbosef("DEBUG: Skipping starter node - no output_1")
+						continue
+					}
+					
+					if output1.Connections == nil || len(output1.Connections) == 0 {
+						logger.Verbosef("DEBUG: Skipping corrupted starter node with empty connections")
+						continue
+					}
 
 					methodItem := data["method"]
 					if methodItem != "ANY" {
@@ -121,6 +151,9 @@ func GetWorkflow(c echo.Context, playbooks map[string]map[string]*model.Playbook
 								}
 							}
 						}
+
+						logger.Verbosef("DEBUG: Selected VALID starter node with %d connections for path %s", 
+							len(output1.Connections), urlpattern)
 
 						c := &model.Controller{
 							Methods:  []string{method},

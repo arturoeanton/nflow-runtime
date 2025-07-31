@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +8,7 @@ import (
 	"strings"
 
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/arturoeanton/gocommons/utils"
@@ -32,6 +32,21 @@ import (
 var (
 	registry *require.Registry
 )
+
+// Helper function to debug output keys
+func getOutputKeys(outputs map[string]*model.Output) []string {
+	if outputs == nil {
+		return []string{"<nil map>"}
+	}
+	keys := make([]string, 0, len(outputs))
+	for k := range outputs {
+		keys = append(keys, k)
+	}
+	if len(keys) == 0 {
+		return []string{"<empty map>"}
+	}
+	return keys
+}
 
 // GetRequireRegistry retorna el registry de require
 func GetRequireRegistry() *require.Registry {
@@ -167,28 +182,79 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		process.WKill(wid)
 	})
 
-	// Get the playbook and determine the starting node. If no specific node
-	// is requested (next == ""), start from the beginning of the workflow.
-	// The playbook is a map of node IDs to their configurations.
+	// Get the playbook and determine the starting node 
+	// Use the Controller passed directly to avoid any concurrency issues
+	if cc.Playbook == nil {
+		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Playbook not loaded."})
+		return nil
+	}
+	
 	pb := *cc.Playbook
 	nodeAuth := pb[next]
+	
 	if next == "" {
-		ActorDataMutex.RLock()
+		if cc.Start == nil {
+			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node not configured."})
+			return nil
+		}
+		
+		logger.Verbosef("DEBUG: Processing workflow %s, endpoint %s", cc.FlowName, endpoint)
+		logger.Verbosef("DEBUG: Controller address: %p, Start address: %p", cc, cc.Start)
 		logger.Verbosef("Start Data: %+v", cc.Start.Data)
-		ActorDataMutex.RUnlock()
-		if len(cc.Start.Outputs["output_1"].Connections) == 0 {
+		
+		// Defensive programming - check each step carefully
+		if cc.Start.Outputs == nil {
+			logger.Error("DEBUG: cc.Start.Outputs is nil")
+			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node has no outputs configured."})
+			return nil
+		}
+		
+		output1, exists := cc.Start.Outputs["output_1"]
+		if !exists {
+			logger.Errorf("DEBUG: output_1 does not exist. Available outputs: %v", getOutputKeys(cc.Start.Outputs))
+			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node missing 'output_1' connection."})
+			return nil
+		}
+		
+		if output1 == nil {
+			logger.Error("DEBUG: output1 is nil")
+			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Output_1 is null."})
+			return nil
+		}
+		
+		if output1.Connections == nil {
+			logger.Error("DEBUG: output1.Connections is nil")
+			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Output_1 connections is null."})
+			return nil
+		}
+		
+		// Make a defensive copy of connections to avoid concurrent modification
+		connections := make([]struct {
+			Node   string `json:"node"`
+			Output string `json:"output"`
+		}, len(output1.Connections))
+		copy(connections, output1.Connections)
+		
+		if len(connections) == 0 {
+			logger.Errorf("DEBUG: connections copy is empty! original len: %d, copy len: %d", len(output1.Connections), len(connections))
+			logger.Errorf("DEBUG: output1.Connections is empty! output1 address: %p, Connections address: %p", output1, output1.Connections)
+			logger.Errorf("DEBUG: output1 full struct: %+v", output1)
+			logger.Errorf("DEBUG: cc.Start full struct: %+v", cc.Start)
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "No output connections found for the start node."})
 			return nil
 		}
-		next = cc.Start.Outputs["output_1"].Connections[0].Node
+		
+		logger.Errorf("DEBUG: SUCCESS! Found %d connections, first connection: %+v", len(connections), connections[0])
+		next = connections[0].Node
 		nodeAuth = cc.Start
+		
+		logger.Verbosef("DEBUG: Successfully found next node: %s", next)
 	}
 
 	// Check if authentication is required for this node. The nflow_auth flag
 	// in node data determines if authentication should be enforced.
-	ActorDataMutex.RLock()
+	// No mutex needed since we're working with immutable data
 	flag, hasAuthFlag := nodeAuth.Data["nflow_auth"]
-	ActorDataMutex.RUnlock()
 
 	if hasAuthFlag {
 		flagString, ok := flag.(string)
@@ -279,6 +345,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 
 	var logId string
 	var orderBox int
+	var err error
 
 	// Generate log ID and order box values. This anonymous function handles
 	// the difference between isolated contexts (used in concurrent execution)
@@ -326,155 +393,70 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 	var boxName string
 	var boxType string
 	defer func() {
-		now := time.Now()
-		diff := now.Sub(t1)
+		// Quick exit if tracker is disabled
+		if !IsTrackerEnabled() || trackerChannel == nil {
+			return
+		}
 
-		// Extract data from context before goroutine to avoid race conditions
-		var username, ip, realip, url, userAgent, queryParam, hostname, host string
-		var jsonPayload []byte
+		// Calculate execution time
+		diff := time.Since(t1)
 
-		// Get profile with proper locking
-		profile := GetProfile(c)
-		if profile != nil {
-			if _, ok := profile["username"]; ok {
-				username = profile["username"]
+		// Create tracker entry with basic info
+		entry := TrackerEntry{
+			LogId:          logId,
+			BoxId:          boxId,
+			BoxName:        boxName,
+			BoxType:        boxType,
+			ConnectionNext: connectionNext,
+			Diff:           diff,
+			OrderBox:       orderBox,
+		}
+
+		// Extract username from profile if available
+		if profile := GetProfile(c); profile != nil {
+			if username, ok := profile["username"]; ok {
+				entry.Username = username
 			}
 		}
 
-		// Marshal payload with locking
-		var err error
-		func() {
+		// Marshal payload efficiently
+		if payload != nil {
 			PayloadSessionMutex.Lock()
-			defer PayloadSessionMutex.Unlock()
-			jsonPayload, err = json.Marshal(payload.Export())
-		}()
-		if err != nil {
-			jsonPayload = []byte("{}")
+			if data, err := json.Marshal(payload.Export()); err == nil {
+				entry.JSONPayload = data
+			} else {
+				entry.JSONPayload = []byte("{}")
+			}
+			PayloadSessionMutex.Unlock()
+		} else {
+			entry.JSONPayload = []byte("{}")
 		}
 
-		// Extract request info
-		func() {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Error("Error in start data:", err)
+		// Extract request information safely
+		if req := c.Request(); req != nil {
+			entry.IP = req.RemoteAddr
+			entry.RealIP = c.RealIP()
+			entry.UserAgent = req.UserAgent()
+			entry.Host = req.Host
+			
+			if reqURL := req.URL; reqURL != nil {
+				entry.URL = reqURL.RawPath
+				if entry.URL == "" {
+					entry.URL = reqURL.Path
 				}
-			}()
-			ip = c.Request().RemoteAddr
-			realip = c.RealIP()
-			url = c.Request().URL.RawPath
-			userAgent = c.Request().UserAgent()
-			queryParam = c.Request().URL.Query().Encode()
-			hostname = c.Request().URL.Hostname()
-			host = c.Request().Host
-		}()
-
-		go func(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host string, diff time.Duration, orderBox int, jsonPayload []byte) {
-			config := GetConfig()
-			if config.DatabaseNflow.QueryInsertLog == "" {
-				return
+				entry.QueryParam = reqURL.Query().Encode()
+				entry.Hostname = reqURL.Hostname()
 			}
+		}
 
-			db, err := GetDB()
-			if err != nil {
-				logger.Error("Error processing node:", err)
-				return
-			}
-			ctx := context.Background()
-			conn, err := db.Conn(ctx)
-			if err != nil {
-				return
-			}
-			defer conn.Close()
-
-			_, err = conn.ExecContext(ctx, config.DatabaseNflow.QueryInsertLog,
-				logId,                                   // $1
-				boxId,                                   // $2
-				boxName,                                 // $3
-				boxType,                                 // $4
-				url,                                     // $5
-				username,                                // $6
-				connectionNext,                          // $7
-				fmt.Sprintf("%dm", diff.Milliseconds()), // $8
-				orderBox,                                // $9
-				string(jsonPayload),                     // $10
-				ip,                                      // $11
-				realip,                                  // $12
-				userAgent,                               // $13
-				queryParam,                              // $14
-				hostname,                                // $15
-				host,                                    // $16
-
-			)
-			if err != nil {
-				logger.Error("Error processing node:", err)
-			}
-
-		}(logId, boxId, boxName, boxType, connectionNext, username, ip, realip, url, userAgent, queryParam, hostname, host, diff, orderBox, jsonPayload)
-
-		// Get profile before goroutine to avoid race
-		logProfile := GetProfile(c)
-
-		go func(logProfile map[string]string, actor *model.Node, boxId string, boxName string, boxType string, connectionNext string, diff time.Duration) {
-
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Error("Error in start data:", err)
-				}
-			}()
-
-			//log.Printf("%s - time: %v", sbLog.String(), diff)
-			code := ""
-			triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
-			if triggersFold == "" {
-				triggersFold = "triggers/"
-			}
-			if utils.Exists(triggersFold + "log.js") {
-				data, err := utils.FileToString(triggersFold + "log.js")
-				if err != nil {
-					logger.Error("Error reading log.js:", err)
-					return
-				}
-				if data == "" {
-					logger.Error("log.js is empty")
-					return
-				}
-				code += data
-			} else {
-				logger.Info("log.js not found, using default logging")
-				return
-			}
-
-			// Crear una VM separada para logging para evitar race conditions
-			logVM := goja.New()
-
-			// Inicializar la VM de logging con los módulos necesarios
-			if registry != nil {
-				registry.Enable(logVM)
-			}
-			console.Enable(logVM)
-
-			// Add minimal required functions for logging with captured profile
-			logVM.Set("get_profile", func() interface{} {
-				return logProfile
-			})
-
-			logVM.Set("box_id", boxId)
-			logVM.Set("box_name", boxName)
-			logVM.Set("box_type", boxType)
-			logVM.Set("connection_next", connectionNext)
-
-			logVM.Set("duration_mc", diff.Microseconds())
-			logVM.Set("duration_ms", diff.Milliseconds())
-			logVM.Set("duration_s", diff.Seconds())
-
-			code += "\nlog()"
-			_, err = logVM.RunString(code)
-			if err != nil {
-				logger.Error("Error processing node:", err)
-			}
-
-		}(logProfile, actor, boxId, boxName, boxType, connectionNext, diff)
-
+		// Send to tracker channel (non-blocking)
+		select {
+		case trackerChannel <- entry:
+			// Successfully sent
+		default:
+			// Channel full, increment dropped counter
+			atomic.AddInt64(&trackerStats.Dropped, 1)
+		}
 	}()
 	defer func() {
 		err := recover()
@@ -488,14 +470,21 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		currentProcess.Close()
 		panic("FlagExit")
 	}
+	
+	// Get the actor from the controller playbook
 	pb := *cc.Playbook
 	originalActor := pb[next]
-
-	// Crear una copia profunda del actor para evitar race conditions
-	actor, err := originalActor.DeepCopy()
+	
+	if originalActor == nil {
+		logger.Errorf("Node not found: %s", next)
+		return "", nil, fmt.Errorf("node not found: %s", next)
+	}
+	
+	// Create a copy to avoid shared state issues
+	actor, err = originalActor.DeepCopy()
 	if err != nil {
 		logger.Errorf("Error creating actor copy: %v", err)
-		// Si falla la copia, usar el original con mutex
+		// If copy fails, use original (with potential race condition risk)
 		actor = originalActor
 	}
 
