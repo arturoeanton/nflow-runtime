@@ -25,6 +25,7 @@ type ConfigWorkspace struct {
 	TrackerConfig        TrackerConfig     `toml:"tracker"`
 	DebugConfig          DebugConfig       `toml:"debug"`
 	MonitorConfig        MonitorConfig     `toml:"monitor"`
+	RateLimitConfig      RateLimitConfig   `toml:"rate_limit"`
 }
 
 // VMPoolConfig configures the JavaScript VM pool for workflow execution.
@@ -76,6 +77,29 @@ type MonitorConfig struct {
 	MetricsPath           string `toml:"metrics_path"`            // Prometheus metrics path (default: /metrics)
 	EnableDetailedMetrics bool   `toml:"enable_detailed_metrics"` // Include detailed metrics (default: false)
 	MetricsPort           string `toml:"metrics_port"`            // Separate port for metrics (empty = same port)
+}
+
+// RateLimitConfig configures IP-based rate limiting for API endpoints.
+// Supports configurable storage backends and exclusion rules.
+type RateLimitConfig struct {
+	Enabled bool `toml:"enabled"` // Enable rate limiting (default: false)
+	
+	// IP rate limiting
+	IPRateLimit      int `toml:"ip_rate_limit"`       // Requests per IP per window (default: 100)
+	IPWindowMinutes  int `toml:"ip_window_minutes"`   // Time window in minutes (default: 1)
+	IPBurstSize      int `toml:"ip_burst_size"`       // Burst size for IP limiting (default: 10)
+	
+	// Storage backend
+	Backend          string `toml:"backend"`           // Backend type: "memory" or "redis" (default: "memory")
+	CleanupInterval  int    `toml:"cleanup_interval"`  // Cleanup interval in minutes for memory backend (default: 10)
+	
+	// Response configuration
+	RetryAfterHeader bool   `toml:"retry_after_header"` // Include Retry-After header (default: true)
+	ErrorMessage     string `toml:"error_message"`      // Custom error message (default: "Rate limit exceeded")
+	
+	// Exclusions
+	ExcludedIPs      string `toml:"excluded_ips"`       // Comma-separated IPs to exclude
+	ExcludedPaths    string `toml:"excluded_paths"`     // Comma-separated paths to exclude
 }
 
 type DatabaseNflow struct {

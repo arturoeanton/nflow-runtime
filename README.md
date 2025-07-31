@@ -25,6 +25,7 @@ go get github.com/arturoeanton/nflow-runtime
 - **Complete Monitoring**: Prometheus metrics and health checks
 - **Advanced Debugging**: Debug endpoints with authentication
 - **Optimized**: Smart caching and highly optimized code
+- **Rate Limiting**: IP-based rate limiting with configurable backends
 
 ## 🔧 Configuration
 
@@ -68,6 +69,11 @@ allowed_ips = ""          # Allowed IPs (e.g., "192.168.1.0/24")
 enabled = false
 smtp_host = "smtp.gmail.com"
 smtp_port = 587
+
+[rate_limit]
+enabled = false            # IP-based rate limiting
+ip_rate_limit = 100       # Requests per IP per window
+ip_window_minutes = 1     # Time window in minutes
 ```
 
 ## 🏃‍♂️ Basic Usage
@@ -216,6 +222,17 @@ engine.RegisterStep("my-custom-step", &MyCustomStep{})
 - `/debug/database/stats`: Database metrics
 
 See [DEBUG_MONITORING.md](DEBUG_MONITORING.md) for complete documentation.
+
+## 🛡️ Rate Limiting
+
+nFlow Runtime includes IP-based rate limiting to protect against abuse:
+
+- Token bucket algorithm for flexible rate control
+- Memory and Redis backends for different deployment scenarios
+- Configurable exclusions for IPs and paths
+- Detailed headers for client integration
+
+See [RATE_LIMITING.md](RATE_LIMITING.md) for complete documentation.
 
 ## 🚨 Error Handling
 

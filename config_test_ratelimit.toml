@@ -1,0 +1,64 @@
+# Test configuration with rate limiting enabled
+
+[pg_session]
+url = ""
+
+[redis]
+host = ""
+password = ""
+
+[database_nflow]
+driver = "sqlite3"
+dsn = "../nflow/app/app.sqlite"
+query="SELECT name,query FROM queries"
+
+[env]
+scim_base = "https://localhost:8443"
+openid_base = "https://localhost:8443"
+
+[vm_pool]
+max_size = 50
+preload_size = 25
+idle_timeout = 10
+cleanup_interval = 5
+enable_metrics = true
+max_memory_mb = 128
+max_execution_seconds = 30
+max_operations = 1000000000
+enable_filesystem = false
+enable_network = false
+enable_process = false
+
+[tracker]
+enabled = false
+workers = 4
+batch_size = 100
+flush_interval = 250
+channel_buffer = 100000
+verbose_logging = false
+stats_interval = 300
+
+[debug]
+enabled = false
+auth_token = ""
+allowed_ips = ""
+enable_pprof = false
+
+[monitor]
+enabled = true
+health_check_path = "/health"
+metrics_path = "/metrics"
+enable_detailed_metrics = false
+metrics_port = ""
+
+[rate_limit]
+enabled = true                    # Enable rate limiting
+ip_rate_limit = 10               # 10 requests per IP per window for testing
+ip_window_minutes = 1            # 1 minute window
+ip_burst_size = 10               # Allow burst of 10 additional requests
+backend = "memory"               # Use memory backend for testing
+cleanup_interval = 10
+retry_after_header = true
+error_message = "Rate limit exceeded. Maximum 10 requests per minute allowed."
+excluded_ips = ""
+excluded_paths = "/health,/metrics"

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/arturoeanton/nflow-runtime/logger"
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
+	"github.com/arturoeanton/nflow-runtime/ratelimit"
 	"github.com/arturoeanton/nflow-runtime/syncsession"
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
@@ -322,10 +324,26 @@ func main() {
 	// A fresh VM is created for each request to ensure stability
 	logger.Info("VM pooling disabled - creating fresh VM per request for stability")
 
+	// Initialize rate limiter
+	var rateLimiter ratelimit.RateLimiter
+	if config.RateLimitConfig.Enabled {
+		rateLimiter = ratelimit.NewRateLimiter(&config.RateLimitConfig, redisClient)
+		logger.Info("Rate limiting enabled")
+		logger.Infof("IP rate limit: %d requests per %d minute(s)", 
+			config.RateLimitConfig.IPRateLimit, 
+			config.RateLimitConfig.IPWindowMinutes)
+	}
+
 	// Create Echo server
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	
+	// Add rate limiting middleware before session middleware
+	if config.RateLimitConfig.Enabled && rateLimiter != nil {
+		e.Use(ratelimit.Middleware(&config.RateLimitConfig, rateLimiter))
+	}
+	
 	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
 
 	// Register monitoring endpoints (health and metrics)
@@ -368,7 +386,26 @@ func main() {
 	if config.DebugConfig.Enabled {
 		logger.Info("Debug endpoints enabled at /debug/*")
 	}
-	e.Logger.Fatal(e.Start(":8080"))
+	
+	// Add shutdown handler
+	go func() {
+		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+	
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	
+	// Cleanup rate limiter
+	if rateLimiter != nil {
+		rateLimiter.Close()
+		logger.Info("Rate limiter closed")
+	}
+	
+	logger.Info("Server shutting down")
 }
 
 // Debug handler functions

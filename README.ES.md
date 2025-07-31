@@ -25,6 +25,7 @@ go get github.com/arturoeanton/nflow-runtime
 - **Monitoreo Completo**: Métricas Prometheus y health checks
 - **Debug Avanzado**: Endpoints de debugging con autenticación
 - **Optimizado**: Cache inteligente y código altamente optimizado
+- **Rate Limiting**: Limitación de tasa basada en IP con backends configurables
 
 ## 🔧 Configuración
 
@@ -68,6 +69,11 @@ allowed_ips = ""          # IPs permitidas (ej: "192.168.1.0/24")
 enabled = false
 smtp_host = "smtp.gmail.com"
 smtp_port = 587
+
+[rate_limit]
+enabled = false            # Limitación de tasa por IP
+ip_rate_limit = 100       # Solicitudes por IP por ventana
+ip_window_minutes = 1     # Ventana de tiempo en minutos
 ```
 
 ## 🏃‍♂️ Uso Básico
@@ -216,6 +222,17 @@ engine.RegisterStep("my-custom-step", &MyCustomStep{})
 - `/debug/database/stats`: Métricas de base de datos
 
 Ver [DEBUG_MONITORING.md](DEBUG_MONITORING.md) para documentación completa.
+
+## 🛡️ Limitación de Tasa
+
+nFlow Runtime incluye limitación de tasa basada en IP para proteger contra el abuso:
+
+- Algoritmo token bucket para control flexible de tasa
+- Backends de memoria y Redis para diferentes escenarios de implementación
+- Exclusiones configurables para IPs y rutas
+- Headers detallados para integración con clientes
+
+Ver [RATE_LIMITING.ES.md](RATE_LIMITING.ES.md) para documentación completa.
 
 ## 🚨 Manejo de Errores
 

@@ -117,6 +117,7 @@
 11. **Sistema de métricas Prometheus** - Implementación completa con health checks y métricas detalladas
 12. **Endpoints de debug avanzados** - Sistema completo de debugging con autenticación y filtrado por IP
 13. **Reorganización de código** - Endpoints movidos a su propio paquete para mejor organización
+14. **Rate limiting por IP** - Implementado con algoritmo token bucket, backends memory/Redis, exclusiones configurables
 
 ## 🎯 Prioridades Recomendadas (Actualizado - 31/07/2025)
 
@@ -126,7 +127,7 @@
 
 2. **Corto plazo**: 
    - Tests de integración end-to-end
-   - Rate limiting por usuario/IP
+   - ~~Rate limiting por IP~~ ✅ RESUELTO
    - Circuit breakers para servicios externos
    
 3. **Mediano plazo**: 

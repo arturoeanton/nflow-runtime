@@ -6,16 +6,16 @@
 
 ## 🎯 Madurez del Proyecto
 
-### Nivel de Madurez: **4.8/5** ⭐⭐⭐⭐⭐
+### Nivel de Madurez: **4.9/5** ⭐⭐⭐⭐⭐
 
 | Aspecto              | Nivel | Comentarios |
 |---------------------|-------|-------------|
 | **Arquitectura**    | 4.8/5 | Sólida con patrón Repository, código bien organizado en paquetes |
 | **Código**          | 4.9/5 | Limpio, thread-safe, optimizado, documentado, organizado por dominios |
 | **Testing**         | 2.5/5 | Tests unitarios mejorados, incluye tests de seguridad |
-| **Documentación**   | 4.5/5 | Documentación completa, endpoints documentados, guías de integración |
+| **Documentación**   | 4.8/5 | Documentación completa, endpoints documentados, guías bilingües, rate limiting |
 | **DevOps**          | 3/5   | Métricas Prometheus, health checks, falta CI/CD |
-| **Seguridad**       | 4.5/5 | Límites, sandboxing, autenticación en debug, filtrado por IP |
+| **Seguridad**       | 4.8/5 | Límites, sandboxing, auth, filtrado IP, rate limiting |
 | **Observabilidad**  | 4.5/5 | Métricas completas, health checks, debugging avanzado |
 
 ## 🚀 Productividad
@@ -61,7 +61,7 @@ Resultados de prueba de carga (summary.csv):
 
 ## 🔒 Seguridad
 
-### Nivel de Seguridad: **BUENO** ✅
+### Nivel de Seguridad: **MUY BUENO** ✅
 
 **Implementado:**
 - ✅ Autenticación por tokens
@@ -73,17 +73,18 @@ Resultados de prueba de carga (summary.csv):
 - ✅ **Bloqueo de eval() y Function constructor**
 - ✅ **Console sanitizado** (sin exposición de paths)
 - ✅ **Configuración flexible de seguridad**
+- ✅ **Rate limiting por IP** (token bucket, backends memory/Redis)
 
 **Faltante:**
 - ⚠️ Sin auditoría detallada de acciones
 - ⚠️ Sin encriptación de datos sensibles en tránsito
-- ⚠️ Sin rate limiting por usuario
 - ⚠️ Sin análisis estático de scripts
 
 ### Vulnerabilidades Mitigadas
 1. ~~**DoS por consumo de recursos**~~ ✅ Resuelto con límites configurables
 2. ~~**Inyección de código via eval**~~ ✅ Resuelto con sandboxing
 3. **Exposición de datos** ⚠️ Parcialmente resuelto (logs sanitizados)
+4. ~~**Abuso de API**~~ ✅ Resuelto con rate limiting por IP
 
 ## 📈 Métricas de Calidad
 
@@ -111,21 +112,20 @@ Resultados de prueba de carga (summary.csv):
 - [x] Métricas de negocio (workflows, procesos)
 - [x] Health checks completos
 - [x] Endpoints de debug seguros
+- [x] Rate limiting (IP-based)
+- [x] Graceful shutdown
 - [ ] Backup y recovery
 - [ ] Documentación ops completa
 - [ ] Runbooks
 - [ ] SLOs definidos
-- [ ] Rate limiting
 - [ ] Circuit breakers
-- [ ] Graceful shutdown
 - [ ] Secretos externalizados
 
-### Estado: **90% Listo para Producción**
+### Estado: **92% Listo para Producción**
 
 ## 🎯 Recomendaciones Inmediatas (Actualizado 31/07/2025)
 
-1. **Seguridad Adicional** (3-4 días)
-   - Implementar rate limiting por usuario
+1. **Seguridad Adicional** (2-3 días)
    - Agregar análisis estático de scripts
    - Encriptación de datos sensibles
 
@@ -148,7 +148,7 @@ Resultados de prueba de carga (summary.csv):
 
 nFlow Runtime está en un estado **funcionalmente estable** pero requiere trabajo en aspectos no funcionales (seguridad, observabilidad, operaciones) para ser considerado **production-ready** en ambientes empresariales exigentes.
 
-**Veredicto**: Apto para ambientes de desarrollo, staging y producción con cargas moderadas a altas. Con el sistema de monitoreo y debugging implementado, está listo para producción con observabilidad completa. Requiere menos de 1 semana de trabajo para cumplir los estándares enterprise más exigentes.
+**Veredicto**: Apto para ambientes de desarrollo, staging y producción con cargas moderadas a altas. Con el sistema de monitoreo, debugging y rate limiting implementado, está listo para producción con protección contra abuso y observabilidad completa. Requiere menos de 1 semana de trabajo para cumplir los estándares enterprise más exigentes.
 
 ## 🆕 Mejoras Recientes
 
@@ -191,3 +191,10 @@ nFlow Runtime está en un estado **funcionalmente estable** pero requiere trabaj
    - Endpoints movidos a paquete dedicado `endpoints/`
    - Mejor separación de responsabilidades
    - Interfaces para desacoplar componentes
+14. **Rate limiting por IP**:
+   - Algoritmo token bucket para control flexible
+   - Backends memory y Redis para diferentes escenarios
+   - Exclusiones configurables para IPs y paths
+   - Headers estándar X-RateLimit-* y Retry-After
+   - Documentación completa en inglés y español
+   - Graceful shutdown con limpieza de recursos

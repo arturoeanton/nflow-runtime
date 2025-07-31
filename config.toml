@@ -56,3 +56,23 @@ health_check_path = "/health"     # Health check endpoint path
 metrics_path = "/metrics"         # Prometheus metrics endpoint path
 enable_detailed_metrics = false   # Include detailed metrics (CPU, memory, goroutines, etc.)
 metrics_port = ""                # Separate port for metrics (empty = use main port)
+
+[rate_limit]
+enabled = false                   # Enable rate limiting (default: false)
+
+# IP rate limiting configuration
+ip_rate_limit = 100              # Requests per IP per window
+ip_window_minutes = 1            # Time window in minutes
+ip_burst_size = 10               # Burst size for IP limiting
+
+# Storage backend
+backend = "memory"               # "memory" or "redis"
+cleanup_interval = 10            # Cleanup interval in minutes (memory backend)
+
+# Response configuration
+retry_after_header = true        # Include Retry-After header
+error_message = "Rate limit exceeded. Please try again later."
+
+# Exclusions (comma-separated)
+excluded_ips = ""                # e.g., "127.0.0.1,192.168.1.0/24"
+excluded_paths = "/health,/metrics"  # Paths to exclude from rate limiting
