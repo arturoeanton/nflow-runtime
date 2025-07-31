@@ -27,7 +27,7 @@ enable_metrics = true      # Log pool metrics
 
 # Resource limits (seguridad)
 max_memory_mb = 128        # Max memory per VM in MB (default: 128)
-max_execution_seconds = 300 # Max execution time in seconds (default: 30)
+max_execution_seconds = 30 # Max execution time in seconds (default: 30)
 max_operations = 1000000000  # Max JS operations (default: 10M)
 
 # Sandbox settings (seguridad)
