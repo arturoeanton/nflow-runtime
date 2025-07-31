@@ -22,6 +22,9 @@ go get github.com/arturoeanton/nflow-runtime
 - **Thread-Safe**: Arquitectura sin condiciones de carrera usando Repository Pattern
 - **Extensible**: Sistema de plugins para agregar funcionalidad personalizada
 - **Logging Detallado**: Sistema de logs estructurado con modo verbose (-v)
+- **Monitoreo Completo**: Métricas Prometheus y health checks
+- **Debug Avanzado**: Endpoints de debugging con autenticación
+- **Optimizado**: Cache inteligente y código altamente optimizado
 
 ## 🔧 Configuración
 
@@ -46,6 +49,20 @@ max_operations = 10000000  # Operaciones JS máximas
 enable_filesystem = false  # Acceso al sistema de archivos
 enable_network = false     # Acceso a red
 enable_process = false     # Acceso a procesos
+
+[tracker]
+enabled = false            # Tracking de ejecución (impacto en performance)
+verbose_logging = false    # Logs detallados del tracker
+
+[monitor]
+enabled = true             # Endpoints de monitoreo
+health_check_path = "/health"
+metrics_path = "/metrics"
+
+[debug]
+enabled = false            # Endpoints de debug (solo desarrollo)
+auth_token = ""           # Token de autenticación
+allowed_ips = ""          # IPs permitidas (ej: "192.168.1.0/24")
 
 [mail]
 enabled = false
@@ -139,6 +156,9 @@ nflow-runtime/
 │   └── config_repository.go # Patrón repository para config
 ├── process/            # Gestión de procesos
 │   └── process_repository.go # Repository thread-safe
+├── endpoints/          # Endpoints de API
+│   ├── debug_endpoints.go    # Endpoints de debugging
+│   └── monitor_endpoints.go  # Health y métricas
 ├── logger/             # Sistema de logging
 │   └── logger.go       # Logger estructurado con niveles
 ├── syncsession/        # Gestión de sesiones optimizada
@@ -173,11 +193,29 @@ engine.RegisterStep("my-custom-step", &MyCustomStep{})
 
 ## 📈 Métricas y Monitoreo
 
-El sistema incluye métricas básicas. Con `-v` habilitado, verás:
-- Tiempos de ejecución de cada nodo
-- Uso de memoria de las VMs
-- Operaciones por segundo
-- Logs detallados de flujo de ejecución
+### Endpoints de Monitoreo
+
+- **Health Check**: `GET /health` - Estado de salud del sistema
+- **Métricas Prometheus**: `GET /metrics` - Todas las métricas en formato Prometheus
+
+### Métricas Disponibles
+
+- `nflow_requests_total`: Total de requests HTTP
+- `nflow_workflows_total`: Total de workflows ejecutados
+- `nflow_processes_active`: Procesos activos
+- `nflow_db_connections_*`: Métricas de conexiones DB
+- `nflow_go_memory_*`: Uso de memoria
+- `nflow_cache_hits/misses`: Estadísticas de caché
+
+### Endpoints de Debug (cuando están habilitados)
+
+- `/debug/info`: Información del sistema
+- `/debug/config`: Configuración actual
+- `/debug/processes`: Lista de procesos activos
+- `/debug/cache/stats`: Estadísticas de caché
+- `/debug/database/stats`: Métricas de base de datos
+
+Ver [DEBUG_MONITORING.md](DEBUG_MONITORING.md) para documentación completa.
 
 ## 🚨 Manejo de Errores
 
@@ -188,10 +226,12 @@ Los errores se manejan de forma consistente:
 
 ## 🔄 Estado del Proyecto
 
-- **Madurez**: 4/5 ⭐ (Producción con cargas moderadas)
+- **Madurez**: 4.8/5 ⭐ (Listo para producción)
 - **Estabilidad**: ESTABLE ✅
-- **Seguridad**: BUENA ✅
+- **Seguridad**: MUY BUENA ✅
 - **Performance**: 5M+ requests/8h ✅
+- **Observabilidad**: COMPLETA ✅
+- **Preparación Producción**: 90% ✅
 
 Ver [STATUS.md](STATUS.md) para más detalles.
 

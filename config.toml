@@ -44,4 +44,15 @@ channel_buffer = 100000   # Channel buffer size (default: 100000)
 verbose_logging = false   # Enable verbose logging (default: false)
 stats_interval = 300      # Stats reporting interval in seconds (default: 300)
 
-  
+[debug]
+enabled = false           # Enable debug endpoints (default: false)
+auth_token = ""          # Optional auth token for debug endpoints (empty = no auth)
+allowed_ips = ""         # Comma-separated allowed IPs (empty = all IPs allowed)
+enable_pprof = false     # Enable Go pprof profiling endpoints
+
+[monitor]
+enabled = true                    # Enable monitoring endpoints (default: true)
+health_check_path = "/health"     # Health check endpoint path
+metrics_path = "/metrics"         # Prometheus metrics endpoint path
+enable_detailed_metrics = false   # Include detailed metrics (CPU, memory, goroutines, etc.)
+metrics_port = ""                # Separate port for metrics (empty = use main port)

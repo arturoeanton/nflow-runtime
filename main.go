@@ -16,6 +16,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/arturoeanton/gocommons/utils"
 	"github.com/arturoeanton/nflow-runtime/commons"
+	"github.com/arturoeanton/nflow-runtime/endpoints"
 	"github.com/arturoeanton/nflow-runtime/engine"
 	"github.com/arturoeanton/nflow-runtime/literals"
 	"github.com/arturoeanton/nflow-runtime/logger"
@@ -67,6 +68,35 @@ var urlCache = struct {
 	cache map[string]*urlParseResult
 }{
 	cache: make(map[string]*urlParseResult),
+}
+
+// urlCacheAdapter implements endpoints.URLCacheInterface
+type urlCacheAdapter struct{}
+
+func (u *urlCacheAdapter) GetSize() int {
+	urlCache.RLock()
+	defer urlCache.RUnlock()
+	return len(urlCache.cache)
+}
+
+func (u *urlCacheAdapter) GetEntries() []endpoints.URLCacheEntry {
+	urlCache.RLock()
+	defer urlCache.RUnlock()
+	
+	entries := make([]endpoints.URLCacheEntry, 0, len(urlCache.cache))
+	for url, result := range urlCache.cache {
+		entries = append(entries, endpoints.URLCacheEntry{
+			URL:      url,
+			Endpoint: result.endpoint,
+		})
+	}
+	return entries
+}
+
+func (u *urlCacheAdapter) Clear() {
+	urlCache.Lock()
+	defer urlCache.Unlock()
+	urlCache.cache = make(map[string]*urlParseResult)
 }
 
 // parseURL extracts endpoint and position tags with caching
@@ -298,32 +328,46 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(session.Middleware(commons.GetSessionStore(&config.PgSessionConfig)))
 
-	// Debug endpoint to invalidate cache and see all starter nodes
-	e.GET("/debug/invalidate-cache", func(c echo.Context) error {
-		repo := engine.GetPlaybookRepository()
-		if repo != nil {
-			repo.InvalidateAllCache()
-			return c.JSON(200, echo.Map{"message": "Cache invalidated"})
-		}
-		return c.JSON(500, echo.Map{"error": "Repository not available"})
-	})
+	// Register monitoring endpoints (health and metrics)
+	endpoints.RegisterMonitoringEndpoints(e, &config)
 
-	// Debug endpoint to return cleaned JSON for database storage
-	e.GET("/debug/clean-json", func(c echo.Context) error {
-		return handleDebugCleanJSON(c, appJson)
-	})
+	// Register debug endpoints if enabled
+	endpoints.RegisterDebugEndpoints(e, &config, appJson, &urlCacheAdapter{})
 
-	// Debug endpoint to show all starter nodes
-	e.GET("/debug/starters", func(c echo.Context) error {
-		return handleDebugStarters(c, appJson)
-	})
+	// Legacy debug endpoints (kept for backward compatibility)
+	if config.DebugConfig.Enabled {
+		e.GET("/debug/invalidate-cache", func(c echo.Context) error {
+			repo := engine.GetPlaybookRepository()
+			if repo != nil {
+				repo.InvalidateAllCache()
+				return c.JSON(200, echo.Map{"message": "Cache invalidated"})
+			}
+			return c.JSON(500, echo.Map{"error": "Repository not available"})
+		})
 
+		e.GET("/debug/clean-json", func(c echo.Context) error {
+			return handleDebugCleanJSON(c, appJson)
+		})
+
+		e.GET("/debug/starters", func(c echo.Context) error {
+			return handleDebugStarters(c, appJson)
+		})
+	}
+
+	// Main workflow handler - must be last
 	e.Any("/*", func(c echo.Context) error {
 		return run(c, appJson)
 	})
 
 	// Start server
-	logger.Info("Starting nFlow Runtime Example on :8080")
+	logger.Info("Starting nFlow Runtime on :8080")
+	if config.MonitorConfig.Enabled {
+		logger.Infof("Health check available at %s", config.MonitorConfig.HealthCheckPath)
+		logger.Infof("Prometheus metrics available at %s", config.MonitorConfig.MetricsPath)
+	}
+	if config.DebugConfig.Enabled {
+		logger.Info("Debug endpoints enabled at /debug/*")
+	}
 	e.Logger.Fatal(e.Start(":8080"))
 }
 

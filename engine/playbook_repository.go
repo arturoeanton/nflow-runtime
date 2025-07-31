@@ -18,6 +18,7 @@ type PlaybookRepository interface {
 	LoadPlaybook(ctx context.Context, appName string) (map[string]map[string]*model.Playbook, error)
 	InvalidateCache(appName string)
 	InvalidateAllCache()
+	GetCacheSize() int
 }
 
 // playbookRepository implementación concreta del repository
@@ -132,6 +133,14 @@ func (r *playbookRepository) InvalidateAllCache() {
 	for appName := range r.needsReload {
 		r.needsReload[appName] = true
 	}
+}
+
+// GetCacheSize returns the number of cached playbooks
+func (r *playbookRepository) GetCacheSize() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	return len(r.playbooks)
 }
 
 // deepCopyPlaybooks creates a deep copy of playbooks to prevent concurrent modification

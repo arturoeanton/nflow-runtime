@@ -23,6 +23,8 @@ type ConfigWorkspace struct {
 	DatabaseNflow        DatabaseNflow     `toml:"database_nflow"`
 	VMPoolConfig         VMPoolConfig      `toml:"vm_pool"`
 	TrackerConfig        TrackerConfig     `toml:"tracker"`
+	DebugConfig          DebugConfig       `toml:"debug"`
+	MonitorConfig        MonitorConfig     `toml:"monitor"`
 }
 
 // VMPoolConfig configures the JavaScript VM pool for workflow execution.
@@ -55,6 +57,25 @@ type TrackerConfig struct {
 	ChannelBuffer  int  `toml:"channel_buffer"`  // Channel buffer size (default: 100000)
 	VerboseLogging bool `toml:"verbose_logging"` // Enable verbose logging (default: false)
 	StatsInterval  int  `toml:"stats_interval"`  // Stats reporting interval in seconds (default: 300)
+}
+
+// DebugConfig configures debug endpoints availability and security.
+// When enabled, provides detailed system information for troubleshooting.
+type DebugConfig struct {
+	Enabled     bool   `toml:"enabled"`      // Enable debug endpoints (default: false)
+	AuthToken   string `toml:"auth_token"`   // Optional auth token for debug endpoints
+	AllowedIPs  string `toml:"allowed_ips"`  // Comma-separated list of allowed IPs (empty = all)
+	EnablePprof bool   `toml:"enable_pprof"` // Enable Go pprof endpoints (default: false)
+}
+
+// MonitorConfig configures monitoring and health check endpoints.
+// Provides Prometheus-compatible metrics and comprehensive health checks.
+type MonitorConfig struct {
+	Enabled               bool   `toml:"enabled"`                 // Enable monitoring endpoints (default: true)
+	HealthCheckPath       string `toml:"health_check_path"`       // Health check endpoint path (default: /health)
+	MetricsPath           string `toml:"metrics_path"`            // Prometheus metrics path (default: /metrics)
+	EnableDetailedMetrics bool   `toml:"enable_detailed_metrics"` // Include detailed metrics (default: false)
+	MetricsPort           string `toml:"metrics_port"`            // Separate port for metrics (empty = same port)
 }
 
 type DatabaseNflow struct {

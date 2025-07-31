@@ -12,10 +12,13 @@
 - **Impacto**: Cambios pueden romper funcionalidad sin ser detectados
 - **Solución propuesta**: Crear suite de tests de integración con workflows reales
 
-### 3. **Documentación de API incompleta**
-- **Problema**: No hay documentación formal de las APIs REST
-- **Impacto**: Dificulta la integración con sistemas externos
-- **Solución propuesta**: Generar documentación OpenAPI/Swagger
+### 3. ~~**Documentación de API incompleta**~~ ✅ PARCIALMENTE RESUELTO
+- ~~**Problema**: No hay documentación formal de las APIs REST~~
+- ~~**Impacto**: Dificulta la integración con sistemas externos~~
+- **Solución implementada**: 
+  - Documentación completa de endpoints de debug y monitoreo en DEBUG_MONITORING.md
+  - Endpoints de health check y métricas Prometheus documentados
+  - Falta documentación OpenAPI/Swagger para APIs de workflows
 
 ## 🟡 Deuda Media
 
@@ -29,10 +32,15 @@
 - ~~**Impacto**: Requiere recompilación para ajustes~~
 - **Solución implementada**: Límites de recursos y sandboxing ahora configurables en config.toml
 
-### 3. **Falta de métricas detalladas**
-- **Problema**: Solo hay métricas básicas del VM pool
-- **Impacto**: Visibilidad limitada del comportamiento en producción
-- **Solución propuesta**: Implementar métricas con Prometheus (ahora incluir métricas de seguridad)
+### 3. ~~**Falta de métricas detalladas**~~ ✅ RESUELTO
+- ~~**Problema**: Solo hay métricas básicas del VM pool~~
+- ~~**Impacto**: Visibilidad limitada del comportamiento en producción~~
+- **Solución implementada**: 
+  - Sistema completo de métricas Prometheus implementado
+  - Métricas de requests, workflows, procesos, base de datos, memoria y caché
+  - Health check endpoint con información detallada de componentes
+  - Soporte para métricas en puerto separado
+  - Documentación completa para integración con Grafana
 
 ### 4. ~~**Gestión de memoria en VMs**~~ ✅ RESUELTO
 - ~~**Problema**: Las VMs no tienen límites de memoria configurables~~
@@ -90,8 +98,8 @@
 
 | Categoría | Cantidad | Esfuerzo Estimado |
 |-----------|----------|-------------------|
-| Crítica   | 3        | 2-3 semanas       |
-| Media     | 2 (-2)   | 2-3 semanas       |
+| Crítica   | 2 (-1)   | 2-3 semanas       |
+| Media     | 1 (-3)   | 1-2 semanas       |
 | Menor     | 2 (-3)   | 1 semana          |
 
 ## ✅ Deuda Resuelta Recientemente
@@ -106,18 +114,27 @@
 8. **Función defer optimizada en engine.go** - Eliminadas goroutines y operaciones DB redundantes
 9. **Optimización completa de engine.go** - Cache de auth.js, mejor organización, prevención de loops infinitos
 10. **Optimización completa de main.go** - Cache de URLs, eliminación de goroutines innecesarias, código más limpio
+11. **Sistema de métricas Prometheus** - Implementación completa con health checks y métricas detalladas
+12. **Endpoints de debug avanzados** - Sistema completo de debugging con autenticación y filtrado por IP
+13. **Reorganización de código** - Endpoints movidos a su propio paquete para mejor organización
 
-## 🎯 Prioridades Recomendadas (Actualizado)
+## 🎯 Prioridades Recomendadas (Actualizado - 31/07/2025)
 
-1. **Inmediato**: Arreglar tests de syncsession
+1. **Inmediato**: 
+   - Arreglar tests de syncsession con deadlock
+   - Documentación OpenAPI para workflows
+
 2. **Corto plazo**: 
-   - Tests de integración con workflows reales
-   - Métricas detalladas (incluyendo seguridad)
-   - Rate limiting por usuario
+   - Tests de integración end-to-end
+   - Rate limiting por usuario/IP
+   - Circuit breakers para servicios externos
+   
 3. **Mediano plazo**: 
    - Manejo de errores centralizado
-   - Documentación OpenAPI
-   - Health check endpoint
+   - Auditoría detallada de acciones
+   - Secretos externalizados (Vault/KMS)
+   
 4. **Largo plazo**: 
-   - Limpieza de código
-   - Migración completa a inglés
+   - CI/CD pipeline completo
+   - Limpieza de código comentado
+   - Benchmarks automatizados

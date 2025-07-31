@@ -164,6 +164,11 @@ func Ps() string {
 	return b.String()
 }
 
+// GetProcessList returns all active processes as a map
+func GetProcessList() map[string]*Process {
+	return GetRepository().GetAll()
+}
+
 func (p *Process) SendCallback(data string) {
 	if p.Callback != nil {
 		select {
