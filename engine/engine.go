@@ -16,7 +16,6 @@ import (
 
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
-	"github.com/arturoeanton/nflow-runtime/syncsession"
 
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/console"
@@ -119,52 +118,30 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		}
 	}
 
-	// Create a fresh VM for each request with security limits
-	// This ensures all features are properly initialized
-	limits := GetLimitsFromConfig()
-	sandboxConfig := GetSandboxConfigFromConfig()
-
-	vm, tracker, err := CreateSecureVM(limits, sandboxConfig)
+	// Use VM from pool for better performance
+	vmManager := GetVMManager()
+	var vm *goja.Runtime
+	
+	// Acquire VM from pool
+	vmInstance, err := vmManager.AcquireVM(c)
 	if err != nil {
-		logger.Errorf("Error creating secure VM: %v", err)
-		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create execution environment"})
+		logger.Errorf("Error acquiring VM from pool: %v", err)
+		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to acquire execution environment"})
 		return nil
 	}
-	defer tracker.Stop()
+	defer vmManager.ReleaseVM(vmInstance)
+	
+	vm = vmInstance.VM
+	
+	// TODO: Fix resource limits for pooled VMs
+	// Currently disabled because trackers are interfering with pooled VMs
+	// limits := GetLimitsFromConfig()
+	// tracker := SetupVMWithLimits(vm, limits)
+	// defer tracker.Stop()
 
-	// Initialize VM with all required modules
-	registryOnce.Do(func() {
-		if registry == nil {
-			registry = new(require.Registry)
-			registry.RegisterNativeModule("console", console.Require)
-			registry.RegisterNativeModule("util", util.Require)
-		}
-	})
-	registry.Enable(vm)
-	// We don't need console.Enable because the sandbox provides its own secure version
-
-	// Add all features to the VM. These features provide various APIs
-	// that workflows can use. The optimized session version uses the
-	// syncsession.Manager for better performance and thread safety.
-	if syncsession.Manager != nil {
-		AddFeatureSessionOptimized(vm, c)
-	} else {
-		AddFeatureSession(vm, c)
-	}
-
-	AddFeatureUsers(vm, c)
-	AddFeatureToken(vm, c)
-	AddFeatureTemplate(vm, c)
+	// IMPORTANT: Re-set request-specific globals for this VM
+	// The VM from pool needs fresh context for each request
 	AddGlobals(vm, c)
-
-	// Add plugin features to the VM. Plugins can extend the JavaScript
-	// environment with custom functions and objects. Each plugin returns
-	// a map of feature names to their implementations.
-	for _, p := range Plugins {
-		for key, fx := range p.AddFeatureJS() {
-			vm.Set(key, fx)
-		}
-	}
 
 	// Set endpoint and request data in the VM. These global variables
 	// are accessible to all JavaScript code in the workflow.

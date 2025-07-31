@@ -136,7 +136,7 @@ func NewVMManagerWithConfig(maxSize int, config *VMPoolConfig) *VMManager {
 func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 	log.Printf("[VM Manager] AcquireVM called\n")
 
-	// Try to get from pool first
+	// First attempt - try to get from pool immediately
 	select {
 	case instance := <-m.pool:
 		log.Printf("[VM Manager] Got VM from pool: %s\n", instance.ID)
@@ -160,13 +160,51 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 		return instance, nil
 
 	default:
-		// Pool is empty, create new VM if under limit
+		// Pool is empty, check if we can create a new VM
 		m.mu.RLock()
 		activeCount := len(m.activeVMs)
+		poolSize := len(m.pool)
 		m.mu.RUnlock()
 
+		log.Printf("[VM Manager] Pool empty. Active: %d, Pool size: %d, Max: %d\n", activeCount, poolSize, m.maxSize)
+
 		if activeCount >= m.maxSize {
-			return nil, fmt.Errorf("VM pool exhausted: %d VMs in use", activeCount)
+			// Pool is at capacity, wait for a VM to become available
+			log.Printf("[VM Manager] Pool at capacity, waiting for available VM...\n")
+			
+			// Wait with timeout for a VM to become available
+			timeout := time.NewTimer(5 * time.Second)
+			defer timeout.Stop()
+			
+			select {
+			case instance := <-m.pool:
+				log.Printf("[VM Manager] Got VM from pool after waiting: %s\n", instance.ID)
+				
+				m.mu.Lock()
+				instance.InUse = true
+				instance.LastUsed = time.Now()
+				instance.UseCount++
+				m.activeVMs[instance.ID] = instance
+				m.mu.Unlock()
+				
+				m.updateStats(func(s *VMStats) {
+					s.InUse++
+					s.Available--
+					s.TotalUses++
+				})
+				
+				m.resetVM(instance.VM, c)
+				return instance, nil
+				
+			case <-timeout.C:
+				// Log current pool state for debugging
+				m.mu.RLock()
+				log.Printf("[VM Manager] Timeout waiting for VM. Active VMs: %d, Pool size: %d\n", 
+					len(m.activeVMs), len(m.pool))
+				m.mu.RUnlock()
+				
+				return nil, fmt.Errorf("VM pool exhausted: timeout waiting for available VM (max: %d)", m.maxSize)
+			}
 		}
 
 		// Create new VM
@@ -207,17 +245,30 @@ func (m *VMManager) AcquireVM(c echo.Context) (*VMInstance, error) {
 // ReleaseVM returns a VM to the pool
 func (m *VMManager) ReleaseVM(instance *VMInstance) {
 	if instance == nil {
+		log.Printf("[VM Manager] ReleaseVM called with nil instance\n")
 		return
 	}
 
+	log.Printf("[VM Manager] Releasing VM: %s\n", instance.ID)
+
 	instance.mu.Lock()
+	wasInUse := instance.InUse
 	instance.InUse = false
 	instance.LastUsed = time.Now()
 	instance.mu.Unlock()
 
+	if !wasInUse {
+		log.Printf("[VM Manager] WARNING: VM %s was not marked as in use\n", instance.ID)
+	}
+
 	m.mu.Lock()
+	_, existed := m.activeVMs[instance.ID]
 	delete(m.activeVMs, instance.ID)
 	m.mu.Unlock()
+
+	if !existed {
+		log.Printf("[VM Manager] WARNING: VM %s was not in activeVMs map\n", instance.ID)
+	}
 
 	// Clear sensitive data from VM
 	m.clearVM(instance.VM)
@@ -225,12 +276,14 @@ func (m *VMManager) ReleaseVM(instance *VMInstance) {
 	// Try to return to pool
 	select {
 	case m.pool <- instance:
+		log.Printf("[VM Manager] VM %s returned to pool\n", instance.ID)
 		m.updateStats(func(s *VMStats) {
 			s.InUse--
 			s.Available++
 		})
 	default:
 		// Pool is full, let GC handle it
+		log.Printf("[VM Manager] WARNING: Pool is full, VM %s will be garbage collected\n", instance.ID)
 		m.updateStats(func(s *VMStats) {
 			s.InUse--
 		})
@@ -283,6 +336,8 @@ func (m *VMManager) resetVM(vm *goja.Runtime, c echo.Context) {
 	AddFeatureUsers(vm, c)
 	AddFeatureToken(vm, c)
 	AddFeatureTemplate(vm, c)
+	// Use wrapper for JS context
+	SetupJSContext(vm, c)
 	AddGlobals(vm, c)
 
 	// Add plugin features
@@ -306,6 +361,14 @@ func (m *VMManager) resetVM(vm *goja.Runtime, c echo.Context) {
 			log.Printf("[VM Reset] Function '%s' is defined\n", fn)
 		}
 	}
+	
+	// Also verify 'c' is available
+	cVal := vm.Get("c")
+	if cVal == nil || cVal == goja.Undefined() || cVal == goja.Null() {
+		log.Printf("[VM Reset] WARNING: 'c' is not defined in VM!\n")
+	} else {
+		log.Printf("[VM Reset] 'c' is defined, type: %T\n", cVal.Export())
+	}
 
 	log.Printf("[VM Reset] VM reset completed\n")
 }
@@ -313,10 +376,11 @@ func (m *VMManager) resetVM(vm *goja.Runtime, c echo.Context) {
 // clearVM removes sensitive data from VM
 func (m *VMManager) clearVM(vm *goja.Runtime) {
 	// Clear sensitive globals and any user-defined variables
+	// NOTE: Don't clear 'c' and 'echo_context' as they need to be reset per request
 	sensitiveKeys := []string{
 		"form", "header", "auth_session", "profile",
 		"redis_hset", "redis_hget", "redis_hdel",
-		"c", "echo_context", "nflow_endpoint",
+		"nflow_endpoint",
 		"shared_var", // For tests
 	}
 
@@ -375,13 +439,33 @@ func (m *VMManager) Cleanup() {
 
 // logMetrics logs VM pool metrics periodically
 func (m *VMManager) logMetrics() {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(30 * time.Second) // More frequent metrics
 	defer ticker.Stop()
 
 	for range ticker.C {
-		stats := m.GetStats()
-		log.Printf("[VM Pool Metrics] Created: %d, InUse: %d, Available: %d, TotalUses: %d, Errors: %d\n",
-			stats.Created, stats.InUse, stats.Available, stats.TotalUses, stats.Errors)
+		m.stats.mu.RLock()
+		stats := VMStats{
+			Created:   m.stats.Created,
+			InUse:     m.stats.InUse,
+			Available: m.stats.Available,
+			TotalUses: m.stats.TotalUses,
+			Errors:    m.stats.Errors,
+		}
+		m.stats.mu.RUnlock()
+		
+		m.mu.RLock()
+		activeVMs := len(m.activeVMs)
+		poolSize := len(m.pool)
+		m.mu.RUnlock()
+		
+		log.Printf("[VM Pool Metrics] Created: %d, InUse: %d, Available: %d, TotalUses: %d, Errors: %d | ActiveVMs: %d, PoolSize: %d, MaxSize: %d\n",
+			stats.Created, stats.InUse, stats.Available, stats.TotalUses, stats.Errors,
+			activeVMs, poolSize, m.maxSize)
+		
+		// Warn if pool is getting full
+		if activeVMs > int(float64(m.maxSize)*0.8) {
+			log.Printf("[VM Pool WARNING] Pool usage above 80%%: %d/%d VMs in use\n", activeVMs, m.maxSize)
+		}
 	}
 }
 

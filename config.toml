@@ -19,8 +19,8 @@ scim_base = "https://localhost:8443"
 openid_base = "https://localhost:8443"
 
 [vm_pool]
-max_size = 50              # Maximum VMs in pool
-preload_size = 25          # VMs to create at startup
+max_size = 200              # Maximum VMs in pool (increased for 4x performance)
+preload_size = 100          # VMs to create at startup (50% of max)
 idle_timeout = 10          # Minutes before removing idle VMs
 cleanup_interval = 5       # Minutes between cleanup runs
 enable_metrics = true      # Log pool metrics

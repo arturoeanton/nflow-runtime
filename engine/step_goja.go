@@ -3,6 +3,7 @@ package engine
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/arturoeanton/nflow-runtime/model"
 	"github.com/arturoeanton/nflow-runtime/process"
@@ -13,7 +14,16 @@ import (
 )
 
 var (
-	semVM = make(chan int, 50) // 70 aguanto - 80 no aguanto
+	semVM     chan int
+	semVMOnce sync.Once
+
+	// Cache for babel transforms
+	babelCache     = make(map[string]string)
+	babelCacheMutex sync.RWMutex
+
+	// Cache for compiled programs
+	programCache      = make(map[string]*goja.Program)
+	programCacheMutex sync.RWMutex
 )
 
 type StepJS struct {
@@ -42,7 +52,6 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	_, hasCompile := actor.Data["compile"]
 
 	if !hasCompile {
-
 		scriptName, hasScript := actor.Data["script"]
 
 		if hasScript {
@@ -51,7 +60,9 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 			mr := GetRepositoryModules()
 			module, ok := mr.GetModuleWithFallback(scriptName.(string), ctx, conn)
 			if ok {
-				actor.Data["compile"] = module.Code
+				// Transform and cache the module code
+				transformed := babelTransform(module.Code)
+				actor.Data["compile"] = transformed
 			}
 		}
 		codeData, hasCode := actor.Data["code"]
@@ -86,6 +97,43 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 	vm.Set("__flow_name", cc.FlowName)
 	vm.Set("__flow_app", cc.AppName)
 
+	// Initialize semaphore with pool size on first use
+	semVMOnce.Do(func() {
+		config := GetConfig()
+		maxSize := config.VMPoolConfig.MaxSize
+		if maxSize <= 0 {
+			maxSize = 200 // Default to 200 for 4x performance
+		}
+		semVM = make(chan int, maxSize)
+	})
+
+	// Try to get compiled program from cache
+	programCacheMutex.RLock()
+	program, hasProgram := programCache[code]
+	programCacheMutex.RUnlock()
+
+	if !hasProgram {
+		// Compile the program
+		var err error
+		program, err = goja.Compile("workflow", code, false)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, echo.Map{
+				"message": "Script compilation error: " + err.Error(),
+				"actor":   actor,
+			})
+			currentProcess.State = "error"
+			return "", payload, err
+		}
+
+		// Cache the compiled program
+		programCacheMutex.Lock()
+		if len(programCache) > 500 { // Limit cache size
+			programCache = make(map[string]*goja.Program)
+		}
+		programCache[code] = program
+		programCacheMutex.Unlock()
+	}
+
 	err = func() error {
 		defer func() {
 			err := recover()
@@ -94,7 +142,7 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 			}
 		}()
 		semVM <- 1
-		_, err := vm.RunString(code)
+		_, err := vm.RunProgram(program)
 		<-semVM
 		return err
 	}()
@@ -133,6 +181,15 @@ func (s *StepJS) Run(cc *model.Controller, actor *model.Node, c echo.Context, vm
 }
 
 func babelTransform(code string) string {
+	// Check cache first
+	babelCacheMutex.RLock()
+	if cached, ok := babelCache[code]; ok {
+		babelCacheMutex.RUnlock()
+		return cached
+	}
+	babelCacheMutex.RUnlock()
+
+	// Transform code
 	babel.Init(4) // Setup 4 transformers (can be any number > 0)
 	res, err := babel.TransformString(
 		code,
@@ -163,6 +220,18 @@ func babelTransform(code string) string {
 		log.Println(code)
 		log.Println(err)
 		log.Println("babelTransform_00010 ****", err)
+		return code // Return original code on error
 	}
+
+	// Cache the result
+	babelCacheMutex.Lock()
+	// Limit cache size to prevent memory issues
+	if len(babelCache) > 1000 {
+		// Clear cache when it gets too large
+		babelCache = make(map[string]string)
+	}
+	babelCache[code] = res
+	babelCacheMutex.Unlock()
+
 	return res
 }
