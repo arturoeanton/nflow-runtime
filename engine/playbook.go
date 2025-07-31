@@ -59,12 +59,12 @@ func GetPlaybook(ctx context.Context, conn *sql.Conn, pbName string) (map[string
 	// CRITICAL: Protect JSON unmarshaling from concurrent access
 	// Multiple goroutines calling json.Unmarshal concurrently can corrupt slice data
 	jsonUnmarshalMutex.Lock()
-	
+
 	data := make(map[string]map[string]map[string]*model.Playbook)
 	err = json.Unmarshal([]byte(flowJson), &data)
-	
+
 	jsonUnmarshalMutex.Unlock()
-	
+
 	if err != nil {
 		logger.Errorf("JSON unmarshal error for playbook %s: %v", pbName, err)
 		return nil, err
@@ -111,13 +111,13 @@ func GetWorkflow(c echo.Context, playbooks map[string]map[string]*model.Playbook
 						logger.Verbosef("DEBUG: Skipping starter node - no outputs")
 						continue
 					}
-					
+
 					output1, hasOutput1 := item.Outputs["output_1"]
 					if !hasOutput1 || output1 == nil {
 						logger.Verbosef("DEBUG: Skipping starter node - no output_1")
 						continue
 					}
-					
+
 					if output1.Connections == nil || len(output1.Connections) == 0 {
 						logger.Verbosef("DEBUG: Skipping corrupted starter node with empty connections")
 						continue
@@ -152,7 +152,7 @@ func GetWorkflow(c echo.Context, playbooks map[string]map[string]*model.Playbook
 							}
 						}
 
-						logger.Verbosef("DEBUG: Selected VALID starter node with %d connections for path %s", 
+						logger.Verbosef("DEBUG: Selected VALID starter node with %d connections for path %s",
 							len(output1.Connections), urlpattern)
 
 						c := &model.Controller{

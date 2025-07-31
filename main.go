@@ -57,7 +57,7 @@ func CheckError(c echo.Context, err error, code int) bool {
 
 // URL parsing cache for better performance
 type urlParseResult struct {
-	endpoint         string
+	endpoint           string
 	positionTagNflowID int
 	positionTagNflowTK int
 }
@@ -143,7 +143,7 @@ func extractNextNodeRun(c echo.Context, endpointParts []string, positionTagNflow
 // corresponding workflow based on the URL path.
 func run(c echo.Context, appJson string) error {
 	ctx := c.Request().Context()
-	
+
 	// Get database connection
 	db, err := engine.GetDB()
 	if err != nil {
@@ -166,7 +166,7 @@ func run(c echo.Context, appJson string) error {
 
 	modulesRepo := engine.GetRepositoryModules()
 	modulesRepo.SetDinamic(false)
-	
+
 	// Get playbook repository
 	repo := engine.GetPlaybookRepository()
 	if repo == nil {
@@ -307,12 +307,12 @@ func main() {
 		}
 		return c.JSON(500, echo.Map{"error": "Repository not available"})
 	})
-	
+
 	// Debug endpoint to return cleaned JSON for database storage
 	e.GET("/debug/clean-json", func(c echo.Context) error {
 		return handleDebugCleanJSON(c, appJson)
 	})
-	
+
 	// Debug endpoint to show all starter nodes
 	e.GET("/debug/starters", func(c echo.Context) error {
 		return handleDebugStarters(c, appJson)
@@ -336,26 +336,26 @@ func handleDebugCleanJSON(c echo.Context, appJson string) error {
 	if repo == nil {
 		return c.JSON(500, echo.Map{"error": "Repository not available"})
 	}
-	
+
 	// Force reload to get fresh data from database
 	repo.InvalidateAllCache()
 	appPlaybooks, err := repo.LoadPlaybook(ctx, appJson)
 	if err != nil {
 		return c.JSON(500, echo.Map{"error": err.Error()})
 	}
-	
+
 	// Clean the playbooks
 	cleanedPlaybooks, removedCount := cleanPlaybooks(appPlaybooks)
-	
+
 	// Wrap in drawflow structure for database storage
 	result := map[string]interface{}{
 		"drawflow": cleanedPlaybooks,
 	}
-	
+
 	return c.JSON(200, map[string]interface{}{
-		"message": fmt.Sprintf("Cleaned JSON ready for database storage. Removed %d corrupted starter nodes.", removedCount),
+		"message":       fmt.Sprintf("Cleaned JSON ready for database storage. Removed %d corrupted starter nodes.", removedCount),
 		"removed_nodes": removedCount,
-		"clean_json": result,
+		"clean_json":    result,
 	})
 }
 
@@ -363,7 +363,7 @@ func handleDebugCleanJSON(c echo.Context, appJson string) error {
 func cleanPlaybooks(appPlaybooks map[string]map[string]*model.Playbook) (map[string]map[string]*model.Playbook, int) {
 	cleanedPlaybooks := make(map[string]map[string]*model.Playbook)
 	removedCount := 0
-	
+
 	for key, flows := range appPlaybooks {
 		cleanedFlows := make(map[string]*model.Playbook)
 		for flowKey, pb := range flows {
@@ -371,19 +371,19 @@ func cleanPlaybooks(appPlaybooks map[string]map[string]*model.Playbook) (map[str
 				cleanedFlows[flowKey] = pb
 				continue
 			}
-			
+
 			cleanedPlaybook := make(model.Playbook)
 			for nodeID, node := range *pb {
 				if isValidNode(node, nodeID, &removedCount) {
 					cleanedPlaybook[nodeID] = node
 				}
 			}
-			
+
 			cleanedFlows[flowKey] = &cleanedPlaybook
 		}
 		cleanedPlaybooks[key] = cleanedFlows
 	}
-	
+
 	return cleanedPlaybooks, removedCount
 }
 
@@ -392,33 +392,33 @@ func isValidNode(node *model.Node, nodeID string, removedCount *int) bool {
 	if node == nil || node.Data == nil {
 		return true
 	}
-	
+
 	// Check if this is a starter node
 	nodeType, ok := node.Data["type"]
 	if !ok || nodeType != "starter" {
 		return true
 	}
-	
+
 	// Check if starter has proper connections
 	if node.Outputs == nil {
 		logger.Verbosef("DEBUG: Removing starter node %s - no outputs", nodeID)
 		*removedCount++
 		return false
 	}
-	
+
 	output1, exists := node.Outputs["output_1"]
 	if !exists || output1 == nil {
 		logger.Verbosef("DEBUG: Removing starter node %s - no output_1", nodeID)
 		*removedCount++
 		return false
 	}
-	
+
 	if output1.Connections == nil || len(output1.Connections) == 0 {
-		logger.Verbosef("DEBUG: Removing starter node %s - empty connections", nodeID) 
+		logger.Verbosef("DEBUG: Removing starter node %s - empty connections", nodeID)
 		*removedCount++
 		return false
 	}
-	
+
 	return true
 }
 
@@ -429,26 +429,26 @@ func handleDebugStarters(c echo.Context, appJson string) error {
 	if repo == nil {
 		return c.JSON(500, echo.Map{"error": "Repository not available"})
 	}
-	
+
 	// Force reload to see fresh data
 	repo.InvalidateAllCache()
 	appPlaybooks, err := repo.LoadPlaybook(ctx, appJson)
 	if err != nil {
 		return c.JSON(500, echo.Map{"error": err.Error()})
 	}
-	
+
 	starters := collectStarters(appPlaybooks)
-	
+
 	return c.JSON(200, map[string]interface{}{
 		"total_starters": len(starters),
-		"starters": starters,
+		"starters":       starters,
 	})
 }
 
 // collectStarters collects all starter nodes from playbooks
 func collectStarters(appPlaybooks map[string]map[string]*model.Playbook) []map[string]interface{} {
 	starters := []map[string]interface{}{}
-	
+
 	for key, flows := range appPlaybooks {
 		for flowKey, pb := range flows {
 			if pb == nil {
@@ -461,7 +461,7 @@ func collectStarters(appPlaybooks map[string]map[string]*model.Playbook) []map[s
 			}
 		}
 	}
-	
+
 	return starters
 }
 
@@ -470,25 +470,25 @@ func extractStarterInfo(node *model.Node, nodeID, flowKey, subKey string) map[st
 	if node == nil || node.Data == nil {
 		return nil
 	}
-	
+
 	nodeType, ok := node.Data["type"]
 	if !ok || nodeType != "starter" {
 		return nil
 	}
-	
+
 	starter := map[string]interface{}{
-		"flow_key":     flowKey,
-		"sub_key":      subKey,
-		"node_id":      nodeID,
-		"urlpattern":   node.Data["urlpattern"],
-		"method":       node.Data["method"],
-		"name":         node.Data["name_box"],
-		"has_outputs":  node.Outputs != nil,
+		"flow_key":    flowKey,
+		"sub_key":     subKey,
+		"node_id":     nodeID,
+		"urlpattern":  node.Data["urlpattern"],
+		"method":      node.Data["method"],
+		"name":        node.Data["name_box"],
+		"has_outputs": node.Outputs != nil,
 	}
-	
+
 	// Add connection information
 	addConnectionInfo(starter, node)
-	
+
 	return starter
 }
 
@@ -499,17 +499,17 @@ func addConnectionInfo(starter map[string]interface{}, node *model.Node) {
 		starter["has_connections"] = false
 		return
 	}
-	
+
 	output1, exists := node.Outputs["output_1"]
 	if !exists || output1 == nil {
 		starter["connections_count"] = "no_output_1"
 		starter["has_connections"] = false
 		return
 	}
-	
+
 	starter["connections_count"] = len(output1.Connections)
 	starter["has_connections"] = len(output1.Connections) > 0
-	
+
 	if len(output1.Connections) > 0 {
 		starter["first_connection"] = map[string]string{
 			"node":   output1.Connections[0].Node,
@@ -525,7 +525,7 @@ func checkAndLoadFileApp() (string, bool) {
 	if !strings.HasSuffix(appJson, ".json") {
 		return appJson, false
 	}
-	
+
 	// Validate file exists
 	if _, err := os.Stat(appJson); os.IsNotExist(err) {
 		logger.Error("Playbook file does not exist:", appJson)
@@ -540,7 +540,7 @@ func checkAndLoadFileApp() (string, bool) {
 		logger.Error("Failed to load playbook:", err)
 		return "", true
 	}
-	
+
 	return appJson, false
 }
 
@@ -550,20 +550,20 @@ func loadPlaybookFile(filename string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	var drawflow map[string]map[string]map[string]*model.Playbook
 	if err := json.Unmarshal(data, &drawflow); err != nil {
 		return fmt.Errorf("failed to parse JSON: %w", err)
 	}
-	
+
 	repo := engine.GetPlaybookRepository()
 	if repo == nil {
 		return fmt.Errorf("PlaybookRepository not initialized")
 	}
-	
+
 	// Save to cache
 	repo.Set(filename, drawflow["drawflow"])
 	repo.SetReloaded(filename)
-	
+
 	return nil
 }

@@ -30,9 +30,9 @@ import (
 )
 
 var (
-	registry *require.Registry
+	registry     *require.Registry
 	registryOnce sync.Once
-	
+
 	// Cache for auth.js to avoid repeated file reads
 	authCodeCache struct {
 		sync.RWMutex
@@ -187,59 +187,59 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 		process.WKill(wid)
 	})
 
-	// Get the playbook and determine the starting node 
+	// Get the playbook and determine the starting node
 	// Use the Controller passed directly to avoid any concurrency issues
 	if cc.Playbook == nil {
 		c.JSON(http.StatusInternalServerError, echo.Map{"error": "Playbook not loaded."})
 		return nil
 	}
-	
+
 	pb := *cc.Playbook
 	nodeAuth := pb[next]
-	
+
 	if next == "" {
 		if cc.Start == nil {
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node not configured."})
 			return nil
 		}
-		
+
 		logger.Verbosef("DEBUG: Processing workflow %s, endpoint %s", cc.FlowName, endpoint)
 		logger.Verbosef("DEBUG: Controller address: %p, Start address: %p", cc, cc.Start)
 		logger.Verbosef("Start Data: %+v", cc.Start.Data)
-		
+
 		// Defensive programming - check each step carefully
 		if cc.Start.Outputs == nil {
 			logger.Error("DEBUG: cc.Start.Outputs is nil")
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node has no outputs configured."})
 			return nil
 		}
-		
+
 		output1, exists := cc.Start.Outputs["output_1"]
 		if !exists {
 			logger.Errorf("DEBUG: output_1 does not exist. Available outputs: %v", getOutputKeys(cc.Start.Outputs))
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Start node missing 'output_1' connection."})
 			return nil
 		}
-		
+
 		if output1 == nil {
 			logger.Error("DEBUG: output1 is nil")
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Output_1 is null."})
 			return nil
 		}
-		
+
 		if output1.Connections == nil {
 			logger.Error("DEBUG: output1.Connections is nil")
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "Output_1 connections is null."})
 			return nil
 		}
-		
+
 		// Make a defensive copy of connections to avoid concurrent modification
 		connections := make([]struct {
 			Node   string `json:"node"`
 			Output string `json:"output"`
 		}, len(output1.Connections))
 		copy(connections, output1.Connections)
-		
+
 		if len(connections) == 0 {
 			logger.Errorf("DEBUG: connections copy is empty! original len: %d, copy len: %d", len(output1.Connections), len(connections))
 			logger.Errorf("DEBUG: output1.Connections is empty! output1 address: %p, Connections address: %p", output1, output1.Connections)
@@ -248,11 +248,11 @@ func run(cc *model.Controller, c echo.Context, vars model.Vars, next string, end
 			c.JSON(http.StatusInternalServerError, echo.Map{"error": "No output connections found for the start node."})
 			return nil
 		}
-		
+
 		logger.Errorf("DEBUG: SUCCESS! Found %d connections, first connection: %+v", len(connections), connections[0])
 		next = connections[0].Node
 		nodeAuth = cc.Start
-		
+
 		logger.Verbosef("DEBUG: Successfully found next node: %s", next)
 	}
 
@@ -406,7 +406,7 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 			entry.RealIP = c.RealIP()
 			entry.UserAgent = req.UserAgent()
 			entry.Host = req.Host
-			
+
 			if reqURL := req.URL; reqURL != nil {
 				entry.URL = reqURL.RawPath
 				if entry.URL == "" {
@@ -438,16 +438,16 @@ func step(cc *model.Controller, c echo.Context, vm *goja.Runtime, next string, v
 		currentProcess.Close()
 		panic("FlagExit")
 	}
-	
+
 	// Get the actor from the controller playbook
 	pb := *cc.Playbook
 	originalActor := pb[next]
-	
+
 	if originalActor == nil {
 		logger.Errorf("Node not found: %s", next)
 		return "", nil, fmt.Errorf("node not found: %s", next)
 	}
-	
+
 	// Create a copy to avoid shared state issues
 	actor, err = originalActor.DeepCopy()
 	if err != nil {
@@ -659,22 +659,22 @@ func getCachedAuthCode() string {
 		return code
 	}
 	authCodeCache.RUnlock()
-	
+
 	// Load with write lock
 	authCodeCache.Lock()
 	defer authCodeCache.Unlock()
-	
+
 	// Double-check after acquiring write lock
 	if authCodeCache.loaded && time.Since(authCodeCache.lastCheck) < 5*time.Minute {
 		return authCodeCache.code
 	}
-	
+
 	// Load from file
 	triggersFold := os.Getenv("NFLOE_TRIGGERS_FOLD")
 	if triggersFold == "" {
 		triggersFold = "triggers/"
 	}
-	
+
 	authFile := triggersFold + "auth.js"
 	if !utils.Exists(authFile) {
 		authCodeCache.loaded = true
@@ -682,18 +682,18 @@ func getCachedAuthCode() string {
 		authCodeCache.lastCheck = time.Now()
 		return ""
 	}
-	
+
 	data, err := utils.FileToString(authFile)
 	if err != nil || data == "" {
 		logger.Error("Error reading auth.js:", err)
 		return ""
 	}
-	
+
 	// Update cache
 	authCodeCache.code = data + "\nauth()"
 	authCodeCache.loaded = true
 	authCodeCache.lastCheck = time.Now()
-	
+
 	return authCodeCache.code
 }
 
@@ -722,23 +722,23 @@ func getAuthProfile(c echo.Context) interface{} {
 // mergeSessionPayload merges session data with the current payload
 func mergeSessionPayload(c echo.Context, vm *goja.Runtime, payload goja.Value) goja.Value {
 	payloadMap := make(map[string]interface{})
-	
+
 	// Extract existing payload
 	if payload != nil {
 		PayloadSessionMutex.Lock()
 		payloadMap = payload.Export().(map[string]interface{})
 		PayloadSessionMutex.Unlock()
 	}
-	
+
 	// Skip session merge for isolated contexts
 	if _, isIsolated := c.(*IsolatedContext); isIsolated {
 		return payload
 	}
-	
+
 	// Merge session data
 	EchoSessionsMutex.Lock()
 	defer EchoSessionsMutex.Unlock()
-	
+
 	s, err := session.Get("nflow_form", c)
 	if err == nil && s != nil && s.Values != nil {
 		for k, v := range s.Values {
@@ -749,7 +749,7 @@ func mergeSessionPayload(c echo.Context, vm *goja.Runtime, payload goja.Value) g
 			}
 		}
 	}
-	
+
 	// Convert back to goja value
 	PayloadSessionMutex.Lock()
 	defer PayloadSessionMutex.Unlock()
@@ -761,17 +761,17 @@ func savePayloadToSession(c echo.Context, payload goja.Value) bool {
 	if payload == nil {
 		return false
 	}
-	
+
 	rawPayload, ok := payload.Export().(map[string]interface{})
 	if !ok {
 		return false
 	}
-	
+
 	// Skip for isolated contexts
 	if _, isIsolated := c.(*IsolatedContext); !isIsolated {
 		EchoSessionsMutex.Lock()
 		defer EchoSessionsMutex.Unlock()
-		
+
 		s, err := session.Get("nflow_form", c)
 		if err == nil {
 			for k, v := range rawPayload {
@@ -780,7 +780,7 @@ func savePayloadToSession(c echo.Context, payload goja.Value) bool {
 			s.Save(c.Request(), c.Response())
 		}
 	}
-	
+
 	// Check for break flag
 	if breakVal, exists := rawPayload["break"]; exists {
 		switch v := breakVal.(type) {
@@ -790,7 +790,7 @@ func savePayloadToSession(c echo.Context, payload goja.Value) bool {
 			return v == "true"
 		}
 	}
-	
+
 	return false
 }
 
@@ -800,10 +800,10 @@ func cleanupSession(c echo.Context) {
 	if _, isIsolated := c.(*IsolatedContext); isIsolated {
 		return
 	}
-	
+
 	EchoSessionsMutex.Lock()
 	defer EchoSessionsMutex.Unlock()
-	
+
 	s, err := session.Get("nflow_form", c)
 	if err == nil {
 		s.Values = make(map[interface{}]interface{})

@@ -26,9 +26,9 @@ func (rc *RuntimeController) GetMethods() []string {
 // CreateRuntimeController crea un wrapper para model.Controller
 func CreateRuntimeController(cc *model.Controller) model.Runeable {
 	logger.Verbosef("DEBUG: Creating controller for %s, address: %p, start address: %p", cc.FlowName, cc, cc.Start)
-	if cc.Start != nil && cc.Start.Outputs != nil {  
+	if cc.Start != nil && cc.Start.Outputs != nil {
 		logger.Verbosef("DEBUG: Start has %d outputs", len(cc.Start.Outputs))
-		
+
 		// DEBUG: Check if the start node has proper connections
 		if output1, exists := cc.Start.Outputs["output_1"]; exists && output1 != nil {
 			logger.Verbosef("DEBUG: Controller creation - output_1 has %d connections", len(output1.Connections))
@@ -37,10 +37,10 @@ func CreateRuntimeController(cc *model.Controller) model.Runeable {
 			}
 		}
 	}
-	
+
 	// Inicializar/actualizar el sistema inmutable con el nuevo controller
 	// Esto garantiza que siempre tengamos un snapshot actualizado
 	InitializeImmutableWorkflow(cc)
-	
+
 	return &RuntimeController{Controller: cc}
 }
