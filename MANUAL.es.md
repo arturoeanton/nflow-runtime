@@ -1,51 +1,44 @@
-# nFlow Runtime - Manual Completo
+# Manual de nFlow Runtime
 
 ## Tabla de Contenidos
 
 1. [Introducción](#introducción)
-2. [Instalación](#instalación)
-3. [Configuración Básica](#configuración-básica)
-4. [Visión General de la Arquitectura](#visión-general-de-la-arquitectura)
-5. [Conceptos Fundamentales](#conceptos-fundamentales)
+2. [Comenzando](#comenzando)
+3. [Conceptos Básicos](#conceptos-básicos)
+4. [Guía de Configuración](#guía-de-configuración)
+5. [Desarrollo de Workflows](#desarrollo-de-workflows)
 6. [Características de Seguridad](#características-de-seguridad)
-7. [Optimización del Rendimiento](#optimización-del-rendimiento)
-8. [Desarrollo de Plugins](#desarrollo-de-plugins)
-9. [Configuración Avanzada](#configuración-avanzada)
-10. [Monitoreo y Depuración](#monitoreo-y-depuración)
-11. [Despliegue en Producción](#despliegue-en-producción)
-12. [Solución de Problemas](#solución-de-problemas)
-13. [Referencia de API](#referencia-de-api)
+7. [Optimización de Rendimiento](#optimización-de-rendimiento)
+8. [Monitoreo y Depuración](#monitoreo-y-depuración)
+9. [Desarrollo de Plugins](#desarrollo-de-plugins)
+10. [Despliegue en Producción](#despliegue-en-producción)
+11. [Solución de Problemas](#solución-de-problemas)
+12. [Temas Avanzados](#temas-avanzados)
 
 ## Introducción
 
-nFlow Runtime es un motor de ejecución de workflows de alto rendimiento diseñado para ejecutar flujos de trabajo creados en el diseñador visual nFlow. Proporciona un entorno seguro y escalable con amplias capacidades de monitoreo.
+nFlow Runtime es un motor de ejecución de workflows de alto rendimiento diseñado para ejecutar flujos de trabajo creados en el diseñador visual nFlow. Proporciona una plataforma segura, escalable y observable para ejecutar workflows basados en JavaScript con características de nivel empresarial.
 
 ### Características Principales
 
-- **Ejecución de JavaScript**: Entorno sandboxed seguro para ejecutar código JavaScript
-- **Alto Rendimiento**: Optimizado para manejar miles de solicitudes por segundo
-- **Seguridad Primero**: Múltiples capas de seguridad incluyendo sandboxing, límites de recursos y análisis estático
-- **Extensible**: Sistema de plugins para funcionalidad personalizada
-- **Observable**: Métricas integradas, logging y capacidades de depuración
+- **Ejecución Segura**: Entorno JavaScript sandboxed con límites de recursos
+- **Alto Rendimiento**: 3,396+ RPS con workflows intensivos en cómputo
+- **Seguridad Empresarial**: Análisis estático, encriptación y sanitización de logs
+- **Observabilidad Completa**: Health checks, métricas Prometheus, endpoints de debug
+- **Arquitectura Flexible**: Sistema de plugins para extensibilidad
 
-### Casos de Uso
-
-- Automatización de workflows
-- Orquestación de APIs
-- Pipelines de procesamiento de datos
-- Automatización de procesos de negocio
-- Middleware de integración
-
-## Instalación
+## Comenzando
 
 ### Prerrequisitos
 
 - Go 1.19 o superior
-- PostgreSQL 12+ o SQLite3
-- Redis 6+ (opcional, para sesiones y rate limiting)
+- PostgreSQL 9.6+ o SQLite3
+- Redis 5.0+ (opcional, para gestión de sesiones)
 - Git
 
-### Desde el Código Fuente
+### Instalación
+
+#### Desde el Código Fuente
 
 ```bash
 # Clonar el repositorio
@@ -55,25 +48,704 @@ cd nflow-runtime
 # Compilar el binario
 go build -o nflow-runtime .
 
-# Ejecutar las pruebas
-go test ./...
-
-# Ejecutar con salida detallada
-./nflow-runtime -v
+# Ejecutar el servidor
+./nflow-runtime
 ```
 
-### Como Módulo de Go
+#### Como Módulo Go
 
 ```bash
 go get github.com/arturoeanton/nflow-runtime
 ```
 
-### Instalación con Docker
+### Inicio Rápido
+
+1. Crear un `config.toml` básico:
+
+```toml
+[database_nflow]
+driver = "sqlite3"
+dsn = "./nflow.db"
+
+[vm_pool]
+max_size = 50
+preload_size = 10
+
+[monitor]
+enabled = true
+```
+
+2. Ejecutar el servidor:
+
+```bash
+./nflow-runtime -v  # Modo verbose para logs detallados
+```
+
+3. Verificar que el servidor esté funcionando:
+
+```bash
+curl http://localhost:8080/health
+```
+
+## Conceptos Básicos
+
+### Workflows
+
+Un workflow es una serie de nodos (pasos) conectados que se ejecutan en secuencia o en paralelo. Cada nodo realiza una acción específica y puede pasar datos a los nodos siguientes.
+
+### Nodos/Pasos
+
+Los nodos son los bloques de construcción de los workflows:
+- **httpstart**: Punto de entrada para workflows activados por HTTP
+- **js**: Ejecutar código JavaScript
+- **http**: Realizar peticiones HTTP
+- **db**: Operaciones de base de datos
+- **mail**: Enviar correos electrónicos
+- **template**: Procesar plantillas
+
+### Proceso
+
+Un proceso es una instancia de ejecución de un workflow. Cada proceso tiene:
+- ID único
+- Estado (en ejecución, completado, fallido)
+- Variables/estado
+- Historial de ejecución
+
+### Payload
+
+Datos pasados entre nodos. Puede ser cualquier valor serializable en JSON.
+
+## Guía de Configuración
+
+### Referencia Completa de Configuración
+
+```toml
+# Configuración de base de datos
+[database_nflow]
+driver = "postgres"  # postgres, mysql, sqlite3
+dsn = "host=localhost user=postgres password=secret dbname=nflow sslmode=disable"
+query = "SELECT name,query FROM queries"  # Tabla de consultas personalizada
+
+# Configuración de Redis (opcional)
+[redis]
+host = "localhost:6379"
+password = ""
+db = 0
+
+# Almacenamiento de sesiones
+[pg_session]
+url = "postgres://user:pass@localhost/sessions?sslmode=disable"
+
+# Configuración del pool de VMs
+[vm_pool]
+max_size = 200              # Máximo de VMs en el pool
+preload_size = 100          # VMs a crear al inicio
+idle_timeout = 10           # Minutos antes de eliminar VMs inactivas
+cleanup_interval = 5        # Minutos entre limpiezas
+enable_metrics = true       # Registrar métricas del pool
+
+# Límites de recursos por VM
+max_memory_mb = 128         # Memoria máxima por VM (MB)
+max_execution_seconds = 30  # Tiempo máximo de ejecución (segundos)
+max_operations = 10000000   # Operaciones JS máximas
+
+# Configuración del sandbox
+enable_filesystem = false   # Permitir acceso al sistema de archivos
+enable_network = false      # Permitir acceso a la red
+enable_process = false      # Permitir creación de procesos
+
+# Seguimiento de ejecución
+[tracker]
+enabled = false             # Habilitar seguimiento de ejecución
+workers = 4                 # Número de goroutines trabajadoras
+batch_size = 100           # Tamaño del lote para inserciones DB
+flush_interval = 250       # Intervalo de flush (ms)
+channel_buffer = 100000    # Tamaño del buffer del canal
+verbose_logging = false    # Habilitar logging verbose
+stats_interval = 300       # Intervalo de reporte de estadísticas (segundos)
+
+# Endpoints de depuración
+[debug]
+enabled = false            # Habilitar endpoints de debug
+auth_token = "secret"      # Token de autenticación
+allowed_ips = "127.0.0.1,192.168.1.0/24"  # IPs permitidas
+enable_pprof = false       # Habilitar profiling con pprof
+
+# Monitoreo
+[monitor]
+enabled = true                    # Habilitar endpoints de monitoreo
+health_check_path = "/health"     # Endpoint de health check
+metrics_path = "/metrics"         # Endpoint de métricas Prometheus
+enable_detailed_metrics = true    # Incluir métricas detalladas
+metrics_port = "9090"            # Puerto separado para métricas (opcional)
+
+# Limitación de tasa
+[rate_limit]
+enabled = true                    # Habilitar limitación de tasa
+ip_rate_limit = 100              # Solicitudes por IP por ventana
+ip_window_minutes = 1            # Ventana de tiempo en minutos
+ip_burst_size = 10               # Tamaño de ráfaga para límite IP
+backend = "memory"               # "memory" o "redis"
+cleanup_interval = 10            # Intervalo de limpieza en minutos
+retry_after_header = true        # Incluir header Retry-After
+error_message = "Límite de tasa excedido. Intente nuevamente más tarde."
+excluded_ips = "127.0.0.1,10.0.0.0/8"     # IPs excluidas
+excluded_paths = "/health,/metrics"        # Rutas excluidas
+
+# Configuración de seguridad
+[security]
+# Análisis estático
+enable_static_analysis = true     # Habilitar análisis estático de JavaScript
+block_on_high_severity = true     # Bloquear problemas de alta severidad
+log_security_warnings = true      # Registrar advertencias de seguridad
+cache_analysis_results = true     # Cachear resultados del análisis
+cache_ttl_minutes = 5            # TTL del cache en minutos
+allowed_patterns = []            # Patrones en lista blanca
+
+# Encriptación
+enable_encryption = true          # Habilitar encriptación de datos
+encryption_key = ""              # Clave de 32 bytes (base64 o hex)
+encrypt_sensitive_data = true    # Auto-encriptar datos sensibles
+encrypt_in_place = true          # Reemplazar valores en el lugar
+always_encrypt_fields = [
+    "password",
+    "token",
+    "secret",
+    "api_key"
+]
+sensitive_patterns = [
+    "email",
+    "phone",
+    "ssn",
+    "credit_card",
+    "api_key",
+    "jwt"
+]
+
+# Patrones personalizados para datos sensibles
+[security.custom_patterns]
+employee_id = "EMP\\d{6}"
+account_number = "ACC-\\d{4}-\\d{4}-\\d{4}"
+
+# Sanitización de logs
+enable_log_sanitization = true    # Habilitar sanitización de logs
+log_masking_char = "*"           # Carácter de enmascaramiento
+log_preserve_length = false      # Preservar longitud original
+log_show_type = true            # Mostrar tipo de dato en reemplazo
+
+# Patrones personalizados para sanitización de logs
+[security.log_custom_patterns]
+session_id = "sess_[a-zA-Z0-9]{32}"
+internal_id = "INT-\\d{8}"
+
+# Configuración de correo
+[mail]
+enabled = false
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+smtp_user = "user@example.com"
+smtp_password = "password"
+smtp_from = "noreply@example.com"
+use_tls = true
+
+# Variables de entorno
+[env]
+scim_base = "https://localhost:8443"
+openid_base = "https://localhost:8443"
+custom_var = "value"
+```
+
+### Configuraciones Específicas por Entorno
+
+#### Desarrollo
+
+```toml
+[debug]
+enabled = true
+auth_token = "dev-token"
+
+[vm_pool]
+max_size = 10
+preload_size = 2
+
+[security]
+enable_static_analysis = true
+block_on_high_severity = false  # Advertir pero no bloquear
+```
+
+#### Producción
+
+```toml
+[debug]
+enabled = false
+
+[vm_pool]
+max_size = 200
+preload_size = 100
+
+[security]
+enable_static_analysis = true
+block_on_high_severity = true
+enable_encryption = true
+enable_log_sanitization = true
+
+[rate_limit]
+enabled = true
+backend = "redis"
+```
+
+## Desarrollo de Workflows
+
+### Creando Tu Primer Workflow
+
+1. **Diseñar en nFlow**: Usa el diseñador visual en https://github.com/arturoeanton/nflow
+
+2. **Nodo JavaScript Básico**:
+
+```javascript
+// Acceder a datos de entrada
+const input = payload;
+
+// Procesar datos
+const result = {
+    message: "Hola, " + input.name,
+    timestamp: new Date().toISOString()
+};
+
+// Retornar datos para el siguiente nodo
+return result;
+```
+
+3. **Usando Métodos del Contexto**:
+
+```javascript
+// Obtener datos de la petición HTTP
+const body = c.request.body;
+const headers = c.request.headers;
+const query = c.request.query;
+
+// Establecer respuesta
+c.response.status = 200;
+c.response.set("Content-Type", "application/json");
+
+// Acceder a variables de entorno
+const apiKey = env.API_KEY;
+
+// Registrar mensajes (serán sanitizados si está habilitado)
+console.log("Procesando usuario:", body.email);
+```
+
+### Trabajando con Variables
+
+```javascript
+// Establecer variables del workflow
+vars.set("userId", 12345);
+vars.set("userName", "Juan Pérez");
+
+// Obtener variables
+const userId = vars.get("userId");
+
+// Verificar si existe una variable
+if (vars.has("userId")) {
+    // Procesar...
+}
+
+// Obtener todas las variables
+const allVars = vars.getAll();
+```
+
+### Peticiones HTTP
+
+```javascript
+// Usando el plugin http
+const response = await http.get("https://api.example.com/data", {
+    headers: {
+        "Authorization": "Bearer " + vars.get("token")
+    }
+});
+
+// Petición POST
+const result = await http.post("https://api.example.com/users", {
+    body: {
+        name: "Juan Pérez",
+        email: "juan@example.com"
+    },
+    headers: {
+        "Content-Type": "application/json"
+    }
+});
+```
+
+### Operaciones de Base de Datos
+
+```javascript
+// Consultar base de datos
+const users = await db.query("SELECT * FROM users WHERE active = $1", [true]);
+
+// Insertar datos
+const result = await db.exec(
+    "INSERT INTO logs (message, created_at) VALUES ($1, $2)",
+    ["Usuario conectado", new Date()]
+);
+
+// Transacción
+await db.transaction(async (tx) => {
+    await tx.exec("UPDATE users SET credits = credits - 10 WHERE id = $1", [userId]);
+    await tx.exec("INSERT INTO transactions (user_id, amount) VALUES ($1, $2)", [userId, -10]);
+});
+```
+
+### Manejo de Errores
+
+```javascript
+try {
+    // Operación riesgosa
+    const data = await http.get("https://api.example.com/data");
+    return data;
+} catch (error) {
+    console.error("Falló la llamada API:", error.message);
+    
+    // Retornar respuesta de error
+    c.response.status = 500;
+    return {
+        error: "Fallo al obtener datos",
+        details: error.message
+    };
+}
+```
+
+## Características de Seguridad
+
+### Análisis Estático
+
+El analizador estático verifica el código JavaScript antes de la ejecución:
+
+```javascript
+// Estos serán bloqueados:
+eval("console.log('peligroso')");  // ❌ uso de eval
+new Function("return 1");           // ❌ constructor Function
+require('fs');                      // ❌ acceso al sistema de archivos
+require('child_process');           // ❌ creación de procesos
+
+// Estos están permitidos:
+console.log("Operación segura");    // ✅
+Math.random();                      // ✅
+JSON.parse('{"key": "value"}');     // ✅
+```
+
+### Encriptación
+
+Los datos sensibles se encriptan automáticamente:
+
+```javascript
+// Esto será encriptado automáticamente en las respuestas
+const userData = {
+    email: "usuario@example.com",    // Detectado como email
+    phone: "555-123-4567",          // Detectado como teléfono
+    apiKey: "sk_test_1234567890",   // Detectado como API key
+    safe: "Esto permanece como texto plano"
+};
+
+// Encriptación manual
+const encrypted = security.encrypt("datos sensibles");
+const decrypted = security.decrypt(encrypted);
+```
+
+### Sanitización de Logs
+
+Los logs se sanitizan automáticamente:
+
+```javascript
+// Log original
+console.log("Email del usuario: juan@example.com, SSN: 123-45-6789");
+
+// Salida sanitizada
+// Email del usuario: [REDACTED:email], SSN: [REDACTED:ssn]
+```
+
+### Límites de Recursos
+
+Cada script se ejecuta con límites:
+
+```javascript
+// Esto expirará después de 30 segundos (configurable)
+while (true) {
+    // Protección contra bucles infinitos
+}
+
+// Esto fallará si la memoria excede 128MB
+const bigArray = new Array(100000000);
+
+// Esto fallará después de 10M operaciones
+for (let i = 0; i < 100000000; i++) {
+    // Protección de CPU
+}
+```
+
+## Optimización de Rendimiento
+
+### Optimización del Pool de VMs
+
+```toml
+[vm_pool]
+# Para escenarios de alto throughput
+max_size = 500              # Aumentar tamaño del pool
+preload_size = 250          # Pre-calentar más VMs
+idle_timeout = 30           # Mantener VMs más tiempo
+cleanup_interval = 15       # Limpieza menos frecuente
+
+# Para entornos con memoria limitada
+max_size = 50
+preload_size = 10
+idle_timeout = 5
+max_memory_mb = 64          # Reducir memoria por VM
+```
+
+### Estrategias de Cache
+
+1. **Habilitar Cache de Análisis**:
+```toml
+[security]
+cache_analysis_results = true
+cache_ttl_minutes = 10
+```
+
+2. **Usar Redis para Cache Distribuido**:
+```toml
+[redis]
+host = "redis-cluster:6379"
+```
+
+3. **Optimizar Consultas de Base de Datos**:
+```javascript
+// Usar sentencias preparadas
+const stmt = db.prepare("SELECT * FROM users WHERE id = $1");
+const user = await stmt.query(userId);
+```
+
+### Monitoreo del Rendimiento
+
+```bash
+# Verificar estado del pool de VMs
+curl http://localhost:8080/debug/vm/pool
+
+# Obtener métricas detalladas
+curl http://localhost:8080/metrics | grep nflow_
+
+# Perfilar uso de CPU (cuando pprof está habilitado)
+go tool pprof http://localhost:8080/debug/pprof/profile?seconds=30
+```
+
+## Monitoreo y Depuración
+
+### Health Checks
+
+```bash
+# Health check básico
+curl http://localhost:8080/health
+
+# Respuesta
+{
+    "status": "healthy",
+    "timestamp": 1643723400,
+    "uptime": "2h30m15s",
+    "version": "1.0.0",
+    "components": {
+        "database": {
+            "status": "healthy"
+        },
+        "redis": {
+            "status": "healthy"
+        },
+        "memory": {
+            "status": "healthy"
+        }
+    }
+}
+```
+
+### Métricas Prometheus
+
+Métricas clave para monitorear:
+
+```prometheus
+# Tasa de requests
+rate(nflow_requests_total[5m])
+
+# Tasa de errores
+rate(nflow_requests_errors_total[5m]) / rate(nflow_requests_total[5m])
+
+# Tiempo de ejecución de workflows
+histogram_quantile(0.95, nflow_workflow_duration_seconds)
+
+# Procesos activos
+nflow_processes_active
+
+# Utilización del pool de VMs
+nflow_vm_pool_active / nflow_vm_pool_size
+
+# Uso de memoria
+nflow_go_memory_alloc_bytes
+```
+
+### Endpoints de Debug
+
+```bash
+# Obtener información del sistema
+curl -H "Authorization: Bearer secret" http://localhost:8080/debug/info
+
+# Listar procesos activos
+curl -H "Authorization: Bearer secret" http://localhost:8080/debug/processes
+
+# Ver configuración actual
+curl -H "Authorization: Bearer secret" http://localhost:8080/debug/config
+
+# Estadísticas de cache
+curl -H "Authorization: Bearer secret" http://localhost:8080/debug/cache/stats
+```
+
+### Logging
+
+```bash
+# Ejecutar con logging verbose
+./nflow-runtime -v
+
+# Formato de logs
+# 2024/01/02 15:04:05 [INFO] Iniciando nFlow Runtime
+# 2024/01/02 15:04:05 [DEBUG] Cargando configuración desde config.toml
+# 2024/01/02 15:04:05 [WARN] Redis no configurado, usando sesiones en memoria
+```
+
+## Desarrollo de Plugins
+
+### Creando un Plugin Personalizado
+
+1. **Definir la Estructura del Plugin**:
+
+```go
+package myplugin
+
+import (
+    "github.com/dop251/goja"
+    "github.com/labstack/echo/v4"
+)
+
+type MyPlugin struct {
+    config map[string]interface{}
+}
+
+func New(config map[string]interface{}) *MyPlugin {
+    return &MyPlugin{
+        config: config,
+    }
+}
+```
+
+2. **Implementar Métodos del Plugin**:
+
+```go
+func (p *MyPlugin) DoSomething(data string) (string, error) {
+    // Tu implementación
+    return "Procesado: " + data, nil
+}
+
+func (p *MyPlugin) RegisterVM(vm *goja.Runtime) {
+    // Crear objeto del plugin
+    obj := vm.NewObject()
+    
+    // Agregar métodos
+    obj.Set("doSomething", p.DoSomething)
+    
+    // Registrar globalmente
+    vm.Set("myPlugin", obj)
+}
+```
+
+3. **Registrar en el Motor**:
+
+```go
+// En tu main.go o código de inicialización
+import "github.com/arturoeanton/nflow-runtime/plugins/myplugin"
+
+func init() {
+    plugin := myplugin.New(config)
+    engine.RegisterPlugin("myPlugin", plugin)
+}
+```
+
+4. **Usar en Workflows**:
+
+```javascript
+// En tu JavaScript del workflow
+const result = myPlugin.doSomething("datos de prueba");
+console.log(result); // "Procesado: datos de prueba"
+```
+
+### Mejores Prácticas para Plugins
+
+1. **Manejo de Errores**:
+```go
+func (p *MyPlugin) RiskyOperation() (interface{}, error) {
+    defer func() {
+        if r := recover(); r != nil {
+            logger.Error("Plugin panic:", r)
+        }
+    }()
+    
+    // Tu código
+}
+```
+
+2. **Gestión de Recursos**:
+```go
+type MyPlugin struct {
+    pool sync.Pool
+    mu   sync.RWMutex
+}
+
+func (p *MyPlugin) GetResource() *Resource {
+    if r := p.pool.Get(); r != nil {
+        return r.(*Resource)
+    }
+    return newResource()
+}
+```
+
+3. **Validación de Configuración**:
+```go
+func New(config map[string]interface{}) (*MyPlugin, error) {
+    // Validar campos requeridos
+    if _, ok := config["apiKey"]; !ok {
+        return nil, errors.New("apiKey es requerido")
+    }
+    
+    return &MyPlugin{config: config}, nil
+}
+```
+
+## Despliegue en Producción
+
+### Checklist Pre-Producción
+
+- [ ] Configurar base de datos de producción
+- [ ] Configurar Redis para sesiones/cache
+- [ ] Generar clave de encriptación segura
+- [ ] Configurar limitación de tasa
+- [ ] Habilitar características de seguridad
+- [ ] Configurar monitoreo
+- [ ] Configurar agregación de logs
+- [ ] Planificar estrategia de backup
+- [ ] Documentar runbooks
+- [ ] Hacer pruebas de carga
+
+### Despliegue con Docker
 
 ```dockerfile
+# Dockerfile
 FROM golang:1.19-alpine AS builder
 WORKDIR /app
 COPY . .
+RUN go mod download
 RUN go build -o nflow-runtime .
 
 FROM alpine:latest
@@ -85,648 +757,47 @@ EXPOSE 8080
 CMD ["./nflow-runtime"]
 ```
 
-## Configuración Básica
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  nflow:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./config.toml:/root/config.toml
+    
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: nflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
 
-### config.toml Mínimo
-
-```toml
-[database_nflow]
-driver = "sqlite3"
-dsn = "app.sqlite"
-
-[vm_pool]
-max_size = 50
-preload_size = 25
+volumes:
+  postgres_data:
+  redis_data:
 ```
-
-### Configuración de Base de Datos
-
-#### SQLite (Desarrollo)
-
-```toml
-[database_nflow]
-driver = "sqlite3"
-dsn = "app.sqlite"
-```
-
-#### PostgreSQL (Producción)
-
-```toml
-[database_nflow]
-driver = "postgres"
-dsn = "user=nflow password=secret host=localhost port=5432 dbname=nflow sslmode=require"
-query = "SELECT name,query FROM queries"
-```
-
-### Configuración de Redis
-
-```toml
-[redis]
-host = "localhost:6379"
-password = "tu-contraseña-redis"
-db = 0
-```
-
-## Visión General de la Arquitectura
-
-### Arquitectura de Componentes
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐
-│   Capa HTTP     │────▶│  Motor Principal │────▶│  Pool de VMs │
-│   (Echo)        │     │                  │     │  (Goja)      │
-└─────────────────┘     └──────────────────┘     └──────────────┘
-         │                       │                        │
-         ▼                       ▼                        ▼
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐
-│ Limitador Tasa  │     │ Gestor Procesos  │     │  Módulo      │
-│                 │     │                  │     │  Seguridad   │
-└─────────────────┘     └──────────────────┘     └──────────────┘
-         │                       │                        │
-         ▼                       ▼                        ▼
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐
-│ Base de Datos   │     │      Caché       │     │   Métricas   │
-│  (PostgreSQL)   │     │  (Memoria/Redis) │     │ (Prometheus) │
-└─────────────────┘     └──────────────────┘     └──────────────┘
-```
-
-### Flujo de Solicitudes
-
-1. **Solicitud HTTP** llega al router Echo
-2. **Limitación de Tasa** verifica si la solicitud debe proceder
-3. **Análisis de Seguridad** valida el código JavaScript
-4. **Adquisición de VM** del pool para ejecución
-5. **Ejecución del Workflow** con límites de recursos
-6. **Procesamiento de Respuesta** con encriptación opcional
-7. **Recolección de Métricas** y logging
-
-### Estructura de Directorios
-
-```
-nflow-runtime/
-├── engine/               # Motor de ejecución principal
-│   ├── engine.go        # Ejecutor principal de workflows
-│   ├── vm_manager.go    # Gestión del pool de VMs
-│   ├── vm_limits.go     # Aplicación de límites de recursos
-│   └── vm_sandbox.go    # Sandboxing de seguridad
-├── security/            # Módulo de seguridad
-│   ├── analyzer/        # Análisis estático de código
-│   ├── encryption/      # Encriptación de datos
-│   └── interceptor/     # Detección de datos sensibles
-├── process/             # Gestión de procesos
-├── endpoints/           # Endpoints de API
-├── plugins/             # Sistema de plugins
-└── main.go             # Punto de entrada
-```
-
-## Conceptos Fundamentales
-
-### Workflows
-
-Un workflow es una estructura JSON que define:
-- **Nodos**: Unidades individuales de ejecución
-- **Conexiones**: Cómo fluyen los datos entre nodos
-- **Datos**: Mapeos de entrada/salida
-
-Ejemplo de estructura de workflow:
-```json
-{
-  "nodo1": {
-    "data": {
-      "type": "httpstart",
-      "method": "POST",
-      "path": "/api/procesar"
-    },
-    "outputs": {
-      "output": {
-        "connections": [{
-          "node": "nodo2",
-          "output": "input"
-        }]
-      }
-    }
-  },
-  "nodo2": {
-    "data": {
-      "type": "js",
-      "script": "return {resultado: payload.valor * 2};"
-    }
-  }
-}
-```
-
-### Nodos
-
-Tipos de nodos integrados:
-- **httpstart**: Disparador de endpoint HTTP
-- **js**: Ejecución de JavaScript
-- **http**: Cliente HTTP
-- **db**: Operaciones de base de datos
-- **mail**: Envío de correos
-- **template**: Renderizado de plantillas
-
-### Pool de VMs
-
-El pool de VMs gestiona las instancias de runtime JavaScript:
-
-```toml
-[vm_pool]
-max_size = 200              # Máximo de VMs en el pool
-preload_size = 100          # VMs pre-creadas
-idle_timeout = 10           # Minutos antes de eliminar VM inactiva
-cleanup_interval = 5        # Intervalo de limpieza
-```
-
-Beneficios:
-- Elimina el overhead de creación de VMs
-- Rendimiento predecible
-- Eficiencia de recursos
-
-## Características de Seguridad
-
-### Sandboxing de JavaScript
-
-#### Límites de Recursos
-
-```toml
-[vm_pool]
-max_memory_mb = 128         # Límite de memoria por VM
-max_execution_seconds = 30  # Timeout de ejecución
-max_operations = 10000000   # Límite de operaciones JavaScript
-```
-
-#### Características Deshabilitadas
-
-- Constructores `eval()` y `Function()`
-- Acceso al sistema de archivos (configurable)
-- Acceso a la red (configurable)
-- Spawning de procesos
-
-#### Habilitar/Deshabilitar Características
-
-```toml
-[vm_pool]
-enable_filesystem = false   # Acceso al sistema de archivos
-enable_network = false      # Acceso a la red
-enable_process = false      # Ejecución de procesos
-```
-
-### Análisis Estático de Código
-
-El módulo de seguridad analiza JavaScript antes de la ejecución:
-
-```toml
-[security]
-enable_static_analysis = true
-block_on_high_severity = true
-log_security_warnings = true
-```
-
-Patrones detectados:
-- Uso directo de `eval()`
-- Intentos de `require('fs')`
-- Spawning de procesos hijos
-- Loops infinitos
-- Modificaciones del scope global
-
-Ejemplo de código bloqueado:
-```javascript
-// Esto será bloqueado
-eval("código malicioso");
-require('fs').readFile('/etc/passwd');
-while(true) { }
-```
-
-### Encriptación de Datos
-
-Encriptación automática de datos sensibles:
-
-```toml
-[security]
-enable_encryption = true
-encryption_key = "tu-clave-de-32-bytes-aquí"
-encrypt_sensitive_data = true
-```
-
-Encriptados automáticamente:
-- Direcciones de email
-- Números de teléfono
-- Números de Seguro Social
-- Claves API
-- Tokens JWT
-- Números de tarjetas de crédito
-
-#### Generación de Claves de Encriptación
-
-```go
-// Generar una clave segura
-key, err := encryption.GenerateKeyString()
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Println("Agregar a config.toml:", key)
-```
-
-### Limitación de Tasa
-
-Limitación de tasa basada en IP con algoritmo token bucket:
-
-```toml
-[rate_limit]
-enabled = true
-ip_rate_limit = 100         # Solicitudes por ventana
-ip_window_minutes = 1       # Ventana de tiempo
-backend = "memory"          # o "redis"
-```
-
-Configuración avanzada:
-```toml
-[rate_limit]
-burst_size = 10
-cleanup_interval = 10
-excluded_ips = "127.0.0.1,10.0.0.0/8"
-excluded_paths = "/health,/metrics"
-```
-
-## Optimización del Rendimiento
-
-### Ajuste del Pool de VMs
-
-Para escenarios de alto tráfico:
-
-```toml
-[vm_pool]
-max_size = 500              # Aumentar tamaño del pool
-preload_size = 250          # Pre-calentar más VMs
-idle_timeout = 5            # Limpieza agresiva
-enable_metrics = true       # Monitorear uso del pool
-```
-
-### Caché
-
-Múltiples capas de caché:
-
-1. **Caché Babel**: Resultados de transformación ES6
-2. **Caché de Programas**: Programas JavaScript compilados
-3. **Caché de Auth**: Scripts de autenticación
-
-### Optimización de Base de Datos
-
-```toml
-[database_nflow]
-max_open_conns = 100        # Tamaño del pool de conexiones
-max_idle_conns = 10         # Conexiones inactivas
-conn_max_lifetime = 300     # Tiempo de vida de conexión (segundos)
-```
-
-### Monitoreo del Rendimiento
-
-Habilitar métricas detalladas:
-
-```toml
-[monitor]
-enabled = true
-enable_detailed_metrics = true
-metrics_port = "9090"       # Puerto separado para métricas
-```
-
-Métricas clave a monitorear:
-- `nflow_vm_pool_active`: VMs activas
-- `nflow_vm_pool_available`: VMs disponibles
-- `nflow_requests_duration`: Latencia de solicitudes
-- `nflow_workflows_total`: Ejecuciones de workflows
-
-## Desarrollo de Plugins
-
-### Creación de un Plugin Personalizado
-
-```go
-package miplugin
-
-import (
-    "github.com/dop251/goja"
-    "github.com/labstack/echo/v4"
-)
-
-type MiPlugin struct{}
-
-func (p *MiPlugin) Name() string {
-    return "miplugin"
-}
-
-func (p *MiPlugin) Initialize(vm *goja.Runtime) error {
-    // Agregar funciones a la VM
-    vm.Set("miFuncion", func(call goja.FunctionCall) goja.Value {
-        // Implementación
-        return vm.ToValue("resultado")
-    })
-    return nil
-}
-
-func (p *MiPlugin) Execute(c echo.Context, vm *goja.Runtime) error {
-    // Lógica del plugin
-    return nil
-}
-```
-
-### Registro de Plugins
-
-En tu main.go:
-
-```go
-import "github.com/arturoeanton/nflow-runtime/plugins"
-
-func init() {
-    plugins.Register(&MiPlugin{})
-}
-```
-
-### Mejores Prácticas para Plugins
-
-1. **Thread Safety**: Los plugins deben ser thread-safe
-2. **Manejo de Errores**: Siempre retornar errores significativos
-3. **Limpieza de Recursos**: Usar defer para limpieza
-4. **Documentación**: Documentar todas las funciones expuestas
-5. **Testing**: Incluir tests comprehensivos
-
-## Configuración Avanzada
-
-### Ejemplo Completo de config.toml
-
-```toml
-# Configuración de base de datos
-[database_nflow]
-driver = "postgres"
-dsn = "host=localhost user=nflow password=secret dbname=nflow sslmode=require"
-max_open_conns = 100
-max_idle_conns = 10
-conn_max_lifetime = 300
-
-# Redis para sesiones y caché
-[redis]
-host = "localhost:6379"
-password = "contraseña-redis"
-db = 0
-max_retries = 3
-pool_size = 10
-
-# Configuración del Pool de VMs
-[vm_pool]
-max_size = 200
-preload_size = 100
-idle_timeout = 10
-cleanup_interval = 5
-enable_metrics = true
-
-# Límites de recursos
-max_memory_mb = 128
-max_execution_seconds = 30
-max_operations = 10000000
-
-# Configuración del sandbox
-enable_filesystem = false
-enable_network = true
-enable_process = false
-
-# Tracking y monitoreo
-[tracker]
-enabled = true
-workers = 8
-batch_size = 1000
-flush_interval = 500
-channel_buffer = 100000
-verbose_logging = false
-
-# Endpoints de debug
-[debug]
-enabled = false
-auth_token = "debug-token-12345"
-allowed_ips = "10.0.0.0/8,172.16.0.0/12"
-enable_pprof = false
-
-# Monitoreo
-[monitor]
-enabled = true
-health_check_path = "/health"
-metrics_path = "/metrics"
-enable_detailed_metrics = true
-metrics_port = "9090"
-
-# Limitación de tasa
-[rate_limit]
-enabled = true
-ip_rate_limit = 1000
-ip_window_minutes = 1
-ip_burst_size = 50
-backend = "redis"
-cleanup_interval = 10
-retry_after_header = true
-error_message = "Demasiadas solicitudes. Por favor intente más tarde."
-excluded_ips = "10.0.0.0/8,172.16.0.0/12"
-excluded_paths = "/health,/metrics,/debug"
-
-# Seguridad
-[security]
-enable_static_analysis = true
-block_on_high_severity = true
-log_security_warnings = true
-cache_analysis_results = true
-cache_ttl_minutes = 5
-
-enable_encryption = true
-encryption_key = "tu-clave-codificada-base64-de-32-bytes"
-encrypt_sensitive_data = true
-encrypt_in_place = true
-
-always_encrypt_fields = [
-    "password",
-    "token",
-    "secret",
-    "api_key",
-    "private_key"
-]
-
-[security.custom_patterns]
-employee_id = "EMP\\d{6}"
-internal_api = "int_api_[a-zA-Z0-9]{32}"
-
-# Configuración de email
-[mail]
-enabled = true
-smtp_host = "smtp.gmail.com"
-smtp_port = 587
-username = "nflow@ejemplo.com"
-password = "contraseña-smtp"
-from = "nFlow Runtime <nflow@ejemplo.com>"
-```
-
-### Variables de Entorno
-
-Sobrescribir configuración con variables de entorno:
-
-```bash
-export NFLOW_DATABASE_DSN="postgres://user:pass@host/db"
-export NFLOW_REDIS_HOST="redis.ejemplo.com:6379"
-export NFLOW_VM_POOL_MAX_SIZE="500"
-export NFLOW_SECURITY_ENCRYPTION_KEY="tu-clave-segura"
-```
-
-## Monitoreo y Depuración
-
-### Health Checks
-
-Endpoint por defecto: `GET /health`
-
-Respuesta:
-```json
-{
-  "status": "healthy",
-  "timestamp": 1627849200,
-  "uptime": "24h15m30s",
-  "version": "1.0.0",
-  "checks": {
-    "database": "ok",
-    "redis": "ok",
-    "vm_pool": "ok"
-  }
-}
-```
-
-### Métricas Prometheus
-
-Endpoint por defecto: `GET /metrics`
-
-Métricas principales:
-```
-# Métricas HTTP
-nflow_requests_total{method="POST",path="/api/*",status="200"} 12345
-nflow_requests_duration_seconds{method="POST",quantile="0.99"} 0.125
-
-# Métricas de workflows
-nflow_workflows_total{status="success"} 10000
-nflow_workflows_duration_seconds{quantile="0.99"} 2.5
-
-# Métricas del Pool de VMs
-nflow_vm_pool_active 45
-nflow_vm_pool_available 155
-nflow_vm_pool_created_total 200
-
-# Métricas de seguridad
-nflow_security_scripts_analyzed_total 5000
-nflow_security_scripts_blocked_total 23
-nflow_security_data_encrypted_total 1500
-```
-
-### Endpoints de Debug
-
-Habilitar endpoints de debug:
-
-```toml
-[debug]
-enabled = true
-auth_token = "tu-token-secreto"
-allowed_ips = "10.0.0.0/8"
-```
-
-Endpoints disponibles:
-- `GET /debug/info` - Información del sistema
-- `GET /debug/config` - Configuración actual
-- `GET /debug/processes` - Procesos activos
-- `GET /debug/cache/stats` - Estadísticas de caché
-- `GET /debug/vm/pool` - Estado del pool de VMs
-
-Ejemplo de solicitud:
-```bash
-curl -H "X-Debug-Token: tu-token-secreto" http://localhost:8080/debug/info
-```
-
-### Logging
-
-#### Niveles de Log
-
-Ejecutar con logging detallado:
-```bash
-./nflow-runtime -v
-```
-
-Formato de log:
-```
-2024-01-15 10:30:45 [INFO] Iniciado nFlow Runtime
-2024-01-15 10:30:45 [DEBUG] Pool de VMs: Creadas 100 VMs
-2024-01-15 10:30:46 [WARN] Seguridad: Script bloqueado con eval()
-2024-01-15 10:30:47 [ERROR] Conexión a base de datos falló: timeout
-```
-
-#### Logging Estructurado
-
-Configurar logging estructurado:
-
-```go
-logger.SetFormatter(&logger.JSONFormatter{})
-logger.SetLevel(logger.DebugLevel)
-```
-
-Salida:
-```json
-{
-  "time": "2024-01-15T10:30:45Z",
-  "level": "info",
-  "msg": "Workflow ejecutado",
-  "workflow_id": "abc123",
-  "duration_ms": 125,
-  "status": "success"
-}
-```
-
-## Despliegue en Producción
-
-### Requisitos del Sistema
-
-#### Requisitos Mínimos
-- CPU: 2 cores
-- RAM: 4GB
-- Disco: 10GB SSD
-- Red: 100Mbps
-
-#### Recomendado para Producción
-- CPU: 8+ cores
-- RAM: 16GB+
-- Disco: 100GB+ SSD
-- Red: 1Gbps
-
-### Checklist de Despliegue
-
-1. **Seguridad**
-   - [ ] Cambiar todas las contraseñas por defecto
-   - [ ] Habilitar HTTPS/TLS
-   - [ ] Configurar reglas de firewall
-   - [ ] Habilitar limitación de tasa
-   - [ ] Habilitar módulo de seguridad
-   - [ ] Rotar claves de encriptación
-
-2. **Base de Datos**
-   - [ ] Usar PostgreSQL para producción
-   - [ ] Configurar pooling de conexiones
-   - [ ] Configurar backups regulares
-   - [ ] Habilitar SSL para conexiones
-
-3. **Monitoreo**
-   - [ ] Configurar Prometheus
-   - [ ] Configurar dashboards de Grafana
-   - [ ] Configurar reglas de alertas
-   - [ ] Habilitar health checks
-
-4. **Rendimiento**
-   - [ ] Ajustar tamaño del pool de VMs
-   - [ ] Configurar caché
-   - [ ] Habilitar compresión
-   - [ ] Configurar CDN para assets estáticos
 
 ### Despliegue en Kubernetes
 
-Ejemplo de deployment:
-
 ```yaml
+# deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -743,27 +814,20 @@ spec:
     spec:
       containers:
       - name: nflow-runtime
-        image: nflow/runtime:latest
+        image: tu-registro/nflow-runtime:latest
         ports:
         - containerPort: 8080
-        - containerPort: 9090
         env:
-        - name: NFLOW_DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: nflow-secrets
-              key: database-dsn
-        - name: NFLOW_SECURITY_ENCRYPTION_KEY
-          valueFrom:
-            secretKeyRef:
-              name: nflow-secrets
-              key: encryption-key
+        - name: DB_HOST
+          value: postgres-service
+        - name: REDIS_HOST
+          value: redis-service
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "512Mi"
+            cpu: "500m"
           limits:
-            memory: "4Gi"
+            memory: "2Gi"
             cpu: "2000m"
         livenessProbe:
           httpGet:
@@ -777,24 +841,61 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.toml
+          subPath: config.toml
+      volumes:
+      - name: config
+        configMap:
+          name: nflow-config
 ```
 
-### Estrategias de Escalamiento
+### Configuración de Monitoreo
 
-#### Escalamiento Horizontal
-- Agregar más instancias detrás de un balanceador
-- Usar Redis para estado compartido
-- Configurar afinidad de sesión si es necesario
+#### Configuración de Prometheus
 
-#### Escalamiento Vertical
-- Aumentar tamaño del pool de VMs
-- Agregar más CPU/RAM
-- Ajustar recolección de basura
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'nflow-runtime'
+    static_configs:
+      - targets: ['nflow-runtime:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+```
 
-#### Escalamiento de Base de Datos
-- Réplicas de lectura para consultas
-- Pooling de conexiones
-- Optimización de consultas
+#### Dashboard de Grafana
+
+Importa el dashboard de nFlow Runtime (JSON disponible en el repo) o crea paneles personalizados:
+
+```json
+{
+  "dashboard": {
+    "title": "nFlow Runtime",
+    "panels": [
+      {
+        "title": "Tasa de Requests",
+        "targets": [{
+          "expr": "rate(nflow_requests_total[5m])"
+        }]
+      },
+      {
+        "title": "Tasa de Errores",
+        "targets": [{
+          "expr": "rate(nflow_requests_errors_total[5m])"
+        }]
+      },
+      {
+        "title": "Workflows Activos",
+        "targets": [{
+          "expr": "nflow_processes_active"
+        }]
+      }
+    ]
+  }
+}
+```
 
 ## Solución de Problemas
 
@@ -802,187 +903,289 @@ spec:
 
 #### Alto Uso de Memoria
 
-Síntomas:
-- Errores OOM
-- Rendimiento lento
-- Inestabilidad del sistema
+**Síntomas**: Errores OOM, rendimiento lento
 
-Soluciones:
+**Soluciones**:
 1. Reducir tamaño del pool de VMs
-2. Bajar límites de memoria
-3. Habilitar GC agresivo
-4. Buscar fugas de memoria
-
-#### Degradación del Rendimiento
-
-Síntomas:
-- Latencia aumentada
-- Errores de timeout
-- Acumulación de cola
-
-Soluciones:
-1. Verificar métricas del pool de VMs
-2. Analizar consultas lentas
-3. Revisar complejidad de workflows
-4. Habilitar caché
-
-#### Bloqueos de Seguridad
-
-Síntomas:
-- Scripts rechazados
-- Errores de "patrón peligroso"
-
-Soluciones:
-1. Revisar logs de seguridad
-2. Whitelist de patrones seguros
-3. Refactorizar código problemático
-4. Ajustar niveles de severidad
-
-### Comandos de Debug
-
-Verificar estado del sistema:
-```bash
-# Estado del pool de VMs
-curl http://localhost:8080/debug/vm/pool
-
-# Procesos activos
-curl http://localhost:8080/debug/processes
-
-# Estadísticas de caché
-curl http://localhost:8080/debug/cache/stats
+2. Bajar límite de memoria por VM
+3. Habilitar GC más agresivo:
+```go
+GOGC=50 ./nflow-runtime
 ```
 
-### Profiling de Rendimiento
+#### Timeouts en Workflows
 
-Habilitar pprof:
+**Síntomas**: Errores 408, ejecuciones incompletas
+
+**Soluciones**:
+1. Aumentar timeout de ejecución:
 ```toml
-[debug]
-enable_pprof = true
+max_execution_seconds = 60
 ```
+2. Optimizar código JavaScript
+3. Usar operaciones asíncronas donde sea posible
 
-Perfilar CPU:
+#### Problemas de Conexión a Base de Datos
+
+**Síntomas**: Errores "too many connections"
+
+**Soluciones**:
+1. Configurar pooling de conexiones:
+```go
+db.SetMaxOpenConns(25)
+db.SetMaxIdleConns(5)
+db.SetConnMaxLifetime(5 * time.Minute)
+```
+2. Usar un pooler de conexiones (PgBouncer)
+
+#### Falsos Positivos en Rate Limiting
+
+**Síntomas**: Usuarios legítimos bloqueados
+
+**Soluciones**:
+1. Excluir IPs confiables:
+```toml
+excluded_ips = "10.0.0.0/8,172.16.0.0/12"
+```
+2. Aumentar límites de tasa
+3. Usar backend Redis para límites distribuidos
+
+### Técnicas de Depuración
+
+#### Habilitar Logging Verbose
+
 ```bash
-go tool pprof http://localhost:8080/debug/pprof/profile?seconds=30
+./nflow-runtime -v
 ```
 
-Perfilar memoria:
+#### Rastrear Workflow Específico
+
+```javascript
+// Agregar logs de debug en el workflow
+console.log("[DEBUG] Iniciando proceso:", vars.get("processId"));
+console.log("[DEBUG] Payload:", JSON.stringify(payload));
+```
+
+#### Usar Endpoints de Debug
+
 ```bash
-go tool pprof http://localhost:8080/debug/pprof/heap
+# Verificar estado del proceso
+curl -H "Authorization: Bearer secret" \
+  http://localhost:8080/debug/process/12345
+
+# Forzar recolección de basura
+curl -X POST -H "Authorization: Bearer secret" \
+  http://localhost:8080/debug/gc
 ```
 
-## Referencia de API
+#### Perfilar Rendimiento
 
-### Ejecución de Workflows
+```bash
+# Perfil de CPU
+curl http://localhost:8080/debug/pprof/profile?seconds=30 > cpu.prof
+go tool pprof cpu.prof
 
-#### Ejecutar Workflow
+# Perfil de memoria
+curl http://localhost:8080/debug/pprof/heap > mem.prof
+go tool pprof mem.prof
 
+# Dump de goroutines
+curl http://localhost:8080/debug/pprof/goroutine?debug=2
 ```
-POST /api/workflow/{workflow_id}
-```
 
-Headers:
-- `Content-Type: application/json`
-- `Authorization: Bearer {token}`
+## Temas Avanzados
 
-Cuerpo de solicitud:
-```json
-{
-  "input": {
-    "clave": "valor"
-  }
+### Autenticación Personalizada
+
+Implementar middleware de autenticación personalizado:
+
+```go
+func AuthMiddleware(config *Config) echo.MiddlewareFunc {
+    return func(next echo.HandlerFunc) echo.HandlerFunc {
+        return func(c echo.Context) error {
+            // Extraer token
+            token := c.Request().Header.Get("Authorization")
+            
+            // Validar token
+            if !isValidToken(token) {
+                return echo.ErrUnauthorized
+            }
+            
+            // Establecer contexto de usuario
+            c.Set("user", getUserFromToken(token))
+            
+            return next(c)
+        }
+    }
 }
 ```
 
-Respuesta:
-```json
-{
-  "success": true,
-  "output": {
-    "resultado": "procesado"
-  },
-  "execution_time": 125
+### Versionado de Workflows
+
+Implementar versionado de workflows:
+
+```javascript
+// En el workflow
+const version = vars.get("workflowVersion") || "1.0";
+
+switch(version) {
+    case "1.0":
+        // Lógica original
+        break;
+    case "2.0":
+        // Nueva lógica
+        break;
+    default:
+        throw new Error("Versión desconocida: " + version);
 }
 ```
 
-### Endpoints Administrativos
+### Trazado Distribuido
 
-#### Listar Workflows
+Integrar con OpenTelemetry:
 
+```go
+import (
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/trace"
+)
+
+func TraceMiddleware() echo.MiddlewareFunc {
+    tracer := otel.Tracer("nflow-runtime")
+    
+    return func(next echo.HandlerFunc) echo.HandlerFunc {
+        return func(c echo.Context) error {
+            ctx, span := tracer.Start(c.Request().Context(), "workflow")
+            defer span.End()
+            
+            c.SetRequest(c.Request().WithContext(ctx))
+            return next(c)
+        }
+    }
+}
 ```
-GET /api/admin/workflows
+
+### Integración de Webhooks
+
+Manejar webhooks en workflows:
+
+```javascript
+// Verificar firma del webhook
+const signature = c.request.headers["x-webhook-signature"];
+const payload = c.request.body;
+
+const expectedSignature = crypto
+    .createHmac('sha256', env.WEBHOOK_SECRET)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+
+if (signature !== expectedSignature) {
+    c.response.status = 401;
+    return { error: "Firma inválida" };
+}
+
+// Procesar webhook
+switch(payload.event) {
+    case "user.created":
+        // Manejar creación de usuario
+        break;
+    case "payment.completed":
+        // Manejar pago
+        break;
+}
 ```
 
-#### Actualizar Workflow
+### Streaming de Eventos
 
+Implementar Server-Sent Events:
+
+```javascript
+// En el workflow
+c.response.set("Content-Type", "text/event-stream");
+c.response.set("Cache-Control", "no-cache");
+c.response.set("Connection", "keep-alive");
+
+// Enviar eventos
+for (let i = 0; i < 10; i++) {
+    const event = {
+        id: i,
+        data: { message: "Actualización " + i },
+        timestamp: new Date()
+    };
+    
+    c.response.write(`data: ${JSON.stringify(event)}\n\n`);
+    await sleep(1000); // Función sleep personalizada
+}
+
+c.response.end();
 ```
-PUT /api/admin/workflows/{workflow_id}
-```
 
-#### Eliminar Workflow
+### Multi-Tenancy
 
-```
-DELETE /api/admin/workflows/{workflow_id}
-```
+Implementar aislamiento de inquilinos:
 
-### APIs de Plugins
+```go
+type TenantMiddleware struct {
+    tenantResolver func(c echo.Context) string
+}
 
-Los plugins pueden exponer endpoints personalizados:
-
-```
-POST /api/plugin/{plugin_name}/{action}
+func (tm *TenantMiddleware) Process(next echo.HandlerFunc) echo.HandlerFunc {
+    return func(c echo.Context) error {
+        tenantID := tm.tenantResolver(c)
+        
+        // Establecer contexto del inquilino
+        c.Set("tenantID", tenantID)
+        
+        // Configurar base de datos específica del inquilino
+        db := getDBForTenant(tenantID)
+        c.Set("db", db)
+        
+        return next(c)
+    }
+}
 ```
 
 ## Mejores Prácticas
 
+### Diseño de Workflows
+
+1. **Mantener workflows simples**: Dividir lógica compleja en múltiples nodos
+2. **Manejar errores graciosamente**: Siempre incluir manejo de errores
+3. **Usar nombres descriptivos**: Nombrar nodos y variables claramente
+4. **Documentar lógica compleja**: Agregar comentarios en nodos JavaScript
+5. **Probar casos límite**: Incluir datos de prueba para varios escenarios
+
 ### Seguridad
 
-1. **Nunca deshabilitar sandboxing** en producción
-2. **Rotar claves de encriptación** regularmente
-3. **Monitorear métricas de seguridad** para anomalías
-4. **Revisar scripts bloqueados** para falsos positivos
-5. **Mantener dependencias actualizadas**
+1. **Nunca hardcodear secretos**: Usar variables de entorno
+2. **Validar todas las entradas**: No confiar en datos externos
+3. **Usar encriptación**: Habilitar encriptación para datos sensibles
+4. **Actualizaciones regulares**: Mantener dependencias actualizadas
+5. **Logs de auditoría**: Habilitar logging comprensivo
 
 ### Rendimiento
 
-1. **Dimensionar correctamente el pool de VMs** basado en carga
-2. **Usar caché** para operaciones repetidas
-3. **Monitorear uso de recursos** continuamente
-4. **Optimizar consultas de base de datos**
-5. **Perfilar antes de optimizar**
+1. **Reutilizar conexiones**: Usar pooling de conexiones
+2. **Operaciones en lote**: Agrupar operaciones de base de datos
+3. **Asíncrono cuando sea posible**: Usar promesas para operaciones I/O
+4. **Cachear resultados**: Cachear cálculos costosos
+5. **Monitorear métricas**: Vigilar degradación del rendimiento
 
 ### Operaciones
 
-1. **Automatizar despliegues** con CI/CD
-2. **Usar infraestructura como código**
-3. **Implementar logging apropiado**
-4. **Configurar umbrales de alerta**
-5. **Documentar runbooks**
+1. **Automatizar despliegue**: Usar pipelines CI/CD
+2. **Monitorear todo**: Configurar monitoreo comprensivo
+3. **Planificar para fallos**: Implementar circuit breakers
+4. **Documentar runbooks**: Crear procedimientos operacionales
+5. **Backups regulares**: Implementar estrategia de backup
 
-## Apéndice
+## Conclusión
 
-### Glosario
+nFlow Runtime proporciona una plataforma robusta para ejecutar workflows con características de nivel empresarial. Siguiendo este manual y las mejores prácticas, puedes construir soluciones de workflow seguras, escalables y mantenibles.
 
-- **VM**: Máquina Virtual (instancia de runtime JavaScript)
-- **Workflow**: Definición de flujo ejecutable
-- **Nodo**: Unidad de ejecución individual en un workflow
-- **Sandbox**: Entorno de ejecución aislado
-- **Pool**: Colección de VMs pre-inicializadas
+Para soporte adicional:
+- GitHub Issues: https://github.com/arturoeanton/nflow-runtime/issues
+- Documentación: https://github.com/arturoeanton/nflow-runtime/docs
+- Comunidad: Únete a nuestro canal Discord/Slack
 
-### Referencias
-
-- [Documentación de Goja](https://github.com/dop251/goja)
-- [Framework Echo](https://echo.labstack.com/)
-- [Métricas Prometheus](https://prometheus.io/)
-- [Diseñador nFlow](https://github.com/arturoeanton/nflow)
-
-### Historial de Versiones
-
-- v1.0.0 - Lanzamiento inicial
-- v1.1.0 - Agregado pooling de VMs
-- v1.2.0 - Módulo de seguridad
-- v1.3.0 - Limitación de tasa
-- v1.4.0 - Monitoreo avanzado
-
----
-
-Para más información, visita [https://github.com/arturoeanton/nflow-runtime](https://github.com/arturoeanton/nflow-runtime)
+Recuerda siempre probar exhaustivamente en un entorno de staging antes de desplegar a producción.

@@ -85,15 +85,15 @@ type ScriptAnalysisResult struct {
 func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 	if config == nil {
 		config = &Config{
-			EnableStaticAnalysis: true,
-			EnableEncryption:     true,
-			BlockOnHighSeverity:  true,
-			LogSecurityWarnings:  true,
-			EncryptInPlace:       true,
+			EnableStaticAnalysis:  true,
+			EnableEncryption:      true,
+			BlockOnHighSeverity:   true,
+			LogSecurityWarnings:   true,
+			EncryptInPlace:        true,
 			EnableLogSanitization: true,
-			LogShowType:          true,
-			CacheAnalysisResults: true,
-			CacheTTL:             5 * time.Minute,
+			LogShowType:           true,
+			CacheAnalysisResults:  true,
+			CacheTTL:              5 * time.Minute,
 		}
 	}
 

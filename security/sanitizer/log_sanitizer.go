@@ -37,24 +37,24 @@ type Pattern struct {
 
 // LogSanitizer sanitizes logs by removing or masking sensitive data
 type LogSanitizer struct {
-	patterns      []Pattern
+	patterns       []Pattern
 	customPatterns map[string]*Pattern
-	
+
 	// Configuration
-	enabled       bool
-	maskingChar   string
+	enabled        bool
+	maskingChar    string
 	preserveLength bool
-	showType      bool
-	
+	showType       bool
+
 	// Performance optimization
 	compiledPatterns []*Pattern
 	patternCache     sync.Map
 	bufferPool       sync.Pool
-	
+
 	// Metrics
-	logsProcessed    uint64
-	dataSanitized    uint64
-	mu               sync.RWMutex
+	logsProcessed uint64
+	dataSanitized uint64
+	mu            sync.RWMutex
 }
 
 // Config holds sanitizer configuration
@@ -76,11 +76,11 @@ func NewLogSanitizer(config *Config) *LogSanitizer {
 			ShowType:       true,
 		}
 	}
-	
+
 	if config.MaskingChar == "" {
 		config.MaskingChar = "*"
 	}
-	
+
 	sanitizer := &LogSanitizer{
 		enabled:        config.Enabled,
 		maskingChar:    config.MaskingChar,
@@ -93,10 +93,10 @@ func NewLogSanitizer(config *Config) *LogSanitizer {
 			},
 		},
 	}
-	
+
 	// Initialize default patterns
 	sanitizer.initializeDefaultPatterns()
-	
+
 	// Add custom patterns
 	for name, pattern := range config.CustomPatterns {
 		if compiled, err := regexp.Compile(pattern); err == nil {
@@ -108,12 +108,12 @@ func NewLogSanitizer(config *Config) *LogSanitizer {
 			}
 		}
 	}
-	
+
 	// Compile patterns for performance (need to lock here since constructor doesn't hold lock)
 	sanitizer.mu.Lock()
 	sanitizer.compilePatterns()
 	sanitizer.mu.Unlock()
-	
+
 	return sanitizer
 }
 
@@ -190,15 +190,15 @@ func (ls *LogSanitizer) initializeDefaultPatterns() {
 func (ls *LogSanitizer) compilePatterns() {
 	// Combine all patterns
 	allPatterns := make([]*Pattern, 0, len(ls.patterns)+len(ls.customPatterns))
-	
+
 	for i := range ls.patterns {
 		allPatterns = append(allPatterns, &ls.patterns[i])
 	}
-	
+
 	for _, p := range ls.customPatterns {
 		allPatterns = append(allPatterns, p)
 	}
-	
+
 	ls.compiledPatterns = allPatterns
 }
 
@@ -207,23 +207,23 @@ func (ls *LogSanitizer) Sanitize(logMessage string) string {
 	if !ls.enabled || logMessage == "" {
 		return logMessage
 	}
-	
+
 	atomic.AddUint64(&ls.logsProcessed, 1)
-	
+
 	// Get a string builder from pool
 	builder := ls.bufferPool.Get().(*strings.Builder)
 	defer func() {
 		builder.Reset()
 		ls.bufferPool.Put(builder)
 	}()
-	
+
 	ls.mu.RLock()
 	patterns := ls.compiledPatterns
 	ls.mu.RUnlock()
-	
+
 	result := logMessage
 	sanitizedCount := uint64(0)
-	
+
 	// Apply each pattern
 	for _, pattern := range patterns {
 		if pattern.Regex.MatchString(result) {
@@ -233,11 +233,11 @@ func (ls *LogSanitizer) Sanitize(logMessage string) string {
 			})
 		}
 	}
-	
+
 	if sanitizedCount > 0 {
 		atomic.AddUint64(&ls.dataSanitized, sanitizedCount)
 	}
-	
+
 	return result
 }
 
@@ -251,7 +251,7 @@ func (ls *LogSanitizer) maskMatch(match string, pattern *Pattern) string {
 		}
 		return masked
 	}
-	
+
 	// Fixed length masking
 	if ls.showType {
 		return fmt.Sprintf("[REDACTED:%s]", pattern.Replacement)
@@ -264,9 +264,9 @@ func (ls *LogSanitizer) SanitizeMap(data map[string]interface{}) map[string]inte
 	if !ls.enabled || data == nil {
 		return data
 	}
-	
+
 	result := make(map[string]interface{}, len(data))
-	
+
 	for key, value := range data {
 		switch v := value.(type) {
 		case string:
@@ -279,14 +279,14 @@ func (ls *LogSanitizer) SanitizeMap(data map[string]interface{}) map[string]inte
 			result[key] = value
 		}
 	}
-	
+
 	return result
 }
 
 // sanitizeSlice sanitizes all string values in a slice
 func (ls *LogSanitizer) sanitizeSlice(data []interface{}) []interface{} {
 	result := make([]interface{}, len(data))
-	
+
 	for i, value := range data {
 		switch v := value.(type) {
 		case string:
@@ -299,7 +299,7 @@ func (ls *LogSanitizer) sanitizeSlice(data []interface{}) []interface{} {
 			result[i] = value
 		}
 	}
-	
+
 	return result
 }
 
@@ -309,20 +309,20 @@ func (ls *LogSanitizer) AddCustomPattern(name, pattern string) error {
 	if err != nil {
 		return fmt.Errorf("invalid pattern: %w", err)
 	}
-	
+
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
-	
+
 	ls.customPatterns[name] = &Pattern{
 		Type:        SensitiveDataType("custom_" + name),
 		Name:        name,
 		Regex:       compiled,
 		Replacement: name,
 	}
-	
+
 	// Recompile patterns
 	ls.compilePatterns()
-	
+
 	return nil
 }
 
@@ -330,13 +330,13 @@ func (ls *LogSanitizer) AddCustomPattern(name, pattern string) error {
 func (ls *LogSanitizer) RemoveCustomPattern(name string) bool {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
-	
+
 	if _, exists := ls.customPatterns[name]; exists {
 		delete(ls.customPatterns, name)
 		ls.compilePatterns()
 		return true
 	}
-	
+
 	return false
 }
 
@@ -370,22 +370,22 @@ func (ls *LogSanitizer) BatchSanitize(messages []string) []string {
 	if !ls.enabled || len(messages) == 0 {
 		return messages
 	}
-	
+
 	result := make([]string, len(messages))
-	
+
 	// Process in parallel for large batches
 	if len(messages) > 100 {
 		var wg sync.WaitGroup
 		workers := 4 // Optimal for most cases
 		batchSize := len(messages) / workers
-		
+
 		for i := 0; i < workers; i++ {
 			start := i * batchSize
 			end := start + batchSize
 			if i == workers-1 {
 				end = len(messages)
 			}
-			
+
 			wg.Add(1)
 			go func(start, end int) {
 				defer wg.Done()
@@ -394,7 +394,7 @@ func (ls *LogSanitizer) BatchSanitize(messages []string) []string {
 				}
 			}(start, end)
 		}
-		
+
 		wg.Wait()
 	} else {
 		// Process sequentially for small batches
@@ -402,7 +402,7 @@ func (ls *LogSanitizer) BatchSanitize(messages []string) []string {
 			result[i] = ls.Sanitize(msg)
 		}
 	}
-	
+
 	return result
 }
 
@@ -411,16 +411,16 @@ func (ls *LogSanitizer) ShouldSanitize(logMessage string) bool {
 	if !ls.enabled || logMessage == "" {
 		return false
 	}
-	
+
 	ls.mu.RLock()
 	patterns := ls.compiledPatterns
 	ls.mu.RUnlock()
-	
+
 	for _, pattern := range patterns {
 		if pattern.Regex.MatchString(logMessage) {
 			return true
 		}
 	}
-	
+
 	return false
 }
