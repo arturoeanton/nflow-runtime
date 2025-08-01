@@ -26,6 +26,8 @@ go get github.com/arturoeanton/nflow-runtime
 - **Debug Avanzado**: Endpoints de debugging con autenticación
 - **Optimizado**: Pool de VMs, cache multinivel y código altamente optimizado
 - **Rate Limiting**: Limitación de tasa basada en IP con backends configurables
+- **Análisis de Seguridad**: Análisis estático de JavaScript antes de ejecución
+- **Encriptación Automática**: Detección y encriptación de datos sensibles
 
 ## 🔧 Configuración
 
@@ -78,6 +80,16 @@ smtp_port = 587
 enabled = false            # Limitación de tasa por IP
 ip_rate_limit = 100       # Solicitudes por IP por ventana
 ip_window_minutes = 1     # Ventana de tiempo en minutos
+
+[security]
+# Análisis estático de JavaScript
+enable_static_analysis = false    # Detecta patrones peligrosos antes de ejecución
+block_on_high_severity = true     # Bloquea scripts con problemas graves
+
+# Encriptación de datos sensibles
+enable_encryption = false         # Encripta automáticamente datos sensibles
+encryption_key = ""              # Clave de 32 bytes para AES-256
+encrypt_sensitive_data = true    # Detecta y encripta emails, SSN, API keys, etc.
 ```
 
 ## 🏃‍♂️ Uso Básico

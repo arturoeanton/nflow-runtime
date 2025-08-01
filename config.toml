@@ -76,3 +76,48 @@ error_message = "Rate limit exceeded. Please try again later."
 # Exclusions (comma-separated)
 excluded_ips = ""                # e.g., "127.0.0.1,192.168.1.0/24"
 excluded_paths = "/health,/metrics"  # Paths to exclude from rate limiting
+
+[security]
+# Static Analysis Configuration
+enable_static_analysis = false    # Enable JavaScript static analysis (default: false)
+block_on_high_severity = true     # Block execution on high severity issues (default: true)
+log_security_warnings = true      # Log security warnings to console (default: true)
+cache_analysis_results = true     # Cache analysis results for performance (default: true)
+cache_ttl_minutes = 5            # Cache TTL in minutes (default: 5)
+
+# Allowed patterns to whitelist (reduce false positives)
+allowed_patterns = []            # e.g., ["console.log", "Math.random"]
+
+# Encryption Configuration
+enable_encryption = false         # Enable data encryption features (default: false)
+encryption_key = ""              # 32-byte key for AES-256 encryption (base64 or raw)
+encrypt_sensitive_data = true    # Auto-encrypt sensitive data in responses (default: true)
+encrypt_in_place = true          # Replace values in-place vs metadata (default: true)
+
+# Fields that should always be encrypted
+always_encrypt_fields = [
+    "password",
+    "token",
+    "secret",
+    "api_key",
+    "private_key",
+    "access_token",
+    "refresh_token"
+]
+
+# Sensitive data patterns to detect (built-in: email, phone, ssn, credit_card, api_key, jwt)
+sensitive_patterns = [
+    "email",
+    "phone",
+    "ssn",
+    "credit_card",
+    "api_key",
+    "jwt"
+]
+
+# Custom patterns for sensitive data detection
+# Format: pattern_name = "regex_pattern"
+[security.custom_patterns]
+# employee_id = "EMP\\d{6}"
+# account_number = "ACC-\\d{4}-\\d{4}-\\d{4}"
+# custom_token = "tok_[a-zA-Z0-9]{24}"
