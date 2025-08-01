@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	
-	"log"
+
 	"github.com/arturoeanton/nflow-runtime/security/analyzer"
 	"github.com/arturoeanton/nflow-runtime/security/encryption"
 	"github.com/arturoeanton/nflow-runtime/security/interceptor"
 	"github.com/dop251/goja"
 	"github.com/labstack/echo/v4"
+	"log"
 )
 
 // SecurityMiddleware provides unified security features for nFlow Runtime
@@ -21,10 +21,10 @@ type SecurityMiddleware struct {
 	analyzer    *analyzer.StaticAnalyzer
 	encryption  *encryption.EncryptionService
 	interceptor *interceptor.SensitiveDataInterceptor
-	
+
 	// Configuration
 	config *Config
-	
+
 	// Metrics
 	metrics *SecurityMetrics
 	mu      sync.RWMutex
@@ -37,19 +37,19 @@ type Config struct {
 	BlockOnHighSeverity  bool     `toml:"block_on_high_severity"`
 	LogSecurityWarnings  bool     `toml:"log_security_warnings"`
 	AllowedPatterns      []string `toml:"allowed_patterns"` // Patterns to whitelist
-	
+
 	// Encryption
-	EnableEncryption       bool              `toml:"enable_encryption"`
-	EncryptionKey         string            `toml:"encryption_key"`
-	EncryptSensitiveData  bool              `toml:"encrypt_sensitive_data"`
-	EncryptInPlace        bool              `toml:"encrypt_in_place"`
-	SensitivePatterns     []string          `toml:"sensitive_patterns"`
-	AlwaysEncryptFields   []string          `toml:"always_encrypt_fields"`
-	CustomPatterns        map[string]string `toml:"custom_patterns"`
-	
+	EnableEncryption     bool              `toml:"enable_encryption"`
+	EncryptionKey        string            `toml:"encryption_key"`
+	EncryptSensitiveData bool              `toml:"encrypt_sensitive_data"`
+	EncryptInPlace       bool              `toml:"encrypt_in_place"`
+	SensitivePatterns    []string          `toml:"sensitive_patterns"`
+	AlwaysEncryptFields  []string          `toml:"always_encrypt_fields"`
+	CustomPatterns       map[string]string `toml:"custom_patterns"`
+
 	// Performance
 	CacheAnalysisResults bool          `toml:"cache_analysis_results"`
-	CacheTTL            time.Duration `toml:"cache_ttl"`
+	CacheTTL             time.Duration `toml:"cache_ttl"`
 }
 
 // SecurityMetrics tracks security-related metrics
@@ -83,23 +83,23 @@ func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 			CacheTTL:             5 * time.Minute,
 		}
 	}
-	
+
 	sm := &SecurityMiddleware{
 		config:  config,
 		metrics: &SecurityMetrics{},
 	}
-	
+
 	// Initialize static analyzer
 	if config.EnableStaticAnalysis {
 		sm.analyzer = analyzer.NewStaticAnalyzer()
-		
+
 		// Add allowed patterns (to reduce false positives)
 		for _, pattern := range config.AllowedPatterns {
 			// This would need implementation in analyzer to support whitelisting
 			log.Printf("[DEBUG] Whitelisting pattern: %s", pattern)
 		}
 	}
-	
+
 	// Initialize encryption
 	if config.EnableEncryption && config.EncryptionKey != "" {
 		encService, err := encryption.NewEncryptionService(config.EncryptionKey)
@@ -107,7 +107,7 @@ func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 			return nil, fmt.Errorf("failed to initialize encryption: %w", err)
 		}
 		sm.encryption = encService
-		
+
 		// Initialize interceptor
 		interceptorConfig := &interceptor.Config{
 			Enabled:        config.EncryptSensitiveData,
@@ -117,7 +117,7 @@ func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 		}
 		sm.interceptor = interceptor.NewSensitiveDataInterceptor(encService, interceptorConfig)
 	}
-	
+
 	return sm, nil
 }
 
@@ -126,7 +126,7 @@ func (sm *SecurityMiddleware) AnalyzeScript(script string, scriptID string) erro
 	if !sm.config.EnableStaticAnalysis || sm.analyzer == nil {
 		return nil
 	}
-	
+
 	start := time.Now()
 	defer func() {
 		sm.mu.Lock()
@@ -134,16 +134,16 @@ func (sm *SecurityMiddleware) AnalyzeScript(script string, scriptID string) erro
 		sm.metrics.ScriptsAnalyzed++
 		sm.mu.Unlock()
 	}()
-	
+
 	// Analyze the script
 	issues, err := sm.analyzer.AnalyzeScript(script)
 	if err != nil {
 		return fmt.Errorf("script analysis failed: %w", err)
 	}
-	
+
 	// Update metrics
 	sm.updateIssueMetrics(issues)
-	
+
 	// Log warnings if configured
 	if sm.config.LogSecurityWarnings {
 		for _, issue := range issues {
@@ -151,17 +151,17 @@ func (sm *SecurityMiddleware) AnalyzeScript(script string, scriptID string) erro
 				scriptID, issue.Severity, issue.Description, issue.Line)
 		}
 	}
-	
+
 	// Block on high severity if configured
 	if sm.config.BlockOnHighSeverity && analyzer.HasHighSeverityIssues(issues) {
 		sm.mu.Lock()
 		sm.metrics.ScriptsBlocked++
 		sm.mu.Unlock()
-		
+
 		return fmt.Errorf("script blocked due to security issues: %d high severity issues found",
 			len(analyzer.FilterBySeverity(issues, analyzer.SeverityHigh)))
 	}
-	
+
 	return nil
 }
 
@@ -170,23 +170,23 @@ func (sm *SecurityMiddleware) ProcessResponse(data interface{}) (interface{}, er
 	if !sm.config.EnableEncryption || sm.interceptor == nil {
 		return data, nil
 	}
-	
+
 	start := time.Now()
 	defer func() {
 		sm.mu.Lock()
 		sm.metrics.EncryptionTime += time.Since(start)
 		sm.mu.Unlock()
 	}()
-	
+
 	result, err := sm.interceptor.ProcessResponse(data)
 	if err != nil {
 		return data, fmt.Errorf("response processing failed: %w", err)
 	}
-	
+
 	sm.mu.Lock()
 	sm.metrics.DataEncrypted++
 	sm.mu.Unlock()
-	
+
 	return result, nil
 }
 
@@ -195,14 +195,14 @@ func (sm *SecurityMiddleware) WrapEchoHandler(next echo.HandlerFunc) echo.Handle
 	return func(c echo.Context) error {
 		// Process the request
 		err := next(c)
-		
+
 		// If there's a response body, process it for encryption
 		if err == nil && sm.config.EnableEncryption {
 			// This is simplified - in real implementation would need to
 			// intercept the actual response body
 			log.Printf("[DEBUG] Response encryption would happen here")
 		}
-		
+
 		return err
 	}
 }
@@ -212,13 +212,13 @@ func (sm *SecurityMiddleware) WrapGojaVM(vm *goja.Runtime, scriptID string) erro
 	if !sm.config.EnableStaticAnalysis {
 		return nil
 	}
-	
+
 	// Add pre-execution hook for script analysis
 	// This is a simplified version - real implementation would need
 	// deeper integration with Goja's execution model
 	// Note: We cannot modify vm.RunString directly as it's not addressable
 	// In a real implementation, this would require wrapping the VM or using a different approach
-	
+
 	return nil
 }
 
@@ -227,14 +227,14 @@ func (sm *SecurityMiddleware) EncryptField(fieldName string, value string) (stri
 	if sm.encryption == nil {
 		return value, nil
 	}
-	
+
 	// Check if this field should always be encrypted
 	for _, field := range sm.config.AlwaysEncryptFields {
 		if field == fieldName {
 			return sm.encryption.Encrypt(value)
 		}
 	}
-	
+
 	return value, nil
 }
 
@@ -243,12 +243,12 @@ func (sm *SecurityMiddleware) DecryptField(value string) (string, error) {
 	if sm.encryption == nil {
 		return value, nil
 	}
-	
+
 	// Check if value appears to be encrypted
 	if encryption.IsEncrypted(value) {
 		return sm.encryption.Decrypt(value)
 	}
-	
+
 	return value, nil
 }
 
@@ -256,16 +256,16 @@ func (sm *SecurityMiddleware) DecryptField(value string) (string, error) {
 func (sm *SecurityMiddleware) GetMetrics() SecurityMetrics {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	
+
 	// Create a copy to avoid race conditions
 	metrics := *sm.metrics
-	
+
 	// Add sub-component metrics
 	if sm.encryption != nil {
 		encCount, decCount := sm.encryption.GetMetrics()
 		metrics.DataEncrypted = encCount + decCount
 	}
-	
+
 	return metrics
 }
 
@@ -273,13 +273,13 @@ func (sm *SecurityMiddleware) GetMetrics() SecurityMetrics {
 func (sm *SecurityMiddleware) ResetMetrics() {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	sm.metrics = &SecurityMetrics{}
-	
+
 	if sm.encryption != nil {
 		sm.encryption.ResetMetrics()
 	}
-	
+
 	if sm.interceptor != nil {
 		sm.interceptor.ResetMetrics()
 	}
@@ -289,7 +289,7 @@ func (sm *SecurityMiddleware) ResetMetrics() {
 func (sm *SecurityMiddleware) updateIssueMetrics(issues []analyzer.SecurityIssue) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	for _, issue := range issues {
 		switch issue.Severity {
 		case analyzer.SeverityHigh:
@@ -317,10 +317,10 @@ func (sm *SecurityMiddleware) IsEnabled() bool {
 func (sm *SecurityMiddleware) SetEnabled(analysis, encryption bool) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	sm.config.EnableStaticAnalysis = analysis
 	sm.config.EnableEncryption = encryption
-	
+
 	if sm.interceptor != nil {
 		sm.interceptor.SetEnabled(encryption)
 	}

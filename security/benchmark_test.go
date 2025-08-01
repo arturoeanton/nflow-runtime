@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	
+
 	"github.com/arturoeanton/nflow-runtime/security/analyzer"
 	"github.com/arturoeanton/nflow-runtime/security/encryption"
 	"github.com/arturoeanton/nflow-runtime/security/interceptor"
@@ -29,7 +29,7 @@ var (
 		const data = Array.from({length: 100}, (_, i) => ({id: i, value: i}));
 		processData(data);
 	`
-	
+
 	dangerousScript = `
 		const fs = require('fs');
 		const exec = require('child_process').exec;
@@ -52,7 +52,7 @@ var (
 		const apiKey = "sk_test_1234567890abcdefghijklmnopqrstuvwxyz";
 		const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 	`
-	
+
 	mixedScript = `
 		// Some safe code
 		function calculate(a, b) {
@@ -79,14 +79,14 @@ var (
 		const doubled = items.map(x => x * 2);
 		console.log(doubled);
 	`
-	
+
 	// Sample data for encryption benchmarks
 	smallData = map[string]interface{}{
 		"id":   123,
 		"name": "Test User",
 		"role": "admin",
 	}
-	
+
 	mediumData = map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":    123,
@@ -101,7 +101,7 @@ var (
 		},
 		"apiKey": "sk_test_1234567890abcdefghij",
 	}
-	
+
 	largeData = generateLargeData()
 )
 
@@ -123,7 +123,7 @@ func generateLargeData() map[string]interface{} {
 			},
 		}
 	}
-	
+
 	return map[string]interface{}{
 		"users":      users,
 		"totalCount": len(users),
@@ -138,7 +138,7 @@ func generateLargeData() map[string]interface{} {
 
 func BenchmarkAnalyzer_SafeScript(b *testing.B) {
 	analyzer := analyzer.NewStaticAnalyzer()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = analyzer.AnalyzeScript(safeScript)
@@ -147,7 +147,7 @@ func BenchmarkAnalyzer_SafeScript(b *testing.B) {
 
 func BenchmarkAnalyzer_DangerousScript(b *testing.B) {
 	analyzer := analyzer.NewStaticAnalyzer()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = analyzer.AnalyzeScript(dangerousScript)
@@ -156,7 +156,7 @@ func BenchmarkAnalyzer_DangerousScript(b *testing.B) {
 
 func BenchmarkAnalyzer_MixedScript(b *testing.B) {
 	analyzer := analyzer.NewStaticAnalyzer()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = analyzer.AnalyzeScript(mixedScript)
@@ -165,7 +165,7 @@ func BenchmarkAnalyzer_MixedScript(b *testing.B) {
 
 func BenchmarkAnalyzer_Parallel(b *testing.B) {
 	analyzer := analyzer.NewStaticAnalyzer()
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, _ = analyzer.AnalyzeScript(mixedScript)
@@ -179,7 +179,7 @@ func BenchmarkEncryption_Small(b *testing.B) {
 	key := strings.Repeat("k", 32)
 	es, _ := encryption.NewEncryptionService(key)
 	data := "Small piece of sensitive data"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := es.Encrypt(data)
@@ -191,7 +191,7 @@ func BenchmarkEncryption_Medium(b *testing.B) {
 	key := strings.Repeat("k", 32)
 	es, _ := encryption.NewEncryptionService(key)
 	data := strings.Repeat("Medium sized data content ", 100)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := es.Encrypt(data)
@@ -203,7 +203,7 @@ func BenchmarkEncryption_Large(b *testing.B) {
 	key := strings.Repeat("k", 32)
 	es, _ := encryption.NewEncryptionService(key)
 	data := strings.Repeat("Large data content for benchmarking ", 1000)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := es.Encrypt(data)
@@ -215,7 +215,7 @@ func BenchmarkEncryption_Parallel(b *testing.B) {
 	key := strings.Repeat("k", 32)
 	es, _ := encryption.NewEncryptionService(key)
 	data := "Concurrent encryption test data"
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			encrypted, _ := es.Encrypt(data)
@@ -234,7 +234,7 @@ func BenchmarkInterceptor_SmallData(b *testing.B) {
 		EncryptInPlace: true,
 	}
 	sdi := interceptor.NewSensitiveDataInterceptor(encService, config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = sdi.ProcessResponse(smallData)
@@ -249,7 +249,7 @@ func BenchmarkInterceptor_MediumData(b *testing.B) {
 		EncryptInPlace: true,
 	}
 	sdi := interceptor.NewSensitiveDataInterceptor(encService, config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = sdi.ProcessResponse(mediumData)
@@ -264,7 +264,7 @@ func BenchmarkInterceptor_LargeData(b *testing.B) {
 		EncryptInPlace: true,
 	}
 	sdi := interceptor.NewSensitiveDataInterceptor(encService, config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = sdi.ProcessResponse(largeData)
@@ -280,7 +280,7 @@ func BenchmarkInterceptor_WithMetadata(b *testing.B) {
 		MetadataKey:    "_encrypted",
 	}
 	sdi := interceptor.NewSensitiveDataInterceptor(encService, config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = sdi.ProcessResponse(mediumData)
@@ -293,12 +293,12 @@ func BenchmarkMiddleware_Complete_Small(b *testing.B) {
 	config := &Config{
 		EnableStaticAnalysis: true,
 		EnableEncryption:     true,
-		EncryptionKey:       strings.Repeat("k", 32),
+		EncryptionKey:        strings.Repeat("k", 32),
 		BlockOnHighSeverity:  false,
 		EncryptSensitiveData: true,
 	}
 	sm, _ := NewSecurityMiddleware(config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = sm.AnalyzeScript(safeScript, "bench")
@@ -310,12 +310,12 @@ func BenchmarkMiddleware_Complete_Large(b *testing.B) {
 	config := &Config{
 		EnableStaticAnalysis: true,
 		EnableEncryption:     true,
-		EncryptionKey:       strings.Repeat("k", 32),
+		EncryptionKey:        strings.Repeat("k", 32),
 		BlockOnHighSeverity:  false,
 		EncryptSensitiveData: true,
 	}
 	sm, _ := NewSecurityMiddleware(config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = sm.AnalyzeScript(mixedScript, "bench")
@@ -330,7 +330,7 @@ func BenchmarkMiddleware_AnalysisOnly(b *testing.B) {
 		BlockOnHighSeverity:  false,
 	}
 	sm, _ := NewSecurityMiddleware(config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = sm.AnalyzeScript(dangerousScript, "bench")
@@ -341,11 +341,11 @@ func BenchmarkMiddleware_EncryptionOnly(b *testing.B) {
 	config := &Config{
 		EnableStaticAnalysis: false,
 		EnableEncryption:     true,
-		EncryptionKey:       strings.Repeat("k", 32),
+		EncryptionKey:        strings.Repeat("k", 32),
 		EncryptSensitiveData: true,
 	}
 	sm, _ := NewSecurityMiddleware(config)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = sm.ProcessResponse(largeData)
@@ -356,12 +356,12 @@ func BenchmarkMiddleware_Parallel(b *testing.B) {
 	config := &Config{
 		EnableStaticAnalysis: true,
 		EnableEncryption:     true,
-		EncryptionKey:       strings.Repeat("k", 32),
+		EncryptionKey:        strings.Repeat("k", 32),
 		BlockOnHighSeverity:  false,
 		EncryptSensitiveData: true,
 	}
 	sm, _ := NewSecurityMiddleware(config)
-	
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_ = sm.AnalyzeScript(safeScript, "bench")
@@ -374,7 +374,7 @@ func BenchmarkMiddleware_Parallel(b *testing.B) {
 
 func BenchmarkAlloc_Analyzer(b *testing.B) {
 	analyzer := analyzer.NewStaticAnalyzer()
-	
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -386,7 +386,7 @@ func BenchmarkAlloc_Encryption(b *testing.B) {
 	key := strings.Repeat("k", 32)
 	es, _ := encryption.NewEncryptionService(key)
 	data := strings.Repeat("Test data ", 100)
-	
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -403,7 +403,7 @@ func BenchmarkAlloc_Interceptor(b *testing.B) {
 		EncryptInPlace: true,
 	}
 	sdi := interceptor.NewSensitiveDataInterceptor(encService, config)
-	
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

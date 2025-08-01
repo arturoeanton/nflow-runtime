@@ -40,7 +40,7 @@ type SecurityPattern struct {
 type StaticAnalyzer struct {
 	patterns []SecurityPattern
 	mu       sync.RWMutex // Protects patterns slice for thread-safe operations
-	
+
 	// Performance optimization: pre-compiled pattern cache
 	patternCache map[string]*regexp.Regexp
 	cacheMu      sync.RWMutex
@@ -51,7 +51,7 @@ func NewStaticAnalyzer() *StaticAnalyzer {
 	analyzer := &StaticAnalyzer{
 		patternCache: make(map[string]*regexp.Regexp),
 	}
-	
+
 	// Initialize with default dangerous patterns
 	analyzer.patterns = []SecurityPattern{
 		{
@@ -115,7 +115,7 @@ func NewStaticAnalyzer() *StaticAnalyzer {
 			Description: "Deprecated Buffer constructor usage",
 		},
 	}
-	
+
 	return analyzer
 }
 
@@ -125,22 +125,22 @@ func (sa *StaticAnalyzer) AnalyzeScript(script string) ([]SecurityIssue, error) 
 	if script == "" {
 		return nil, nil
 	}
-	
+
 	sa.mu.RLock()
 	patterns := sa.patterns
 	sa.mu.RUnlock()
-	
+
 	var issues []SecurityIssue
 	lines := strings.Split(script, "\n")
-	
+
 	// Analyze each pattern
 	for _, pattern := range patterns {
 		matches := pattern.Pattern.FindAllStringIndex(script, -1)
-		
+
 		for _, match := range matches {
 			line, column := getLineAndColumn(script, match[0])
 			snippet := extractSnippet(lines, line-1, column)
-			
+
 			issues = append(issues, SecurityIssue{
 				Type:        pattern.Name,
 				Severity:    pattern.Severity,
@@ -151,7 +151,7 @@ func (sa *StaticAnalyzer) AnalyzeScript(script string) ([]SecurityIssue, error) 
 			})
 		}
 	}
-	
+
 	return issues, nil
 }
 
@@ -162,17 +162,17 @@ func (sa *StaticAnalyzer) AddPattern(name, pattern, severity, description string
 	if err != nil {
 		return fmt.Errorf("invalid regex pattern: %w", err)
 	}
-	
+
 	sa.mu.Lock()
 	defer sa.mu.Unlock()
-	
+
 	sa.patterns = append(sa.patterns, SecurityPattern{
 		Name:        name,
 		Pattern:     compiledPattern,
 		Severity:    severity,
 		Description: description,
 	})
-	
+
 	return nil
 }
 
@@ -180,14 +180,14 @@ func (sa *StaticAnalyzer) AddPattern(name, pattern, severity, description string
 func (sa *StaticAnalyzer) RemovePattern(name string) bool {
 	sa.mu.Lock()
 	defer sa.mu.Unlock()
-	
+
 	for i, p := range sa.patterns {
 		if p.Name == name {
 			sa.patterns = append(sa.patterns[:i], sa.patterns[i+1:]...)
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -195,7 +195,7 @@ func (sa *StaticAnalyzer) RemovePattern(name string) bool {
 func (sa *StaticAnalyzer) GetPatterns() []SecurityPattern {
 	sa.mu.RLock()
 	defer sa.mu.RUnlock()
-	
+
 	patterns := make([]SecurityPattern, len(sa.patterns))
 	copy(patterns, sa.patterns)
 	return patterns
@@ -206,19 +206,19 @@ func FilterBySeverity(issues []SecurityIssue, severities ...string) []SecurityIs
 	if len(severities) == 0 {
 		return issues
 	}
-	
+
 	severityMap := make(map[string]bool)
 	for _, s := range severities {
 		severityMap[s] = true
 	}
-	
+
 	var filtered []SecurityIssue
 	for _, issue := range issues {
 		if severityMap[issue.Severity] {
 			filtered = append(filtered, issue)
 		}
 	}
-	
+
 	return filtered
 }
 
@@ -236,7 +236,7 @@ func HasHighSeverityIssues(issues []SecurityIssue) bool {
 func getLineAndColumn(text string, position int) (line, column int) {
 	line = 1
 	column = 1
-	
+
 	for i := 0; i < position && i < len(text); i++ {
 		if text[i] == '\n' {
 			line++
@@ -245,7 +245,7 @@ func getLineAndColumn(text string, position int) (line, column int) {
 			column++
 		}
 	}
-	
+
 	return line, column
 }
 
@@ -254,22 +254,22 @@ func extractSnippet(lines []string, lineIndex, column int) string {
 	if lineIndex < 0 || lineIndex >= len(lines) {
 		return ""
 	}
-	
+
 	line := lines[lineIndex]
-	
+
 	// Extract a window around the issue (40 chars before and after)
 	start := column - 40
 	if start < 0 {
 		start = 0
 	}
-	
+
 	end := column + 40
 	if end > len(line) {
 		end = len(line)
 	}
-	
+
 	snippet := line[start:end]
-	
+
 	// Add ellipsis if truncated
 	if start > 0 {
 		snippet = "..." + snippet
@@ -277,6 +277,6 @@ func extractSnippet(lines []string, lineIndex, column int) string {
 	if end < len(line) {
 		snippet = snippet + "..."
 	}
-	
+
 	return strings.TrimSpace(snippet)
 }
