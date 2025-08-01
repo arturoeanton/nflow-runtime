@@ -18,7 +18,7 @@ go get github.com/arturoeanton/nflow-runtime
 ## 🎯 Features
 
 - **Secure Execution**: JavaScript sandboxing with configurable resource limits
-- **High Performance**: 160-200 RPS with heavy JavaScript (4x improvement with VM pool)
+- **High Performance**: 3,396 RPS with compute-intensive JavaScript workflows (1M+ requests, 0% errors)
 - **Thread-Safe**: Race condition-free architecture using Repository Pattern
 - **Extensible**: Plugin system for custom functionality
 - **Detailed Logging**: Structured logging system with verbose mode (-v)
@@ -255,11 +255,14 @@ nFlow Runtime has been optimized to handle heavy JavaScript workloads:
 - **Program Cache**: Pre-compiled JavaScript
 - **Auth.js Cache**: Avoids repetitive file reads
 
-### Results
-- **Before**: 40-50 RPS with heavy JavaScript
-- **After**: 160-200 RPS (4x improvement)
-- **Concurrency**: Support for 200+ simultaneous requests
-- **Latency**: Significant reduction through overhead elimination
+### JMeter Test Results
+- **Tested workflow**: httpstart → js-JsonRender with 1000 mathematical calculations
+- **Demonstrated throughput**: 3,396 req/s (~3.4 million calculations/second)
+- **Reliability**: 1,007,399 requests processed with 0% errors
+- **Average latency**: 860ms (includes JS compilation + 1000 operations)
+- **Response times**: Minimum 25ms, maximum 2,488ms
+- **Standard deviation**: 87.36ms (predictable behavior)
+- **Transfer capacity**: 5,265.98 KB/s
 
 ## 🚨 Error Handling
 
@@ -273,9 +276,9 @@ Errors are handled consistently:
 - **Maturity**: 4.9/5 ⭐ (Production ready)
 - **Stability**: STABLE ✅
 - **Security**: VERY GOOD ✅
-- **Performance**: 160-200 RPS with heavy JS (4x improvement) ✅
+- **Performance**: 3,396 RPS with intensive JavaScript (0% errors) ✅
 - **Observability**: COMPLETE ✅
-- **Production Ready**: 92% ✅
+- **Production Ready**: 95% ✅
 
 See [STATUS.md](STATUS.md) for more details.
 

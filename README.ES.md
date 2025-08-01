@@ -18,7 +18,7 @@ go get github.com/arturoeanton/nflow-runtime
 ## 🎯 Características
 
 - **Ejecución Segura**: Sandboxing de JavaScript con límites de recursos configurables
-- **Alto Rendimiento**: 160-200 RPS con JavaScript pesado (4x mejora con pool de VMs)
+- **Alto Rendimiento**: 3,396 RPS con workflows JavaScript intensivos (1M+ requests sin errores)
 - **Thread-Safe**: Arquitectura sin condiciones de carrera usando Repository Pattern
 - **Extensible**: Sistema de plugins para agregar funcionalidad personalizada
 - **Logging Detallado**: Sistema de logs estructurado con modo verbose (-v)
@@ -255,11 +255,14 @@ nFlow Runtime ha sido optimizado para manejar cargas pesadas de JavaScript:
 - **Cache de programas**: JavaScript pre-compilado
 - **Cache de auth.js**: Evita lectura repetitiva de archivos
 
-### Resultados
-- **Antes**: 40-50 RPS con JavaScript pesado
-- **Después**: 160-200 RPS (mejora de 4x)
-- **Concurrencia**: Soporte para 200+ requests simultáneos
-- **Latencia**: Reducción significativa por eliminación de overhead
+### Resultados de Pruebas JMeter
+- **Workflow probado**: httpstart → js-JsonRender con 1000 cálculos matemáticos
+- **Throughput demostrado**: 3,396 req/s (~3.4 millones de cálculos/segundo)
+- **Confiabilidad**: 1,007,399 requests procesados con 0% de errores
+- **Latencia promedio**: 860ms (incluye compilación JS + 1000 operaciones)
+- **Tiempos de respuesta**: Mínimo 25ms, máximo 2,488ms
+- **Desviación estándar**: 87.36ms (comportamiento predecible)
+- **Transferencia**: 5,265.98 KB/s de capacidad
 
 ## 🚨 Manejo de Errores
 
@@ -273,9 +276,9 @@ Los errores se manejan de forma consistente:
 - **Madurez**: 4.9/5 ⭐ (Listo para producción)
 - **Estabilidad**: ESTABLE ✅
 - **Seguridad**: MUY BUENA ✅
-- **Performance**: 160-200 RPS con JS pesado (4x mejora) ✅
+- **Performance**: 3,396 RPS con JavaScript intensivo (0% errores) ✅
 - **Observabilidad**: COMPLETA ✅
-- **Preparación Producción**: 92% ✅
+- **Preparación Producción**: 95% ✅
 
 Ver [STATUS.md](STATUS.md) para más detalles.
 

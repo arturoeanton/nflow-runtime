@@ -119,6 +119,35 @@
 13. **Reorganización de código** - Endpoints movidos a su propio paquete para mejor organización
 14. **Rate limiting por IP** - Implementado con algoritmo token bucket, backends memory/Redis, exclusiones configurables
 
+## 🆕 Resultados de Pruebas de Carga JMeter (01/08/2025)
+
+### Métricas de Performance Actualizadas
+- **Total de requests**: 1,007,399 sin errores (0% tasa de error)
+- **Throughput**: 3,396.03 requests/segundo
+- **Tiempo de respuesta promedio**: 860ms
+- **Tiempo mínimo**: 25ms
+- **Tiempo máximo**: 2,488ms
+- **Desviación estándar**: 87.36ms
+- **Capacidad de transferencia**: 5,265.98 KB/s recibidos
+
+### Workflow de Prueba
+El test ejecutó un workflow con:
+- **httpstart** → **js-JsonRender**
+- Script JavaScript con cálculo matemático intensivo (1000 iteraciones)
+- Operaciones: raíz cuadrada, seno, números aleatorios
+- Medición de tiempo de ejecución interno
+
+### Análisis de Resultados
+- El sistema procesó más de 1 millón de requests sin fallos
+- Cada request ejecuta 1000 iteraciones de cálculos matemáticos complejos
+- El throughput de 3,396 req/s significa ~3.4 millones de cálculos/segundo
+- La latencia promedio de 860ms incluye:
+  - Procesamiento HTTP
+  - Compilación y ejecución JavaScript
+  - 1000 operaciones matemáticas por request
+  - Serialización de respuesta JSON
+- La baja desviación estándar (87.36ms) indica comportamiento predecible bajo carga
+
 ## 🆕 Optimizaciones de Rendimiento (31/07/2024)
 
 ### ✅ Pool de VMs Implementado

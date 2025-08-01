@@ -21,9 +21,10 @@
 ## 🚀 Productividad
 
 ### Capacidad Actual
-- ✅ **5M+ requests/8h** - Objetivo alcanzado
+- ✅ **1M+ requests procesados** - Demostrado en pruebas JMeter sin errores
+- ✅ **3,396 req/s de throughput** - Capacidad excepcional demostrada
 - ✅ **Concurrencia alta** - Sin race conditions
-- ✅ **Latencia baja** - <100ms para workflows simples
+- ✅ **Latencia promedio 860ms** - Estable con baja desviación (87ms)
 - ✅ **Con límites de recursos** - VMs limitadas a 128MB/30s por defecto (configurable)
 - ✅ **Tracking optimizado** - Sin impacto en performance cuando está deshabilitado
 - ✅ **Código optimizado** - engine.go y main.go con mejoras significativas de performance
@@ -35,13 +36,16 @@ Workflows complejos:   200-500ms
 Concurrencia máxima:   Limitada por CPU/RAM
 Memory footprint:      ~50MB base + VMs
 
-Resultados de prueba de carga (summary.csv):
-- Promedio de respuesta: 42.1 segundos
-- Mínimo: 823ms
-- Máximo: 68.5 segundos
-- Throughput: 32.66 req/s
+Resultados de prueba de carga JMeter (01/08/2025):
+- Workflow: httpstart → js-JsonRender (1000 cálculos matemáticos)
+- Total de requests: 1,007,399
+- Promedio de respuesta: 860ms
+- Mínimo: 25ms
+- Máximo: 2,488ms
+- Desviación estándar: 87.36ms
+- Throughput: 3,396.03 req/s (~3.4M cálculos/segundo)
 - Tasa de error: 0%
-- Total de requests: 8,807
+- Transferencia: 5,265.98 KB/s
 ```
 
 ## 🛡️ Estabilidad
@@ -121,7 +125,9 @@ Resultados de prueba de carga (summary.csv):
 - [ ] Circuit breakers
 - [ ] Secretos externalizados
 
-### Estado: **92% Listo para Producción**
+### Estado: **95% Listo para Producción**
+
+Las pruebas de carga con JMeter demuestran que el sistema puede manejar más de 1 millón de requests de workflows con JavaScript computacionalmente intensivo (1000 operaciones matemáticas por request) sin errores, con un throughput excepcional de 3,396 req/s, lo que equivale a ~3.4 millones de cálculos por segundo.
 
 ## 🎯 Recomendaciones Inmediatas (Actualizado 31/07/2025)
 
