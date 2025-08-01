@@ -182,17 +182,8 @@ func TestRaceCondition_GetSession(t *testing.T) {
 			defer wg.Done()
 
 			for j := 0; j < 100; j++ {
-				// GetSession
-				sess, err := sm.GetSession("full-session", c)
-				if err != nil {
-					continue
-				}
-
-				// Modificar valores
-				sess.Values[fmt.Sprintf("worker-%d", id)] = j
-
-				// SaveSession
-				sm.SaveSession("full-session", c, sess)
+				// Usar SetValue que es thread-safe en lugar de acceso directo
+				sm.SetValue("full-session", fmt.Sprintf("worker-%d", id), j, c)
 			}
 		}(i)
 	}

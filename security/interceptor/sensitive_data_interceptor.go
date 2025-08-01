@@ -121,8 +121,8 @@ func (sdi *SensitiveDataInterceptor) initializeDefaultPatterns() {
 		PatternPhone: {
 			Type: PatternPhone,
 			Name: "Phone Number",
-			// Supports various formats: (123) 456-7890, 123-456-7890, +1234567890
-			Pattern:    regexp.MustCompile(`\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b`),
+			// Supports various formats: (123) 456-7890, 123-456-7890, +1234567890, 5551234567
+			Pattern:    regexp.MustCompile(`(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b|\b[0-9]{10}\b`),
 			MinLength:  10,
 			MaxLength:  20,
 			Confidence: 0.8,
@@ -148,8 +148,8 @@ func (sdi *SensitiveDataInterceptor) initializeDefaultPatterns() {
 			Type: PatternAPIKey,
 			Name: "API Key",
 			// Common API key patterns
-			Pattern:    regexp.MustCompile(`\b(?i)(?:api[_-]?key|apikey|access[_-]?token|auth[_-]?token)['"]?\s*[:=]\s*['"]?([a-zA-Z0-9_\-]{20,})['"]?\b`),
-			MinLength:  20,
+			Pattern:    regexp.MustCompile(`(?i)(?:api[_-]?key|apikey|access[_-]?token|auth[_-]?token)['"]?\s*[:=]\s*['"]?([a-zA-Z0-9_\-]{16,})['"]?`),
+			MinLength:  16,
 			MaxLength:  256,
 			Confidence: 0.85,
 		},
@@ -298,8 +298,9 @@ func (sdi *SensitiveDataInterceptor) detectSensitiveData(data string) []Detectio
 
 		for _, match := range matches {
 			value := match[0]
-			if len(match) > 1 {
-				value = match[1] // Use first capture group if available
+			// For API keys, use the captured group if available
+			if pattern.Type == PatternAPIKey && len(match) > 1 && match[1] != "" {
+				value = match[1]
 			}
 
 			// Check length constraints

@@ -252,6 +252,7 @@ func TestMetrics(t *testing.T) {
 		EnableEncryption:     true,
 		EncryptionKey:        strings.Repeat("k", 32),
 		BlockOnHighSeverity:  true,
+		EncryptSensitiveData: true,
 	}
 
 	sm, err := NewSecurityMiddleware(config)
@@ -303,6 +304,7 @@ func TestSetEnabled(t *testing.T) {
 		EnableEncryption:     true,
 		EncryptionKey:        strings.Repeat("k", 32),
 		EncryptSensitiveData: true,
+		BlockOnHighSeverity:  true,
 	}
 
 	sm, err := NewSecurityMiddleware(config)
