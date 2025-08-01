@@ -11,6 +11,7 @@ import (
 	"github.com/arturoeanton/nflow-runtime/security/analyzer"
 	"github.com/arturoeanton/nflow-runtime/security/encryption"
 	"github.com/arturoeanton/nflow-runtime/security/interceptor"
+	"github.com/arturoeanton/nflow-runtime/security/sanitizer"
 	"github.com/dop251/goja"
 	"github.com/labstack/echo/v4"
 	"log"
@@ -21,6 +22,7 @@ type SecurityMiddleware struct {
 	analyzer    *analyzer.StaticAnalyzer
 	encryption  *encryption.EncryptionService
 	interceptor *interceptor.SensitiveDataInterceptor
+	sanitizer   *sanitizer.LogSanitizer
 
 	// Configuration
 	config *Config
@@ -47,6 +49,13 @@ type Config struct {
 	AlwaysEncryptFields  []string          `toml:"always_encrypt_fields"`
 	CustomPatterns       map[string]string `toml:"custom_patterns"`
 
+	// Log Sanitization
+	EnableLogSanitization bool              `toml:"enable_log_sanitization"`
+	LogMaskingChar        string            `toml:"log_masking_char"`
+	LogPreserveLength     bool              `toml:"log_preserve_length"`
+	LogShowType           bool              `toml:"log_show_type"`
+	LogCustomPatterns     map[string]string `toml:"log_custom_patterns"`
+
 	// Performance
 	CacheAnalysisResults bool          `toml:"cache_analysis_results"`
 	CacheTTL             time.Duration `toml:"cache_ttl"`
@@ -60,6 +69,8 @@ type SecurityMetrics struct {
 	MediumSeverityIssues uint64
 	LowSeverityIssues    uint64
 	DataEncrypted        uint64
+	LogsProcessed        uint64
+	LogsSanitized        uint64
 	AnalysisTime         time.Duration
 	EncryptionTime       time.Duration
 }
@@ -79,6 +90,8 @@ func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 			BlockOnHighSeverity:  true,
 			LogSecurityWarnings:  true,
 			EncryptInPlace:       true,
+			EnableLogSanitization: true,
+			LogShowType:          true,
 			CacheAnalysisResults: true,
 			CacheTTL:             5 * time.Minute,
 		}
@@ -118,6 +131,18 @@ func NewSecurityMiddleware(config *Config) (*SecurityMiddleware, error) {
 		sm.interceptor = interceptor.NewSensitiveDataInterceptor(encService, interceptorConfig)
 	}
 
+	// Initialize log sanitizer
+	if config.EnableLogSanitization {
+		sanitizerConfig := &sanitizer.Config{
+			Enabled:        true,
+			MaskingChar:    config.LogMaskingChar,
+			PreserveLength: config.LogPreserveLength,
+			ShowType:       config.LogShowType,
+			CustomPatterns: config.LogCustomPatterns,
+		}
+		sm.sanitizer = sanitizer.NewLogSanitizer(sanitizerConfig)
+	}
+
 	return sm, nil
 }
 
@@ -147,8 +172,13 @@ func (sm *SecurityMiddleware) AnalyzeScript(script string, scriptID string) erro
 	// Log warnings if configured
 	if sm.config.LogSecurityWarnings {
 		for _, issue := range issues {
-			log.Printf("[WARN] Security issue in script %s: [%s] %s at line %d",
+			logMsg := fmt.Sprintf("[WARN] Security issue in script %s: [%s] %s at line %d",
 				scriptID, issue.Severity, issue.Description, issue.Line)
+			// Sanitize log message if enabled
+			if sm.sanitizer != nil {
+				logMsg = sm.sanitizer.Sanitize(logMsg)
+			}
+			log.Print(logMsg)
 		}
 	}
 
@@ -200,7 +230,11 @@ func (sm *SecurityMiddleware) WrapEchoHandler(next echo.HandlerFunc) echo.Handle
 		if err == nil && sm.config.EnableEncryption {
 			// This is simplified - in real implementation would need to
 			// intercept the actual response body
-			log.Printf("[DEBUG] Response encryption would happen here")
+			logMsg := "[DEBUG] Response encryption would happen here"
+			if sm.sanitizer != nil {
+				logMsg = sm.sanitizer.Sanitize(logMsg)
+			}
+			log.Print(logMsg)
 		}
 
 		return err
@@ -266,6 +300,12 @@ func (sm *SecurityMiddleware) GetMetrics() SecurityMetrics {
 		metrics.DataEncrypted = encCount + decCount
 	}
 
+	if sm.sanitizer != nil {
+		logsProcessed, logsSanitized := sm.sanitizer.GetMetrics()
+		metrics.LogsProcessed = logsProcessed
+		metrics.LogsSanitized = logsSanitized
+	}
+
 	return metrics
 }
 
@@ -282,6 +322,10 @@ func (sm *SecurityMiddleware) ResetMetrics() {
 
 	if sm.interceptor != nil {
 		sm.interceptor.ResetMetrics()
+	}
+
+	if sm.sanitizer != nil {
+		sm.sanitizer.ResetMetrics()
 	}
 }
 
@@ -324,4 +368,20 @@ func (sm *SecurityMiddleware) SetEnabled(analysis, encryption bool) {
 	if sm.interceptor != nil {
 		sm.interceptor.SetEnabled(encryption)
 	}
+}
+
+// SanitizeLog sanitizes a log message to remove sensitive data
+func (sm *SecurityMiddleware) SanitizeLog(logMessage string) string {
+	if sm.sanitizer == nil || !sm.config.EnableLogSanitization {
+		return logMessage
+	}
+	return sm.sanitizer.Sanitize(logMessage)
+}
+
+// SanitizeLogs sanitizes multiple log messages
+func (sm *SecurityMiddleware) SanitizeLogs(logMessages []string) []string {
+	if sm.sanitizer == nil || !sm.config.EnableLogSanitization {
+		return logMessages
+	}
+	return sm.sanitizer.BatchSanitize(logMessages)
 }

@@ -125,6 +125,12 @@
    - **Alto rendimiento**: 7.7μs para análisis, 311ns para encriptación
    - **Configurable**: Todo controlado desde config.toml
    - **Tests completos**: Unitarios, concurrencia y benchmarks
+16. **Sanitización de logs** (01/08/2025):
+   - **Prevención de exposición de datos**: Detecta y enmascara datos sensibles en logs
+   - **Patrones predefinidos**: Email, teléfono, SSN, tarjetas, API keys, JWT, IPs, passwords
+   - **Alto rendimiento**: 3.6μs para detección simple, 16.3μs para múltiples patrones
+   - **Configurable**: Habilitación, caracteres de enmascarado, patrones personalizados
+   - **Integrado**: Disponible en SecurityMiddleware para uso transparente
 
 ## 🆕 Resultados de Pruebas de Carga JMeter (01/08/2025)
 
@@ -202,6 +208,7 @@ El test ejecutó un workflow con:
    - Circuit breakers para servicios externos
    - ~~Análisis estático de scripts~~ ✅ RESUELTO
    - ~~Encriptación de datos sensibles~~ ✅ RESUELTO
+   - ~~Exposición de datos en logs~~ ✅ RESUELTO
    
 3. **Mediano plazo**: 
    - Manejo de errores centralizado

@@ -121,3 +121,15 @@ sensitive_patterns = [
 # employee_id = "EMP\\d{6}"
 # account_number = "ACC-\\d{4}-\\d{4}-\\d{4}"
 # custom_token = "tok_[a-zA-Z0-9]{24}"
+
+# Log Sanitization Configuration
+enable_log_sanitization = false   # Enable log sanitization to prevent data exposure (default: false)
+log_masking_char = "*"           # Character used for masking sensitive data (default: "*")
+log_preserve_length = false      # Preserve original length when masking (default: false)
+log_show_type = true            # Show data type in replacement (default: true)
+
+# Custom patterns for log sanitization
+# Format: pattern_name = "regex_pattern"
+[security.log_custom_patterns]
+# session_id = "sess_[a-zA-Z0-9]{32}"
+# internal_id = "INT-\\d{8}"
